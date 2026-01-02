@@ -1,0 +1,50 @@
+# 🎮 Game Assets Setup Guide
+
+This guide explains how to add Audio and Visual assets to your project.
+
+## 1. Directory Structure
+All assets must be placed in the `assets/` directory (or `android/assets` depending on your project structure).
+
+```
+fopws2526projectfop-amazeing/
+└── assets/
+    ├── audio/          <-- Create this folder
+    │   ├── music.mp3
+    │   ├── walk.ogg
+    │   ├── hit.ogg
+    │   ├── attack.ogg
+    │   ├── kill.ogg
+    │   ├── collect.ogg
+    │   ├── victory.ogg
+    │   └── gameover.ogg
+    ├── maps/
+    ├── texture/
+    └── craft/
+```
+
+## 2. Audio Files
+The `AudioManager` looks for specific file names. You can use `.ogg`, `.mp3`, or `.wav`.
+
+| Sound Event | Expected Filename | Description |
+|---|---|---|
+| Background Music | `audio/music.mp3` | Loop during gameplay |
+| Walk | `audio/walk.ogg` | (Not yet implemented in code loop, but prepared) |
+| Attack | `audio/attack.ogg` | When player presses Space |
+| Hit | `audio/hit.ogg` | When player or enemy takes damage |
+| Kill | `audio/kill.ogg` | When enemy dies |
+| Collect | `audio/collect.ogg` | When picking up Key |
+| Victory | `audio/victory.ogg` | Win screen |
+| GameOver | `audio/gameover.ogg` | Lose screen |
+
+**Note**: If a file is missing, the game will purely skip the sound request. No crash.
+
+## 3. Visual Effects
+- **Red Flash**: Automatically handled by code (filters player texture red). No asset needed.
+- **Particle Effects**: (Optional) You can add particle files in `particles/` folder later.
+
+## 4. Key Bindings
+Key bindings are stored in `~/.prefs/maze_runner_settings` (on Desktop) or local storage.
+To reset to defaults, you can delete that file or implement a "Reset" button.
+Current Defaults:
+- Move: `UP`, `DOWN`, `LEFT`, `RIGHT` Arrows
+- Attack: `SPACE`

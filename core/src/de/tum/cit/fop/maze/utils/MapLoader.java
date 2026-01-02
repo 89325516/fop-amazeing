@@ -15,6 +15,7 @@ public class MapLoader {
 
     /**
      * 加载指定路径的地图文件
+     * 
      * @param internalPath assets 文件夹下的相对路径，例如 "maps/level1.properties"
      * @return 解析好的 GameMap 对象
      */
@@ -22,11 +23,15 @@ public class MapLoader {
         GameMap map = new GameMap();
         Properties props = new Properties();
 
-        // 使用 LibGDX 的文件处理，确保在不同操作系统下都能找到文件
+        // 使用 LibGDX 的文件处理
+        // 优先检查 Internal (Assets)，如果不存在则检查 Local
         FileHandle file = Gdx.files.internal(internalPath);
+        if (!file.exists()) {
+            file = Gdx.files.local(internalPath);
+        }
 
         if (!file.exists()) {
-            Gdx.app.error("MapLoader", "Map file not found: " + internalPath);
+            Gdx.app.error("MapLoader", "Map file not found in Internal or Local: " + internalPath);
             return map; // 返回空地图防止崩溃
         }
 
@@ -72,6 +77,9 @@ public class MapLoader {
                             break;
                         case 5:
                             map.addGameObject(new Key(x, y));
+                            break;
+                        case 6:
+                            map.addGameObject(new MobileTrap(x, y));
                             break;
                         default:
                             Gdx.app.log("MapLoader", "Unknown object type ID: " + typeId + " at " + x + "," + y);

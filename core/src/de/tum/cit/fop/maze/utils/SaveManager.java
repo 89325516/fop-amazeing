@@ -1,6 +1,5 @@
 package de.tum.cit.fop.maze.utils;
 
-
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.utils.Json;
@@ -10,6 +9,26 @@ import de.tum.cit.fop.maze.model.GameState;
 import java.util.Arrays;
 import java.util.Comparator;
 
+/*
+ * ╔═══════════════════════════════════════════════════════════════════════════╗
+ * ║  ⚠️  CORE SYSTEM FILE - DO NOT MODIFY WITHOUT TEAM LEAD APPROVAL ⚠️      ║
+ * ╠═══════════════════════════════════════════════════════════════════════════╣
+ * ║  This file implements the SAVE/LOAD system using LibGDX JSON:             ║
+ * ║  • Saves game state as human-readable JSON to local storage               ║
+ * ║  • Loads and deserializes GameState objects                               ║
+ * ║  • Lists and sorts save files by modification date                        ║
+ * ║                                                                           ║
+ * ║  CRITICAL: The JSON format must match GameState.java fields exactly.      ║
+ * ║  If you add fields to GameState, they auto-serialize. Removing fields     ║
+ * ║  will break loading of old saves.                                         ║
+ * ║                                                                           ║
+ * ║  DO NOT CHANGE:                                                           ║
+ * ║  - SAVE_DIR path (breaks existing user saves)                             ║
+ * ║  - Method signatures (used by GameScreen)                                 ║
+ * ║  - JSON output format (JsonWriter.OutputType.json)                        ║
+ * ╚═══════════════════════════════════════════════════════════════════════════╝
+ */
+
 public class SaveManager {
 
     // 所有的存档都放在 saves 文件夹下
@@ -17,7 +36,8 @@ public class SaveManager {
 
     /**
      * 保存游戏，允许指定文件名
-     * @param state 游戏状态
+     * 
+     * @param state    游戏状态
      * @param filename 用户输入的文件名 (不需要带 .json 后缀)
      */
     public static void saveGame(GameState state, String filename) {
@@ -107,8 +127,10 @@ public class SaveManager {
 
         return files;
     }
+
     public static boolean deleteSave(String filename) {
-        if (filename == null || filename.isEmpty()) return false;
+        if (filename == null || filename.isEmpty())
+            return false;
 
         if (!filename.endsWith(".json")) {
             filename += ".json";

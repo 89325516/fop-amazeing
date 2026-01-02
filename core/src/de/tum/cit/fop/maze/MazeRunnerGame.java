@@ -11,6 +11,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.utils.Array;
 import de.tum.cit.fop.maze.screens.GameScreen;
 import de.tum.cit.fop.maze.screens.MenuScreen;
+import de.tum.cit.fop.maze.config.GameSettings;
 import games.spooky.gdx.nativefilechooser.NativeFileChooser;
 
 public class MazeRunnerGame extends Game {
@@ -30,9 +31,12 @@ public class MazeRunnerGame extends Game {
         skin = new Skin(Gdx.files.internal("craft/craftacular-ui.json"));
         this.loadCharacterAnimation();
 
-        Music backgroundMusic = Gdx.audio.newMusic(Gdx.files.internal("background.mp3"));
-        backgroundMusic.setLooping(true);
-        backgroundMusic.play();
+        // 加载用户自定义的默认参数
+        GameSettings.loadUserDefaults();
+
+        // Initialize Audio Manager
+        de.tum.cit.fop.maze.utils.AudioManager.getInstance().load();
+        de.tum.cit.fop.maze.utils.AudioManager.getInstance().playMusic();
 
         goToMenu();
     }
@@ -47,6 +51,7 @@ public class MazeRunnerGame extends Game {
 
     /**
      * 【修改点】现在接收一个文件名路径
+     * 
      * @param saveFilePath 存档文件路径。如果是 null，代表开始新游戏。
      */
     public void goToGame(String saveFilePath) {
@@ -77,9 +82,18 @@ public class MazeRunnerGame extends Game {
         }
         spriteBatch.dispose();
         skin.dispose();
+        de.tum.cit.fop.maze.utils.AudioManager.getInstance().dispose();
     }
 
-    public Skin getSkin() { return skin; }
-    public Animation<TextureRegion> getCharacterDownAnimation() { return characterDownAnimation; }
-    public SpriteBatch getSpriteBatch() { return spriteBatch; }
+    public Skin getSkin() {
+        return skin;
+    }
+
+    public Animation<TextureRegion> getCharacterDownAnimation() {
+        return characterDownAnimation;
+    }
+
+    public SpriteBatch getSpriteBatch() {
+        return spriteBatch;
+    }
 }
