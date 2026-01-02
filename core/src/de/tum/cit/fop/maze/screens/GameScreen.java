@@ -15,6 +15,7 @@ import de.tum.cit.fop.maze.model.GameObject;
 import de.tum.cit.fop.maze.model.Player;
 import de.tum.cit.fop.maze.model.Enemy;
 import de.tum.cit.fop.maze.model.CollisionManager;
+import de.tum.cit.fop.maze.ui.GameHUD;
 import de.tum.cit.fop.maze.utils.MapLoader;
 
 import java.util.ArrayList;
@@ -46,6 +47,9 @@ public class GameScreen implements Screen {
 
     // 敌人列表 (从 GameMap 中提取)
     private List<Enemy> enemies;
+
+    // HUD (由葉靖瑄扩展)
+    private GameHUD hud;
 
     // 单元格大小 (16像素)
     private static final float UNIT_SCALE = 16f;
@@ -84,6 +88,9 @@ public class GameScreen implements Screen {
         camera = new OrthographicCamera();
         camera.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         camera.zoom = 0.5f;
+
+        // 6. 初始化 HUD
+        hud = new GameHUD(player);
     }
 
     // 辅助方法：创建一个 16x16 的纯色方块纹理
@@ -202,6 +209,10 @@ public class GameScreen implements Screen {
         game.getSpriteBatch().draw(playerTexture, player.getX() * UNIT_SCALE, player.getY() * UNIT_SCALE);
 
         game.getSpriteBatch().end();
+
+        // --- 5. 渲染 HUD (在游戏世界之上) ---
+        hud.update(delta);
+        hud.render(game.getSpriteBatch());
     }
 
     /**
@@ -244,11 +255,11 @@ public class GameScreen implements Screen {
         camera.update();
     }
 
-    @Override
     public void resize(int width, int height) {
         camera.viewportWidth = width;
         camera.viewportHeight = height;
         camera.update();
+        hud.resize(width, height);
     }
 
     @Override
@@ -275,5 +286,6 @@ public class GameScreen implements Screen {
         trapTexture.dispose();
         enemyTexture.dispose();
         keyTexture.dispose();
+        hud.dispose();
     }
 }
