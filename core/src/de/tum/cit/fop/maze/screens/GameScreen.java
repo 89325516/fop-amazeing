@@ -49,7 +49,7 @@ public class GameScreen implements Screen {
         this.game = game;
 
         // 1. 加载地图
-        gameMap = MapLoader.loadMap("maps/level-5.properties");
+        gameMap = MapLoader.loadMap("maps/level-1.properties");
 
         // 2. 初始化玩家位置
         playerX = gameMap.getPlayerStartX();
