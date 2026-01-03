@@ -42,6 +42,10 @@ public class GameMap {
     private float playerStartX = 0;
     private float playerStartY = 0;
 
+    // Exit position cache for O(1) lookup in CollisionManager
+    private int exitX = -1;
+    private int exitY = -1;
+
     public GameMap() {
         this.dynamicObjects = new ArrayList<>();
         this.wallMap = new com.badlogic.gdx.utils.IntMap<>();
@@ -57,6 +61,11 @@ public class GameMap {
             wallMap.put(key, (Wall) obj);
         } else {
             this.dynamicObjects.add(obj);
+            // Cache Exit position for O(1) lookup
+            if (obj instanceof Exit) {
+                this.exitX = (int) obj.getX();
+                this.exitY = (int) obj.getY();
+            }
         }
 
         // 动态更新地图尺寸，方便相机知道边界在哪里
@@ -124,5 +133,13 @@ public class GameMap {
 
     public float getPlayerStartY() {
         return playerStartY;
+    }
+
+    public int getExitX() {
+        return exitX;
+    }
+
+    public int getExitY() {
+        return exitY;
     }
 }

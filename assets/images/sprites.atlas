@@ -1,0 +1,41 @@
+
+sprites.png
+size: 1024, 512
+format: RGBA8888
+filter: MipMapLinearLinear, Linear
+repeat: none
+basictiles
+  rotate: false
+  xy: 806, 212
+  size: 128, 240
+  orig: 128, 240
+  offset: 0, 0
+  index: -1
+character
+  rotate: false
+  xy: 532, 196
+  size: 272, 256
+  orig: 272, 256
+  offset: 0, 0
+  index: -1
+mobs
+  rotate: false
+  xy: 2, 2
+  size: 192, 128
+  orig: 192, 128
+  offset: 0, 0
+  index: -1
+objects
+  rotate: false
+  xy: 2, 132
+  size: 528, 320
+  orig: 528, 320
+  offset: 0, 0
+  index: -1
+things
+  rotate: false
+  xy: 196, 2
+  size: 192, 128
+  orig: 192, 128
+  offset: 0, 0
+  index: -1

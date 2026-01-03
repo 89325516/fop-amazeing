@@ -16,17 +16,43 @@ public class GameOverScreen implements Screen {
 
     private final MazeRunnerGame game;
     private final Stage stage;
+    private final de.tum.cit.fop.maze.utils.SimpleParticleSystem particleSystem;
 
-    public GameOverScreen(MazeRunnerGame game) {
+    // Updated Constructor
+    public GameOverScreen(MazeRunnerGame game, int killCount) {
         this.game = game;
         this.stage = new Stage(new ScreenViewport(), game.getSpriteBatch());
+        this.particleSystem = new de.tum.cit.fop.maze.utils.SimpleParticleSystem(
+                de.tum.cit.fop.maze.utils.SimpleParticleSystem.Theme.GAME_OVER);
+
+        // 1. Check for Achievements
+        java.util.List<String> newUnlocks = de.tum.cit.fop.maze.utils.AchievementManager.checkAchievements(killCount);
 
         Table table = new Table();
         table.setFillParent(true);
         stage.addActor(table);
 
         Label title = new Label("GAME OVER", game.getSkin(), "title");
-        table.add(title).padBottom(50).row();
+        table.add(title).padBottom(20).row();
+
+        // 2. Statistics
+        Label killLabel = new Label("Enemies Defeated: " + killCount, game.getSkin());
+        killLabel.setFontScale(1.2f);
+        table.add(killLabel).padBottom(20).row();
+
+        // 3. New Unlocks Display
+        if (!newUnlocks.isEmpty()) {
+            Label unlockTitle = new Label("NEW CARDS UNLOCKED!", game.getSkin());
+            unlockTitle.setColor(com.badlogic.gdx.graphics.Color.GOLD);
+            table.add(unlockTitle).padBottom(10).row();
+
+            for (String card : newUnlocks) {
+                Label cardLabel = new Label("Card: " + card, game.getSkin());
+                cardLabel.setColor(com.badlogic.gdx.graphics.Color.YELLOW);
+                table.add(cardLabel).padBottom(5).row();
+            }
+            table.padBottom(20);
+        }
 
         TextButton menuBtn = new TextButton("Back to Menu", game.getSkin());
         menuBtn.addListener(new ChangeListener() {
@@ -35,7 +61,12 @@ public class GameOverScreen implements Screen {
                 game.goToMenu();
             }
         });
-        table.add(menuBtn).width(300).height(60);
+        table.add(menuBtn).width(300).height(60).padTop(30);
+    }
+
+    // Default constructor just in case (calls main with 0)
+    public GameOverScreen(MazeRunnerGame game) {
+        this(game, 0);
     }
 
     @Override
@@ -45,8 +76,12 @@ public class GameOverScreen implements Screen {
 
     @Override
     public void render(float delta) {
-        Gdx.gl.glClearColor(0.2f, 0, 0, 1); // Dark Red Background
+        Gdx.gl.glClearColor(0.1f, 0, 0, 1); // Dark Red Background
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
+        // Render Particles behind UI
+        // particleSystem.updateAndDrawRefactored(delta,
+        // stage.getViewport().getScreenWidth(), stage.getViewport().getScreenHeight());
 
         stage.act(delta);
         stage.draw();
@@ -72,5 +107,6 @@ public class GameOverScreen implements Screen {
     @Override
     public void dispose() {
         stage.dispose();
+        particleSystem.dispose();
     }
 }

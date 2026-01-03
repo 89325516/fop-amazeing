@@ -59,27 +59,23 @@ public class CollisionManager {
 
     /**
      * 对敌人更严格的移动检查：不能穿墙，也不能穿过出口/入口 (防止跑出地图或通过关卡)
+     * OPTIMIZED: Uses cached exit position for O(1) lookup.
      */
     public boolean isWalkableForEnemy(int x, int y) {
         if (!isWalkable(x, y))
             return false;
 
-        // 检查是否有 Exit 或 Entry (假设它们在 DynamicObjects 中)
-        for (GameObject obj : gameMap.getDynamicObjects()) {
-            int ox = Math.round(obj.getX());
-            int oy = Math.round(obj.getY());
-            if (ox == x && oy == y) {
-                if (obj instanceof Exit) {
-                    return false;
-                }
-            }
+        // O(1) Exit check using cached position
+        if (x == gameMap.getExitX() && y == gameMap.getExitY()) {
+            return false;
         }
         return true;
     }
 
     /**
      * 检查玩家是否可以移动到指定位置。
-     * 如果玩家没有钥匙，不能站在 Exit 或 Entry 位置（防止逃出围墙）。
+     * 如果玩家没有钥匙，不能站在 Exit 位置（防止逃出围墙）。
+     * OPTIMIZED: Uses cached exit position for O(1) lookup.
      * 
      * @param x      目标 x 坐标
      * @param y      目标 y 坐标
@@ -94,21 +90,10 @@ public class CollisionManager {
         if (hasKey)
             return true;
 
-        // 没有钥匙时，检查是否是 Exit（不能越过出口逃离）
-        for (GameObject obj : gameMap.getDynamicObjects()) {
-            int ox = Math.round(obj.getX());
-            int oy = Math.round(obj.getY());
-            if (ox == x && oy == y) {
-                if (obj instanceof Exit) {
-                    return false; // 没钥匙不能站在出口上
-                }
-            }
+        // O(1) Exit check - 没有钥匙时不能站在出口
+        if (x == gameMap.getExitX() && y == gameMap.getExitY()) {
+            return false;
         }
-
-        // 检查是否是 Entry（入口位置也应该被阻止？根据用户需求：不能通过入口走出围墙边界）
-        // Entry 通常是玩家起始点，如果它在围墙边缘，玩家可能走出去
-        // 但 Entry 不在 DynamicObjects 中，而且玩家本身从 Entry 开始，所以检查可能复杂
-        // 暂时只阻止 Exit。用户说的"入口或者出口"主要问题是 Exit。
 
         return true;
     }

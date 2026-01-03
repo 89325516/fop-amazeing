@@ -2,10 +2,9 @@ package de.tum.cit.fop.maze;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.audio.Music;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.utils.Array;
@@ -21,6 +20,8 @@ public class MazeRunnerGame extends Game {
     private Skin skin;
     private Animation<TextureRegion> characterDownAnimation;
 
+    private TextureAtlas atlas;
+
     public MazeRunnerGame(NativeFileChooser fileChooser) {
         super();
     }
@@ -28,7 +29,12 @@ public class MazeRunnerGame extends Game {
     @Override
     public void create() {
         spriteBatch = new SpriteBatch();
-        skin = new Skin(Gdx.files.internal("craft/craftacular-ui.json"));
+        skin = new Skin(Gdx.files.internal(de.tum.cit.fop.maze.utils.AssetConfig.getPath("skin.gui")));
+        de.tum.cit.fop.maze.utils.AssetConfig.load();
+
+        // Load global atlas
+        atlas = new TextureAtlas(Gdx.files.internal("images/sprites.atlas"));
+
         this.loadCharacterAnimation();
 
         // 加载用户自定义的默认参数
@@ -63,12 +69,37 @@ public class MazeRunnerGame extends Game {
     }
 
     private void loadCharacterAnimation() {
-        Texture walkSheet = new Texture(Gdx.files.internal("character.png"));
+        TextureRegion walkSheet = atlas.findRegion("character");
+        if (walkSheet == null) {
+            Gdx.app.error("MazeRunnerGame", "Character region not found in atlas!");
+            return;
+        }
+
         int frameWidth = 16;
-        int frameHeight = 32;
+        int frameHeight = 32; // This seems to be loading just "Down" animation which is the first row?
+        // Wait, original code:
+        // walkFrames.add(new TextureRegion(walkSheet, col * frameWidth, 0, frameWidth,
+        // frameHeight));
+        // It was slicing from (0,0) with height 32.
+        // In TextureManager, 16x16 is used for tiles.
+        // 16x32 implies it takes two distinct tiles vertically?
+        // Or maybe character.png IS 16x32?
+        // TextureManager says: "Character Sheet Size: 272x256".
+        // TextureManager split(..., 16, 16).
+        // Here it uses 16x32. This might be why there was a "clipping issue" comment in
+        // TextureManager.
+        // I will preserve the logic: split the region.
+
+        // TextureRegion.split(int tileWidth, int tileHeight) splits the region into 2D
+        // array.
+        // But here we need specific frames.
+        // Since we have the region, we can just slice it manually relative to the
+        // region.
+
         int animationFrames = 4;
         Array<TextureRegion> walkFrames = new Array<>(TextureRegion.class);
         for (int col = 0; col < animationFrames; col++) {
+            // TextureRegion(TextureRegion region, int x, int y, int width, int height)
             walkFrames.add(new TextureRegion(walkSheet, col * frameWidth, 0, frameWidth, frameHeight));
         }
         characterDownAnimation = new Animation<>(0.1f, walkFrames);
@@ -82,6 +113,8 @@ public class MazeRunnerGame extends Game {
         }
         spriteBatch.dispose();
         skin.dispose();
+        if (atlas != null)
+            atlas.dispose();
         de.tum.cit.fop.maze.utils.AudioManager.getInstance().dispose();
     }
 
@@ -95,5 +128,9 @@ public class MazeRunnerGame extends Game {
 
     public SpriteBatch getSpriteBatch() {
         return spriteBatch;
+    }
+
+    public TextureAtlas getAtlas() {
+        return atlas;
     }
 }

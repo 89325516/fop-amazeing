@@ -32,6 +32,8 @@ import de.tum.cit.fop.maze.utils.SaveManager;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+// comments
+
 /*
  * ╔═══════════════════════════════════════════════════════════════════════════╗
  * ║  ⚠️  CORE GAME LOOP FILE - DO NOT MODIFY WITHOUT TEAM LEAD APPROVAL ⚠️   ║
@@ -77,6 +79,7 @@ public class GameScreen implements Screen {
     private java.util.List<MobileTrap> mobileTraps;
     private GameHUD hud;
     private boolean[][] safeGrid;
+    private int killCount = 0;
 
     // --- Rendering ---
     private de.tum.cit.fop.maze.utils.TextureManager textureManager;
@@ -101,7 +104,7 @@ public class GameScreen implements Screen {
 
         uiStage = new Stage(new FitViewport(1920, 1080), game.getSpriteBatch());
 
-        textureManager = new de.tum.cit.fop.maze.utils.TextureManager();
+        textureManager = new de.tum.cit.fop.maze.utils.TextureManager(game.getAtlas());
         mazeRenderer = new de.tum.cit.fop.maze.utils.MazeRenderer(game.getSpriteBatch(), textureManager);
 
         this.currentLevelPath = "maps/level-1.properties";
@@ -238,20 +241,30 @@ public class GameScreen implements Screen {
 
         // 5. Render Player
         TextureRegion playerFrame;
-        switch (playerDirection) {
-            case 1:
-                playerFrame = textureManager.playerUp.getKeyFrame(stateTime, player.isRunning());
-                break;
-            case 2:
-                playerFrame = textureManager.playerLeft.getKeyFrame(stateTime, player.isRunning());
-                break;
-            case 3:
-                playerFrame = textureManager.playerRight.getKeyFrame(stateTime, player.isRunning());
-                break;
-            case 0:
-            default:
-                playerFrame = textureManager.playerDown.getKeyFrame(stateTime, player.isRunning());
-                break;
+        boolean isMoving = Gdx.input.isKeyPressed(GameSettings.KEY_LEFT) ||
+                Gdx.input.isKeyPressed(GameSettings.KEY_RIGHT) ||
+                Gdx.input.isKeyPressed(GameSettings.KEY_UP) ||
+                Gdx.input.isKeyPressed(GameSettings.KEY_DOWN);
+
+        if (isMoving) {
+            switch (playerDirection) {
+                case 1:
+                    playerFrame = textureManager.playerUp.getKeyFrame(stateTime, true);
+                    break;
+                case 2:
+                    playerFrame = textureManager.playerLeft.getKeyFrame(stateTime, true);
+                    break;
+                case 3:
+                    playerFrame = textureManager.playerRight.getKeyFrame(stateTime, true);
+                    break;
+                case 0:
+                default:
+                    playerFrame = textureManager.playerDown.getKeyFrame(stateTime, true);
+                    break;
+            }
+        } else {
+            // User request: Always face front (Down) when stopped
+            playerFrame = textureManager.playerDownStand;
         }
 
         // VFX: Red tint if hurt
@@ -294,6 +307,7 @@ public class GameScreen implements Screen {
                         if (e.takeDamage(1)) {
                             System.out.println("Enemy defeated!");
                             de.tum.cit.fop.maze.utils.AudioManager.getInstance().playSound("kill");
+                            killCount++;
                             iter.remove();
                             // Sync with GameMap
                             gameMap.getDynamicObjects().remove(e);
@@ -351,7 +365,7 @@ public class GameScreen implements Screen {
                 if (player.damage(1)) {
                     System.out.println("Hit by Mobile Trap!");
                     if (player.getLives() <= 0) {
-                        game.setScreen(new GameOverScreen(game));
+                        game.setScreen(new GameOverScreen(game, killCount));
                     }
                 }
             }
@@ -362,7 +376,7 @@ public class GameScreen implements Screen {
                 if (player.damage(1)) {
                     System.out.println("Ouch! Player hit by enemy.");
                     if (player.getLives() <= 0) {
-                        game.setScreen(new GameOverScreen(game));
+                        game.setScreen(new GameOverScreen(game, killCount));
                     }
                 }
             }
@@ -388,7 +402,7 @@ public class GameScreen implements Screen {
                         de.tum.cit.fop.maze.utils.AudioManager.getInstance().playSound("hit");
                         if (player.getLives() <= 0) {
                             de.tum.cit.fop.maze.utils.AudioManager.getInstance().playSound("gameover");
-                            game.setScreen(new GameOverScreen(game));
+                            game.setScreen(new GameOverScreen(game, killCount));
                         }
                     }
                 }

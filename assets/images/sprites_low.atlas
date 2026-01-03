@@ -1,0 +1,41 @@
+
+sprites_low.png
+size: 512, 256
+format: RGBA8888
+filter: MipMapLinearLinear, Linear
+repeat: none
+basictiles
+  rotate: false
+  xy: 406, 108
+  size: 64, 120
+  orig: 64, 120
+  offset: 0, 0
+  index: -1
+character
+  rotate: false
+  xy: 268, 100
+  size: 136, 128
+  orig: 136, 128
+  offset: 0, 0
+  index: -1
+mobs
+  rotate: false
+  xy: 2, 2
+  size: 96, 64
+  orig: 96, 64
+  offset: 0, 0
+  index: -1
+objects
+  rotate: false
+  xy: 2, 68
+  size: 264, 160
+  orig: 264, 160
+  offset: 0, 0
+  index: -1
+things
+  rotate: false
+  xy: 100, 2
+  size: 96, 64
+  orig: 96, 64
+  offset: 0, 0
+  index: -1
