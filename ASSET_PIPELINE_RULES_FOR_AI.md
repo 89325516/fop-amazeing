@@ -9,8 +9,10 @@ You must strictly follow this pipeline when assisting the user with game assets.
 ## 1. Asset Generation Constraints (生成约束)
 - **Save Location (保存位置)**: ALWAYS save generated raw images to `raw_assets/ai_generated_raw/`.
   - ❌ NEVER save directly to `assets/` or `core/` folders.
-- **Content (内容)**: One entity per PNG image (一物一图).
-- **Naming (命名)**: Strict snake_case (e.g., `tile_lava_floor.png`, `item_magic_wand.png`).
+- **Content (内容)**: One entity per PNG image (一物一图). For animations, use "Horizontal Strip 4 Frames".
+- **Naming (命名)**: Strict snake_case.
+  - Tiles/Items: `tile_lava.png`, `item_key.png`.
+  - Animations: MUST start with `anim_` (e.g., `anim_torch.png`).
 
 ## 2. Mandatory Processing Workflow (强制处理流程)
 After generating assets or receiving images, you MUST instruct the user to run (or run yourself if capable) the following workflow:
@@ -28,7 +30,9 @@ After generating assets or receiving images, you MUST instruct the user to run (
     *Effect*: Resizes to strict 64x64 grid, saves to `raw_assets/ai_ready_optimized/`.
 
 ## 3. Final Output Specifications (最终输出规格)
-- **Resolution**: Exactly **64x64 pixels**.
+- **Resolution**:
+  - Standard: Exactly **64x64 pixels**.
+  - Animation (`anim_`): Exactly **256x64 pixels** (Horizontal Strip).
 - **Tile Logic**: Texture fills the entire square.
 - **Item Logic**: Item is centered and scaled within the square.
 - **Location**: `raw_assets/ai_ready_optimized/` is the ONLY source of truth for game-ready textures.

@@ -25,32 +25,44 @@ def standardize_file(filename):
         # Items should maintain aspect ratio and fit inside (e.g. 14x14)
         # Tiles should likely fill the space (16x16)
         
-        new_img = Image.new("RGBA", TARGET_SIZE, (0, 0, 0, 0))
-        
-        if filename.startswith("tile_") or filename.startswith("wall_"):
+        # Determine target size based on file type
+        if filename.startswith("anim_"):
+            # 4-frame animation: 64x64 * 4 = 256x64
+            current_target = (256, 64)
+            new_img = Image.new("RGBA", current_target, (0, 0, 0, 0))
+            # Resize to fill the strip
+            img_resized = img_cropped.resize(current_target, Image.LANCZOS)
+            new_img.paste(img_resized, (0, 0))
+            
+        elif filename.startswith("tile_") or filename.startswith("wall_"):
             # Tiles & Walls: Resize to fill exactly
-            img_resized = img_cropped.resize(TARGET_SIZE, Image.LANCZOS)
+            current_target = TARGET_SIZE
+            new_img = Image.new("RGBA", current_target, (0, 0, 0, 0))
+            img_resized = img_cropped.resize(current_target, Image.LANCZOS)
             new_img.paste(img_resized, (0, 0))
             
         else:
             # Items/Traps/UI: Fit maintain aspect ratio
+            current_target = TARGET_SIZE
+            new_img = Image.new("RGBA", current_target, (0, 0, 0, 0))
+            
             width, height = img_cropped.size
             if width > height:
-                ratio = TARGET_SIZE[0] / width
+                ratio = current_target[0] / width
             else:
-                ratio = TARGET_SIZE[1] / height
+                ratio = current_target[1] / height
             
             new_size = (int(width * ratio), int(height * ratio))
             # Use LANCZOS for high quality downsampling
             img_resized = img_cropped.resize(new_size, Image.LANCZOS)
             
             # Center it
-            paste_x = (TARGET_SIZE[0] - new_size[0]) // 2
-            paste_y = (TARGET_SIZE[1] - new_size[1]) // 2
+            paste_x = (current_target[0] - new_size[0]) // 2
+            paste_y = (current_target[1] - new_size[1]) // 2
             new_img.paste(img_resized, (paste_x, paste_y))
 
         new_img.save(output_path)
-        print(f"Standardized: {filename} -> {TARGET_SIZE}")
+        print(f"Standardized: {filename} -> {current_target}")
         
     except Exception as e:
         print(f"Error processing {filename}: {e}")
