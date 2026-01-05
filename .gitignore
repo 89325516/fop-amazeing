@@ -205,3 +205,6 @@ docs/learning_notes/
 docs/setup_guides/
 core/test/de/tum/cit/fop/maze/utils/AchievementManagerTest.java
 docs/learning_notes/error_analysis_20260103_particle_crash.txt
+
+### Game Saves
+saves/

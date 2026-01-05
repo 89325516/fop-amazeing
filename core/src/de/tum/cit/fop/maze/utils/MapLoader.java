@@ -32,7 +32,7 @@ public class MapLoader {
 
         if (!file.exists()) {
             Gdx.app.error("MapLoader", "Map file not found in Internal or Local: " + internalPath);
-            return map; // 返回空地图防止崩溃
+            return createFallbackMap();
         }
 
         try (InputStream input = file.read()) {
@@ -57,33 +57,17 @@ public class MapLoader {
                     int typeId = Integer.parseInt(value);
 
                     // 3. 根据文档 ID 表创建对应的对象
-                    // 0=Wall, 1=Entry, 2=Exit, 3=Trap, 4=Enemy, 5=Key
-                    switch (typeId) {
-                        case 0:
-                            map.addGameObject(new Wall(x, y));
-                            break;
-                        case 1:
-                            // ID 1 是出生点，不生成实体，只设置坐标
-                            map.setPlayerStart(x, y);
-                            break;
-                        case 2:
-                            map.addGameObject(new Exit(x, y));
-                            break;
-                        case 3:
-                            map.addGameObject(new Trap(x, y));
-                            break;
-                        case 4:
-                            map.addGameObject(new Enemy(x, y));
-                            break;
-                        case 5:
-                            map.addGameObject(new Key(x, y));
-                            break;
-                        case 6:
-                            map.addGameObject(new MobileTrap(x, y));
-                            break;
-                        default:
-                            Gdx.app.log("MapLoader", "Unknown object type ID: " + typeId + " at " + x + "," + y);
-                            break;
+                    // 使用 GameConfig 常量
+                    if (typeId == de.tum.cit.fop.maze.config.GameConfig.OBJECT_ID_ENTRY) {
+                        map.setPlayerStart(x, y);
+                    } else {
+                        GameObject obj = EntityFactory.createEntity(typeId, (float) x, (float) y);
+                        if (obj != null) {
+                            map.addGameObject(obj);
+                        } else {
+                            Gdx.app.log("MapLoader",
+                                    "Unknown or unhandled object type ID: " + typeId + " at " + x + "," + y);
+                        }
                     }
 
                 } catch (NumberFormatException e) {
@@ -93,9 +77,35 @@ public class MapLoader {
 
         } catch (IOException e) {
             Gdx.app.error("MapLoader", "Failed to load map file", e);
+            return createFallbackMap();
+        }
+
+        // Validation: If map is empty or player has no start?
+        if (map.getWidth() == 0 || map.getHeight() == 0) {
+            Gdx.app.error("MapLoader", "Map is empty! Using fallback.");
+            return createFallbackMap();
         }
 
         Gdx.app.log("MapLoader", "Map loaded successfully! Size: " + map.getWidth() + "x" + map.getHeight());
+        return map;
+    }
+
+    private static GameMap createFallbackMap() {
+        Gdx.app.log("MapLoader", "Creating Fallback Map...");
+        GameMap map = new GameMap();
+        // Create a 5x5 enclosed room
+        for (int x = 0; x < 5; x++) {
+            for (int y = 0; y < 5; y++) {
+                if (x == 0 || x == 4 || y == 0 || y == 4) {
+                    map.addGameObject(
+                            EntityFactory.createEntity(de.tum.cit.fop.maze.config.GameConfig.OBJECT_ID_WALL, x, y));
+                }
+            }
+        }
+        // Player Start at 2,2
+        map.setPlayerStart(2, 2);
+        // Exit at 3,3
+        map.addGameObject(EntityFactory.createEntity(de.tum.cit.fop.maze.config.GameConfig.OBJECT_ID_EXIT, 3, 3));
         return map;
     }
 }

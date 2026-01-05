@@ -69,7 +69,7 @@ public class Enemy extends GameObject {
     private final float homeX;
     private final float homeY;
 
-    private int health = 3;
+    private int health = de.tum.cit.fop.maze.config.GameConfig.ENEMY_DEFAULT_HEALTH;
 
     public Enemy(float x, float y) {
         super(x, y);

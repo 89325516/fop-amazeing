@@ -10,6 +10,7 @@ public class CollisionManagerTest {
         GameMap map = new GameMap();
         Wall wall = new Wall(5, 5); // 假设 Wall(x, y) 构造函数
         map.addGameObject(wall);
+        map.addGameObject(new Wall(10, 10)); // Expand map to ensure 6,5 is within bounds
 
         CollisionManager cm = new CollisionManager(map);
 

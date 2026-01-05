@@ -33,6 +33,10 @@ public class TextureManager implements Disposable {
         public Animation<TextureRegion> heartBreak;
         public TextureRegion arrowRegion;
 
+        // Fallback
+        private TextureRegion fallbackRegion;
+        private Texture fallbackTexture;
+
         /**
          * Creates TextureManager using a shared TextureAtlas.
          * 
@@ -41,10 +45,39 @@ public class TextureManager implements Disposable {
          */
         public TextureManager(TextureAtlas sharedAtlas) {
                 this.atlas = sharedAtlas;
+
+                // Create Fallback Texture (Magenta 1x1)
+                com.badlogic.gdx.graphics.Pixmap pixmap = new com.badlogic.gdx.graphics.Pixmap(16, 16,
+                                com.badlogic.gdx.graphics.Pixmap.Format.RGBA8888);
+                pixmap.setColor(com.badlogic.gdx.graphics.Color.MAGENTA);
+                pixmap.fill();
+                // Add checkerboard pattern
+                pixmap.setColor(com.badlogic.gdx.graphics.Color.BLACK);
+                pixmap.fillRectangle(0, 0, 8, 8);
+                pixmap.fillRectangle(8, 8, 8, 8);
+
+                this.fallbackTexture = new Texture(pixmap);
+                pixmap.dispose();
+                this.fallbackRegion = new TextureRegion(fallbackTexture);
+
                 // Load raw texture for attacks to avoid atlas trimming issues (e.g. whitespace
                 // stripping)
-                this.attackTexture = new Texture(com.badlogic.gdx.Gdx.files.internal("images/test.png"));
+                try {
+                        this.attackTexture = new Texture(com.badlogic.gdx.Gdx.files.internal("images/test.png"));
+                } catch (Exception e) {
+                        System.err.println("Failed to load images/test.png: " + e.getMessage());
+                        this.attackTexture = fallbackTexture;
+                }
                 loadAssets();
+        }
+
+        private TextureRegion findRegionSafe(String name) {
+                TextureRegion region = atlas.findRegion(name);
+                if (region == null) {
+                        System.err.println("TextureManager: Region '" + name + "' not found in atlas. Using fallback.");
+                        return fallbackRegion;
+                }
+                return region;
         }
 
         private void loadAssets() {
@@ -52,9 +85,7 @@ public class TextureManager implements Disposable {
 
                 // 1. Player
                 // "character" is the name of the region (from character.png)
-                TextureRegion charRegion = atlas.findRegion("character");
-                if (charRegion == null)
-                        throw new RuntimeException("Region 'character' not found in atlas!");
+                TextureRegion charRegion = findRegionSafe("character");
 
                 System.out
                                 .println("Character Region Size: " + charRegion.getRegionWidth() + "x"
@@ -62,7 +93,28 @@ public class TextureManager implements Disposable {
 
                 // Split the region into tiles
                 // Split the region into tiles (16x32 for character)
-                TextureRegion[][] charTiles = charRegion.split(16, 32);
+                // If fallback, it's 16x16, splitting 16x32 might fail or produce weirdness?
+                // Split handles strict matching or no? region.split returns tiles based on
+                // block size.
+                // If region is 16x16 and we ask for 16x32, it returns empty or fails?
+                // LibGDX split checks region dimensions.
+                // Let's ensure fallback is big enough or adapt.
+                // Fallback is 16x16. Splitting 16x32 will effectively crash or return empty.
+                // For safety, let's make the fallback 64x128 or something reusable?
+                // Or just use 16x16 and hope split works?
+                // Actually, if charRegion is fallback (16x16), splitting 16x32 produces [0][0]
+                // only?
+
+                TextureRegion[][] charTiles;
+                if (charRegion == fallbackRegion) {
+                        // Create a fake array of regions pointing to fallback
+                        charTiles = new TextureRegion[4][4];
+                        for (int i = 0; i < 4; i++)
+                                for (int j = 0; j < 4; j++)
+                                        charTiles[i][j] = fallbackRegion;
+                } else {
+                        charTiles = charRegion.split(16, 32);
+                }
 
                 // Multi-frame Animations & Standing Frames
                 // Assuming 4 rows: 0=Down, 1=Up, 2=Right, 3=Left (Based on previous code
@@ -92,8 +144,16 @@ public class TextureManager implements Disposable {
                 playerLeft.setPlayMode(Animation.PlayMode.LOOP);
 
                 // Assets for HUD - from "objects" region
-                TextureRegion objRegion = atlas.findRegion("objects");
-                TextureRegion[][] objTiles = objRegion.split(16, 16);
+                TextureRegion objRegion = findRegionSafe("objects");
+                TextureRegion[][] objTiles;
+                if (objRegion == fallbackRegion) {
+                        objTiles = new TextureRegion[5][10]; // Enough size for indices below
+                        for (int i = 0; i < 5; i++)
+                                for (int j = 0; j < 10; j++)
+                                        objTiles[i][j] = fallbackRegion;
+                } else {
+                        objTiles = objRegion.split(16, 16);
+                }
 
                 // Hearts: Row 0, starting at Col 4. (Based on user image: Chests(0,1),
                 // Crystal(2), Blank(3), Hearts(4..8))
@@ -109,16 +169,33 @@ public class TextureManager implements Disposable {
                 arrowRegion = objTiles[1][1];
 
                 // 2. Mobs (Slime) - from "mobs" region
-                TextureRegion mobRegion = atlas.findRegion("mobs");
-                TextureRegion[][] mobTiles = mobRegion.split(16, 16);
+                TextureRegion mobRegion = findRegionSafe("mobs");
+                TextureRegion[][] mobTiles;
+                if (mobRegion == fallbackRegion) {
+                        mobTiles = new TextureRegion[5][5];
+                        for (int i = 0; i < 5; i++)
+                                for (int j = 0; j < 5; j++)
+                                        mobTiles[i][j] = fallbackRegion;
+                } else {
+                        mobTiles = mobRegion.split(16, 16);
+                }
+
                 Array<TextureRegion> slimeFrames = new Array<>();
                 slimeFrames.add(mobTiles[4][0]);
                 slimeFrames.add(mobTiles[4][1]);
                 enemyWalk = new Animation<>(0.2f, slimeFrames, Animation.PlayMode.LOOP);
 
                 // 3. Tiles - from "basictiles" region
-                TextureRegion tileRegion = atlas.findRegion("basictiles");
-                TextureRegion[][] tiles = tileRegion.split(16, 16);
+                TextureRegion tileRegion = findRegionSafe("basictiles");
+                TextureRegion[][] tiles;
+                if (tileRegion == fallbackRegion) {
+                        tiles = new TextureRegion[5][10];
+                        for (int i = 0; i < 5; i++)
+                                for (int j = 0; j < 10; j++)
+                                        tiles[i][j] = fallbackRegion;
+                } else {
+                        tiles = tileRegion.split(16, 16);
+                }
 
                 // Note: "things" region not currently used. trapRegion uses objTiles instead.
 
@@ -147,66 +224,71 @@ public class TextureManager implements Disposable {
                 playerAttackRight = playerRight;
 
                 // 4. Attack Animations from test.png (Raw Texture)
-                if (attackTexture != null) {
-                        // Rows 0-3 are presumably walk (16x32), so attack rows start at y = 4 * 32 =
-                        // 128
-                        // We assume Attack frames are WIDER (e.g. 32px) to accommodate weapon swing.
+                if (attackTexture != null && attackTexture != fallbackTexture) {
+                        try {
+                                // Rows 0-3 are presumably walk (16x32), so attack rows start at y = 4 * 32 =
+                                // 128
+                                // We assume Attack frames are WIDER (e.g. 32px) to accommodate weapon swing.
 
-                        // Row 4: Down (Index 4 in 0-indexed rows of height 32)
-                        // y = 128. Width = 32.
-                        int attackFrameWidth = 32;
-                        int attackFrameHeight = 32;
-                        int startY = 128; // 4 * 32
+                                // Row 4: Down (Index 4 in 0-indexed rows of height 32)
+                                // y = 128. Width = 32.
+                                int attackFrameWidth = 32;
+                                int attackFrameHeight = 32;
+                                int startY = 128; // 4 * 32
 
-                        // Helper to get frames
-                        // Row 4: Down
-                        TextureRegion d0 = new TextureRegion(attackTexture, 0 * attackFrameWidth, startY,
-                                        attackFrameWidth, attackFrameHeight);
-                        TextureRegion d1 = new TextureRegion(attackTexture, 1 * attackFrameWidth, startY,
-                                        attackFrameWidth, attackFrameHeight);
-                        TextureRegion d2 = new TextureRegion(attackTexture, 2 * attackFrameWidth, startY,
-                                        attackFrameWidth, attackFrameHeight);
-                        TextureRegion d3 = new TextureRegion(attackTexture, 3 * attackFrameWidth, startY,
-                                        attackFrameWidth, attackFrameHeight);
-                        // 1-4-4-1 distribution (10 frames, 0.02s each => 0.2s total)
-                        playerAttackDown = new Animation<>(0.02f, d0, d1, d1, d1, d1, d2, d2, d2, d2, d3);
-                        playerAttackDown.setPlayMode(Animation.PlayMode.NORMAL);
+                                // Helper to get frames
+                                // Row 4: Down
+                                TextureRegion d0 = new TextureRegion(attackTexture, 0 * attackFrameWidth, startY,
+                                                attackFrameWidth, attackFrameHeight);
+                                TextureRegion d1 = new TextureRegion(attackTexture, 1 * attackFrameWidth, startY,
+                                                attackFrameWidth, attackFrameHeight);
+                                TextureRegion d2 = new TextureRegion(attackTexture, 2 * attackFrameWidth, startY,
+                                                attackFrameWidth, attackFrameHeight);
+                                TextureRegion d3 = new TextureRegion(attackTexture, 3 * attackFrameWidth, startY,
+                                                attackFrameWidth, attackFrameHeight);
+                                // 1-4-4-1 distribution (10 frames, 0.02s each => 0.2s total)
+                                playerAttackDown = new Animation<>(0.02f, d0, d1, d1, d1, d1, d2, d2, d2, d2, d3);
+                                playerAttackDown.setPlayMode(Animation.PlayMode.NORMAL);
 
-                        // Row 5: Up
-                        TextureRegion u0 = new TextureRegion(attackTexture, 0 * attackFrameWidth, startY + 32,
-                                        attackFrameWidth, attackFrameHeight);
-                        TextureRegion u1 = new TextureRegion(attackTexture, 1 * attackFrameWidth, startY + 32,
-                                        attackFrameWidth, attackFrameHeight);
-                        TextureRegion u2 = new TextureRegion(attackTexture, 2 * attackFrameWidth, startY + 32,
-                                        attackFrameWidth, attackFrameHeight);
-                        TextureRegion u3 = new TextureRegion(attackTexture, 3 * attackFrameWidth, startY + 32,
-                                        attackFrameWidth, attackFrameHeight);
-                        playerAttackUp = new Animation<>(0.02f, u0, u1, u1, u1, u1, u2, u2, u2, u2, u3);
-                        playerAttackUp.setPlayMode(Animation.PlayMode.NORMAL);
+                                // Row 5: Up
+                                TextureRegion u0 = new TextureRegion(attackTexture, 0 * attackFrameWidth, startY + 32,
+                                                attackFrameWidth, attackFrameHeight);
+                                TextureRegion u1 = new TextureRegion(attackTexture, 1 * attackFrameWidth, startY + 32,
+                                                attackFrameWidth, attackFrameHeight);
+                                TextureRegion u2 = new TextureRegion(attackTexture, 2 * attackFrameWidth, startY + 32,
+                                                attackFrameWidth, attackFrameHeight);
+                                TextureRegion u3 = new TextureRegion(attackTexture, 3 * attackFrameWidth, startY + 32,
+                                                attackFrameWidth, attackFrameHeight);
+                                playerAttackUp = new Animation<>(0.02f, u0, u1, u1, u1, u1, u2, u2, u2, u2, u3);
+                                playerAttackUp.setPlayMode(Animation.PlayMode.NORMAL);
 
-                        // Row 6: Right
-                        TextureRegion r0 = new TextureRegion(attackTexture, 0 * attackFrameWidth, startY + 64,
-                                        attackFrameWidth, attackFrameHeight);
-                        TextureRegion r1 = new TextureRegion(attackTexture, 1 * attackFrameWidth, startY + 64,
-                                        attackFrameWidth, attackFrameHeight);
-                        TextureRegion r2 = new TextureRegion(attackTexture, 2 * attackFrameWidth, startY + 64,
-                                        attackFrameWidth, attackFrameHeight);
-                        TextureRegion r3 = new TextureRegion(attackTexture, 3 * attackFrameWidth, startY + 64,
-                                        attackFrameWidth, attackFrameHeight);
-                        playerAttackRight = new Animation<>(0.02f, r0, r1, r1, r1, r1, r2, r2, r2, r2, r3);
-                        playerAttackRight.setPlayMode(Animation.PlayMode.NORMAL);
+                                // Row 6: Right
+                                TextureRegion r0 = new TextureRegion(attackTexture, 0 * attackFrameWidth, startY + 64,
+                                                attackFrameWidth, attackFrameHeight);
+                                TextureRegion r1 = new TextureRegion(attackTexture, 1 * attackFrameWidth, startY + 64,
+                                                attackFrameWidth, attackFrameHeight);
+                                TextureRegion r2 = new TextureRegion(attackTexture, 2 * attackFrameWidth, startY + 64,
+                                                attackFrameWidth, attackFrameHeight);
+                                TextureRegion r3 = new TextureRegion(attackTexture, 3 * attackFrameWidth, startY + 64,
+                                                attackFrameWidth, attackFrameHeight);
+                                playerAttackRight = new Animation<>(0.02f, r0, r1, r1, r1, r1, r2, r2, r2, r2, r3);
+                                playerAttackRight.setPlayMode(Animation.PlayMode.NORMAL);
 
-                        // Row 7: Left
-                        TextureRegion l0 = new TextureRegion(attackTexture, 0 * attackFrameWidth, startY + 96,
-                                        attackFrameWidth, attackFrameHeight);
-                        TextureRegion l1 = new TextureRegion(attackTexture, 1 * attackFrameWidth, startY + 96,
-                                        attackFrameWidth, attackFrameHeight);
-                        TextureRegion l2 = new TextureRegion(attackTexture, 2 * attackFrameWidth, startY + 96,
-                                        attackFrameWidth, attackFrameHeight);
-                        TextureRegion l3 = new TextureRegion(attackTexture, 3 * attackFrameWidth, startY + 96,
-                                        attackFrameWidth, attackFrameHeight);
-                        playerAttackLeft = new Animation<>(0.02f, l0, l1, l1, l1, l1, l2, l2, l2, l2, l3);
-                        playerAttackLeft.setPlayMode(Animation.PlayMode.NORMAL);
+                                // Row 7: Left
+                                TextureRegion l0 = new TextureRegion(attackTexture, 0 * attackFrameWidth, startY + 96,
+                                                attackFrameWidth, attackFrameHeight);
+                                TextureRegion l1 = new TextureRegion(attackTexture, 1 * attackFrameWidth, startY + 96,
+                                                attackFrameWidth, attackFrameHeight);
+                                TextureRegion l2 = new TextureRegion(attackTexture, 2 * attackFrameWidth, startY + 96,
+                                                attackFrameWidth, attackFrameHeight);
+                                TextureRegion l3 = new TextureRegion(attackTexture, 3 * attackFrameWidth, startY + 96,
+                                                attackFrameWidth, attackFrameHeight);
+                                playerAttackLeft = new Animation<>(0.02f, l0, l1, l1, l1, l1, l2, l2, l2, l2, l3);
+                                playerAttackLeft.setPlayMode(Animation.PlayMode.NORMAL);
+                        } catch (Exception e) {
+                                System.err.println("Error loading attack animations: " + e.getMessage());
+                                // Keep default (which is playerWalk)
+                        }
                 }
         }
 
@@ -217,6 +299,9 @@ public class TextureManager implements Disposable {
                 }
                 if (attackTexture != null) {
                         attackTexture.dispose();
+                }
+                if (fallbackTexture != null) {
+                        fallbackTexture.dispose();
                 }
         }
 }
