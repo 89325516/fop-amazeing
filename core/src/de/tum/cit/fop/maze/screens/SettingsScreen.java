@@ -122,6 +122,30 @@ public class SettingsScreen implements Screen {
             }
         });
         gameplayTable.add(fogBtn).width(100).left();
+        gameplayTable.row();
+
+        // Camera Zoom / Height（相机高度调节）
+        gameplayTable.add(new Label("Camera:", skin)).right().padRight(10);
+        final Label zoomLabel = new Label(String.format("%.1fx", 1.0f / GameSettings.cameraZoom), skin);
+        Slider zoomSlider = new Slider(0.3f, 1.5f, 0.05f, false, skin);
+        zoomSlider.setValue(GameSettings.cameraZoom);
+        zoomSlider.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                GameSettings.cameraZoom = ((Slider) actor).getValue();
+                // 显示为倍数（zoom值越小，看到的范围越大）
+                zoomLabel.setText(String.format("%.1fx", 1.0f / GameSettings.cameraZoom));
+            }
+        });
+        gameplayTable.add(zoomSlider).width(150);
+        gameplayTable.add(zoomLabel).width(50).padLeft(5);
+        gameplayTable.row();
+
+        // 添加提示：迷雾模式下相机缩放不影响可见范围
+        Label fogHintLabel = new Label("* Fog mode: vision range is fixed", skin);
+        fogHintLabel.setColor(0.7f, 0.7f, 0.7f, 1f);
+        fogHintLabel.setFontScale(0.8f);
+        gameplayTable.add(fogHintLabel).colspan(6).left().padTop(5);
 
         root.add(gameplayTable).colspan(2).padBottom(20).row();
 

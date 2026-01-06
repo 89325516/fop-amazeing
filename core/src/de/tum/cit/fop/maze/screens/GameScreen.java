@@ -361,11 +361,14 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         // 6. Render Player
         renderPlayer(player);
 
-        // 7. Render Fog of War (Gradient Black Hole)
-        // Must be done before HUD but after everything else
-        float viewW = camera.viewportWidth * camera.zoom;
-        float viewH = camera.viewportHeight * camera.zoom;
-        fogRenderer.render(player.getX() * UNIT_SCALE + 8, player.getY() * UNIT_SCALE + 8, viewW, viewH);
+        // 7. Render Fog of War (渐变迷雾效果)
+        // 必须在所有游戏元素渲染完成后、batch.end() 之前渲染
+        // 迷雾会覆盖在游戏画面上，但不影响 HUD
+        // 注意：迷雾可见半径固定，不随相机缩放变化，防止作弊
+        game.getSpriteBatch().setColor(Color.WHITE);
+        float playerCenterX = player.getX() * UNIT_SCALE + UNIT_SCALE / 2;
+        float playerCenterY = player.getY() * UNIT_SCALE + UNIT_SCALE / 2;
+        fogRenderer.render(playerCenterX, playerCenterY, camera);
 
         game.getSpriteBatch().end();
 
