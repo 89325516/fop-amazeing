@@ -212,3 +212,6 @@ saves/
 ### AI Raw Assets
 # raw_assets/**/*.png  <-- Commented out to share assets with team
 !raw_assets/**/README.txt
+
+### Local Generation Guides
+DESERT_WALL_GENERATION_GUIDE.md
