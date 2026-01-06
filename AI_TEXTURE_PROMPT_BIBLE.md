@@ -178,4 +178,38 @@ When walls look like independent objects **pasted onto a grid tile**, they appea
 
 ---
 
+## 9. 🎨 Avoiding White/Pale Objects (避免白色物体 - CRITICAL LESSON)
+
+**Problem Diagnosis (问题诊断)**:
+Objects with large **white or very pale colored areas** get incorrectly cropped by the background removal algorithm, which mistakes white object parts for white background.
+
+**Affected Examples**:
+- ❌ "White salt crystals" → Algorithm removes the crystal itself
+- ❌ "Bleached bones" → Bone details get erased
+- ❌ "Snow/ice structures" → Core structure disappears
+
+**Solution - Color Palette Enforcement (解决方案 - 强制色彩规范)**:
+
+| ❌ AVOID Colors | ✅ USE Instead |
+|-----------------|----------------|
+| Pure White (#FFFFFF) | **Off-white, Cream, Ivory** |
+| Very Pale colors | **Saturated mid-tones** |
+| "Bleached", "Snow-white" | **"Sun-faded", "Weathered"** |
+| Light grey (#EEEEEE+) | **Stone grey, Slate** |
+
+**Prompt Keywords to Enforce (强制使用的关键词)**:
+```
+✅ INCLUDE: "Warm tones", "Saturated colors", "Deep amber", "Rich brown",
+            "Honey gold", "Terracotta", "Dusty tan"
+
+❌ AVOID (in --no):  "white colored object", "pale colors", "snow white",
+                     "pure white", "bleached white"
+```
+
+**Example Fix (修正案例)**:
+- ❌ **Before**: "White salt crystal pillar" → Gets cropped away
+- ✅ **After**: "Deep amber crystal pillar with honey gold veins"
+
+---
+
 *This document serves as the single source of truth for all AI generation tasks. Adhere to these prompts to maintain World-Class quality.*

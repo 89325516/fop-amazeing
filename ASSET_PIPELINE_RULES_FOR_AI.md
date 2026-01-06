@@ -26,8 +26,23 @@ You must strictly follow this pipeline when assisting the user with game assets.
 | Item | `item_{name}.png` | `item_key_gold.png` |
 
 **Wall Themes**: `grassland`, `desert`, `ice`, `jungle`, `space`
-**Wall Sizes (NEW)**: `2x2`, `3x2`, `4x2`, `3x3`, `4x4`
+**Wall Sizes (COMPLETE LIST)**: `2x2`, `2x3`, `2x4`, `3x2`, `3x3`, `4x2`, `4x4`
 **Variants**: `v1`, `v2`
+
+### ⚠️ Completeness Checklist (完整性检查清单 - MANDATORY)
+**BEFORE providing prompts, ALWAYS verify ALL sizes exist for the theme:**
+
+| Size | Description | Pixel Size |
+|------|-------------|------------|
+| 2x2 | 小方形 (Small Square) | 128×160px |
+| 2x3 | 窄高型 (Narrow Tall) | 128×224px |
+| 2x4 | 窄塔型 (Narrow Tower) | 128×288px |
+| 3x2 | 宽矮型 (Wide Short) | 192×160px |
+| 3x3 | 中方形 (Medium Square) | 192×224px |
+| 4x2 | 宽横型 (Wide Horizontal) | 256×160px |
+| 4x4 | 大方形 (Large Square) | 256×288px |
+
+**Each size needs v1 AND v2 = 14 files per theme, 70 files total for all 5 themes.**
 
 ---
 
