@@ -88,3 +88,33 @@ When replacing assets, delete from ALL directories:
 2. **Clear Filenames**: Pre-fill the exact filenames the user should use.
 3. **One-Stop Shop**: The user should be able to just copy-paste from your table.
 
+---
+
+## 7. Asset Dissatisfaction Workflow (素材不满意重新生成流程)
+
+**Trigger**: When user says **"我对 [filename] 不满意"** or similar.
+
+**MANDATORY Steps (必须按顺序执行)**:
+
+### Step 1: Delete Old Files First (先删除旧文件)
+Before generating new prompts, **IMMEDIATELY** delete the unsatisfactory asset(s) from ALL directories:
+```bash
+# Example: User is unhappy with wall_desert_4x4_v2.png
+rm raw_assets/ai_generated_raw/wall_desert_4x4_v2.png
+rm raw_assets/ai_processed_transparent/wall_desert_4x4_v2.png
+rm raw_assets/ai_ready_optimized/wall_desert_4x4_v2.png
+rm assets/images/walls/wall_desert_4x4_v2.png
+```
+**Purpose**: Free up the naming space so user can regenerate with the same filename.
+
+### Step 2: Identify Missing Assets (识别缺失素材)
+Scan the `raw_assets/ai_generated_raw/` folder and cross-reference with expected assets to identify:
+- Assets user wants to **replace** (just deleted)
+- Assets that are **missing entirely** (never existed)
+
+### Step 3: Generate Regeneration Prompt Table (生成提示词表格)
+Create/update a Markdown file with ONLY the assets that need (re)generation. Follow Section 6 format.
+
+**❌ DON'T**: List all assets again.
+**✅ DO**: List only the deleted + missing assets.
+
