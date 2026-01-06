@@ -279,7 +279,8 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
             }
 
             if (reg != null) {
-                game.getSpriteBatch().draw(reg, obj.getX() * UNIT_SCALE, obj.getY() * UNIT_SCALE);
+                game.getSpriteBatch().draw(reg, obj.getX() * UNIT_SCALE, obj.getY() * UNIT_SCALE, UNIT_SCALE,
+                        UNIT_SCALE);
             }
             if (obj instanceof Weapon)
                 game.getSpriteBatch().setColor(Color.WHITE);

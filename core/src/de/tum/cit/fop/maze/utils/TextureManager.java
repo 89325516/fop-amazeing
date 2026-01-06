@@ -208,7 +208,12 @@ public class TextureManager implements Disposable {
                 trapRegion = objTiles[0][2];
 
                 // Key
-                keyRegion = objTiles[4][1];
+                TextureRegion loadedKey = loadTextureSafe("images/items/item_key_gold.png");
+                if (loadedKey != fallbackRegion) {
+                        keyRegion = loadedKey;
+                } else {
+                        keyRegion = objTiles[4][1];
+                }
                 // Potion
                 if (objTiles[4].length > 2) {
                         potionRegion = objTiles[4][2];
@@ -482,6 +487,7 @@ public class TextureManager implements Disposable {
                 disposeRegionTexture(floorRain);
                 disposeRegionTexture(floorSpace);
                 disposeRegionTexture(arrowRegion);
+                disposeRegionTexture(keyRegion);
 
                 for (Array<TextureRegion> variants : wallStaticCache.values()) {
                         for (TextureRegion reg : variants) {
