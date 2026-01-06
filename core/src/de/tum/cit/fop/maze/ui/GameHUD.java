@@ -10,11 +10,7 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.Image;
-import com.badlogic.gdx.scenes.scene2d.ui.Label;
-import com.badlogic.gdx.scenes.scene2d.ui.Skin;
-import com.badlogic.gdx.scenes.scene2d.ui.Table;
-import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Align;
@@ -23,7 +19,11 @@ import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import de.tum.cit.fop.maze.model.Player;
+import de.tum.cit.fop.maze.model.items.Armor;
+import de.tum.cit.fop.maze.model.weapons.Weapon;
 import de.tum.cit.fop.maze.utils.TextureManager;
+
+import java.util.List;
 
 /**
  * Graphical Game HUD.
@@ -66,11 +66,25 @@ public class GameHUD implements Disposable {
     // Weapon Name Notification
     private Label weaponLabel;
 
+    // === New HUD Elements ===
+    private Label coinLabel; // Coin display
+    private Table weaponSlotsTable; // Weapon inventory bar
+    private ProgressBar reloadBar; // Reload progress for ranged weapons
+    private Label armorLabel; // Armor status display
+    private Skin skin; // Keep reference for dynamic updates
+    private int lastWeaponIndex = -1; // Track selected weapon for highlighting
+    private int lastInventorySize = -1; // Track inventory size for rebuilding
+
+    // Cached Drawables to reduce GC pressure
+    private com.badlogic.gdx.scenes.scene2d.utils.Drawable selectedSlotBg;
+    private com.badlogic.gdx.scenes.scene2d.utils.Drawable normalSlotBg;
+
     public GameHUD(SpriteBatch batch, Player player, Viewport gameViewport, Skin skin, TextureManager tm,
             Runnable onSettingsClicked) {
         this.player = player;
         this.gameViewport = gameViewport;
         this.textureManager = tm;
+        this.skin = skin;
 
         Viewport viewport = new FitViewport(1920, 1080);
         this.stage = new Stage(viewport, batch);
@@ -115,6 +129,16 @@ public class GameHUD implements Disposable {
         fpsUpdateTimer = 1.0f; // Trigger immediate update
         topTable.add(fpsLabel).right().padRight(20);
 
+        // Coins Display (NEW)
+        Label.LabelStyle coinStyle = new Label.LabelStyle(skin.getFont("font"), Color.GOLD);
+        coinLabel = new Label("Coins: 0", coinStyle);
+        topTable.add(coinLabel).right().padRight(20);
+
+        // Armor Status Display (NEW)
+        Label.LabelStyle armorStyle = new Label.LabelStyle(skin.getFont("font"), Color.CYAN);
+        armorLabel = new Label("", armorStyle);
+        topTable.add(armorLabel).right().padRight(20);
+
         // Menu Button (Right) - ENLARGED
         settingsButton = new TextButton("Menu", skin);
         settingsButton.addListener(new ChangeListener() {
@@ -146,6 +170,21 @@ public class GameHUD implements Disposable {
 
         inventoryTable = new Table();
         rootTable.add(inventoryTable).bottom().padBottom(30);
+
+        // === Weapon Slots Bar (NEW) ===
+        rootTable.row();
+        weaponSlotsTable = new Table();
+        weaponSlotsTable.pad(5);
+        rootTable.add(weaponSlotsTable).bottom().padBottom(10);
+
+        // === Reload Progress Bar (NEW) ===
+        ProgressBar.ProgressBarStyle reloadStyle = new ProgressBar.ProgressBarStyle();
+        reloadStyle.background = skin.newDrawable("white", new Color(0.2f, 0.2f, 0.2f, 0.8f));
+        reloadStyle.knobBefore = skin.newDrawable("white", new Color(0.3f, 0.7f, 1f, 1f));
+        reloadBar = new ProgressBar(0f, 1f, 0.01f, false, reloadStyle);
+        reloadBar.setVisible(false);
+        rootTable.row();
+        rootTable.add(reloadBar).width(200).height(15).bottom().padBottom(5);
     }
 
     public void setTarget(float x, float y) {
@@ -263,6 +302,72 @@ public class GameHUD implements Disposable {
 
         } else {
             weaponLabel.setVisible(false);
+        }
+
+        // === 5. Update Coin Display (NEW) ===
+        coinLabel.setText("Coins: " + player.getCoins());
+
+        // === 6. Update Armor Status Display (NEW) ===
+        Armor armor = player.getEquippedArmor();
+        if (armor != null && armor.hasShield()) {
+            String armorText = armor.getName() + " [" + armor.getCurrentShield() + "/" + armor.getMaxShield() + "]";
+            armorLabel.setText(armorText);
+            armorLabel.setVisible(true);
+        } else if (armor != null) {
+            armorLabel.setText(armor.getName() + " [BROKEN]");
+            armorLabel.setColor(Color.GRAY);
+            armorLabel.setVisible(true);
+        } else {
+            armorLabel.setVisible(false);
+        }
+
+        // === 7. Update Weapon Slots Bar (OPTIMIZED) ===
+        int currentWeaponIdx = player.getCurrentWeaponIndex();
+        List<Weapon> inventory = player.getInventory();
+
+        // Only rebuild if weapon count changed or first time
+        boolean needRebuild = lastInventorySize != inventory.size() || weaponSlotsTable.getChildren().isEmpty();
+
+        // Cache drawables on first use
+        if (selectedSlotBg == null) {
+            selectedSlotBg = skin.newDrawable("white", new Color(0.3f, 0.5f, 0.8f, 0.8f));
+            normalSlotBg = skin.newDrawable("white", new Color(0.2f, 0.2f, 0.2f, 0.6f));
+        }
+
+        if (needRebuild) {
+            weaponSlotsTable.clearChildren();
+
+            for (int i = 0; i < inventory.size(); i++) {
+                Weapon w = inventory.get(i);
+                Table slot = new Table();
+                slot.setBackground(i == currentWeaponIdx ? selectedSlotBg : normalSlotBg);
+
+                Label slotLabel = new Label(
+                        (i + 1) + ": " + w.getName().substring(0, Math.min(3, w.getName().length())), skin);
+                slotLabel.setFontScale(0.7f);
+                slot.add(slotLabel).pad(5);
+
+                weaponSlotsTable.add(slot).width(70).height(40).pad(3);
+            }
+            lastInventorySize = inventory.size();
+            lastWeaponIndex = currentWeaponIdx;
+        } else if (currentWeaponIdx != lastWeaponIndex) {
+            // Just update backgrounds without rebuilding
+            for (int i = 0; i < weaponSlotsTable.getChildren().size; i++) {
+                Table slot = (Table) weaponSlotsTable.getChildren().get(i);
+                slot.setBackground(i == currentWeaponIdx ? selectedSlotBg : normalSlotBg);
+            }
+            lastWeaponIndex = currentWeaponIdx;
+        }
+
+        // === 8. Update Reload Progress Bar (NEW) ===
+        Weapon currentWeapon = player.getCurrentWeapon();
+        if (currentWeapon != null && currentWeapon.isRanged() && currentWeapon.isReloading()) {
+            reloadBar.setVisible(true);
+            float reloadProgress = 1f - (currentWeapon.getCurrentReloadTimer() / currentWeapon.getReloadTime());
+            reloadBar.setValue(reloadProgress);
+        } else {
+            reloadBar.setVisible(false);
         }
 
         stage.act(delta);

@@ -24,21 +24,28 @@ public class LevelSelectScreen implements Screen {
         this.game = game;
         this.stage = new Stage(new ScreenViewport(), game.getSpriteBatch());
 
-        Table table = new Table();
-        table.setFillParent(true);
-        stage.addActor(table);
+        Table mainTable = new Table();
+        mainTable.setFillParent(true);
+        stage.addActor(mainTable);
 
         Label title = new Label("Select Level", game.getSkin(), "title");
-        table.add(title).padBottom(40).colspan(2).row();
+        mainTable.add(title).padBottom(20).colspan(2).row();
+
+        // Inner table for the level list
+        Table levelTable = new Table();
+        levelTable.top(); // Align content to top
 
         int unlocked = GameSettings.getUnlockedLevel();
 
-        // 5 Levels
-        for (int i = 1; i <= 5; i++) {
+        // 20 Levels
+        for (int i = 1; i <= 20; i++) {
             final int levelNum = i;
             boolean isLocked = i > unlocked;
 
-            String btnText = "Level " + i + (isLocked ? " (Locked)" : "");
+            String btnText = "Level " + i;
+            if (isLocked)
+                btnText += "\n(Locked)";
+
             TextButton levelBtn = new TextButton(btnText, game.getSkin());
 
             if (isLocked) {
@@ -56,8 +63,20 @@ public class LevelSelectScreen implements Screen {
                 }
             });
 
-            table.add(levelBtn).width(400).height(60).padBottom(15).row();
+            // Grid layout: 2 columns
+            levelTable.add(levelBtn).width(180).height(60).pad(10);
+            if (i % 2 == 0) {
+                levelTable.row();
+            }
         }
+
+        // ScrollPane for the level list
+        ScrollPane scrollPane = new ScrollPane(levelTable, game.getSkin());
+        scrollPane.setFadeScrollBars(false);
+        scrollPane.setScrollingDisabled(true, false); // Disable horizontal scrolling
+
+        // Add ScrollPane to main table
+        mainTable.add(scrollPane).width(450).height(400).padBottom(20).row();
 
         TextButton backBtn = new TextButton("Back", game.getSkin());
         backBtn.addListener(new ChangeListener() {
@@ -66,7 +85,7 @@ public class LevelSelectScreen implements Screen {
                 game.goToMenu();
             }
         });
-        table.add(backBtn).width(200).height(50).padTop(30).colspan(2);
+        mainTable.add(backBtn).width(200).height(50).padTop(10);
     }
 
     private void startGame(int level) {

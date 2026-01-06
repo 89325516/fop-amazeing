@@ -30,6 +30,7 @@ import de.tum.cit.fop.maze.model.weapons.Weapon;
 import de.tum.cit.fop.maze.ui.GameHUD;
 import de.tum.cit.fop.maze.utils.MapLoader;
 import de.tum.cit.fop.maze.utils.SaveManager;
+import de.tum.cit.fop.maze.utils.GameLogger;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -52,6 +53,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
     private GameHUD hud;
     private de.tum.cit.fop.maze.utils.TextureManager textureManager;
     private de.tum.cit.fop.maze.utils.MazeRenderer mazeRenderer;
+    private de.tum.cit.fop.maze.utils.FogRenderer fogRenderer;
 
     private float stateTime = 0f;
     private static final float UNIT_SCALE = 16f;
@@ -73,6 +75,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
 
         textureManager = new de.tum.cit.fop.maze.utils.TextureManager(game.getAtlas());
         mazeRenderer = new de.tum.cit.fop.maze.utils.MazeRenderer(game.getSpriteBatch(), textureManager);
+        fogRenderer = new de.tum.cit.fop.maze.utils.FogRenderer(game.getSpriteBatch());
 
         this.currentLevelPath = "maps/level-1.properties";
         boolean isLoaded = false;
@@ -106,6 +109,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
 
         this.textureManager = new de.tum.cit.fop.maze.utils.TextureManager(game.getAtlas());
         this.mazeRenderer = new de.tum.cit.fop.maze.utils.MazeRenderer(game.getSpriteBatch(), textureManager);
+        this.fogRenderer = new de.tum.cit.fop.maze.utils.FogRenderer(game.getSpriteBatch());
 
         initGameWorld(this.currentLevelPath);
 
@@ -135,6 +139,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         GameMap map = MapLoader.loadMap(mapPath);
 
         // Biome Logic
+        GameLogger.info("GameScreen", "Initializing GameWorld with map: " + mapPath);
         if (mapPath.contains("level-1"))
             biomeColor = Color.WHITE;
         else if (mapPath.contains("level-2"))
@@ -171,7 +176,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
 
     @Override
     public void onGameOver(int killCount) {
-        System.out.println("Transitioning to GameOver.");
+        GameLogger.info("GameScreen", "Game Over triggered! Kill count: " + killCount);
         game.setScreen(new GameOverScreen(game, killCount));
     }
 
@@ -192,6 +197,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         SaveManager.saveGame(state, "auto_save_victory");
 
         game.setScreen(new VictoryScreen(game, currentLevelPath));
+        GameLogger.info("GameScreen", "Victory achieved! Level: " + currentLevelPath);
     }
 
     // --- Main Loop ---
@@ -222,18 +228,36 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
 
         // 1. Render Map
         TextureRegion currentFloor = textureManager.floorRegion; // Default
-        if (currentLevelPath.contains("level-1"))
-            currentFloor = textureManager.floorDungeon;
-        else if (currentLevelPath.contains("level-2"))
-            currentFloor = textureManager.floorDesert;
-        else if (currentLevelPath.contains("level-3"))
-            currentFloor = textureManager.floorIce; // Winter/Ice
-        else if (currentLevelPath.contains("level-4"))
-            currentFloor = textureManager.floorForest;
-        else if (currentLevelPath.contains("level-5"))
-            currentFloor = textureManager.floorSpace; // Space Ship
+        String theme = gameMap.getTheme();
 
-        mazeRenderer.render(gameMap, camera, currentFloor);
+        switch (theme) {
+            case "Grassland":
+                currentFloor = textureManager.floorGrassland;
+                break;
+            case "Desert":
+                currentFloor = textureManager.floorDesert;
+                break;
+            case "Ice":
+                currentFloor = textureManager.floorIce;
+                break;
+            case "Jungle":
+                currentFloor = textureManager.floorJungle;
+                break;
+            case "Space":
+                currentFloor = textureManager.floorSpace;
+                break;
+            default:
+                currentFloor = textureManager.floorDungeon; // Default to Dungeon
+                break;
+        }
+
+        // Apply Jungle Tint if needed - now leveraging the actual jungle texture,
+        // but we can still bump the atmosphere if we want.
+        // For now, let's keep it clean since we are generating a specific texture.
+        game.getSpriteBatch().setColor(Color.WHITE);
+
+        mazeRenderer.render(gameMap, camera, currentFloor, stateTime);
+        game.getSpriteBatch().setColor(Color.WHITE); // Reset
 
         // 2. Render Static Dynamic Objects
         for (GameObject obj : gameMap.getDynamicObjects()) {
@@ -261,7 +285,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
                 game.getSpriteBatch().setColor(Color.WHITE);
         }
 
-        // 3. Render Enemies
+        // 3. Render Enemies with Health Bars
         TextureRegion animatedFrame = textureManager.enemyWalk.getKeyFrame(stateTime, true);
         TextureRegion staticFrame = textureManager.enemyWalk.getKeyFrame(0);
 
@@ -284,6 +308,38 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
                 game.getSpriteBatch().draw(currentFrame, e.getX() * UNIT_SCALE, e.getY() * UNIT_SCALE);
             }
             game.getSpriteBatch().setColor(Color.WHITE);
+
+            // === Render Health Bar (OPTIMIZED) ===
+            if (!e.isDead() && e.getHealth() > 0) {
+                float barWidth = 14f;
+                float barHeight = 2f;
+                float barX = e.getX() * UNIT_SCALE + 1f;
+                float barY = e.getY() * UNIT_SCALE + 17f; // Above enemy
+
+                // Background (dark gray)
+                game.getSpriteBatch().setColor(0.2f, 0.2f, 0.2f, 0.8f);
+                game.getSpriteBatch().draw(textureManager.whitePixel, barX, barY, barWidth, barHeight);
+
+                // Shield bar (if has shield) - avoid new Color() allocation
+                if (e.hasShield()) {
+                    float shieldPercent = e.getShieldPercentage();
+                    if (e.getShieldType() == DamageType.PHYSICAL) {
+                        game.getSpriteBatch().setColor(0.3f, 0.5f, 0.8f, 1f); // Blue for physical
+                    } else {
+                        game.getSpriteBatch().setColor(0.7f, 0.3f, 0.9f, 1f); // Purple for magical
+                    }
+                    game.getSpriteBatch().draw(textureManager.whitePixel, barX, barY + barHeight,
+                            barWidth * shieldPercent, barHeight);
+                }
+
+                // Health bar - avoid new Color() allocation
+                float healthPercent = e.getHealthPercentage();
+                game.getSpriteBatch().setColor(1f - healthPercent * 0.5f, healthPercent, 0.2f, 1f);
+                game.getSpriteBatch().draw(textureManager.whitePixel, barX, barY,
+                        barWidth * healthPercent, barHeight);
+
+                game.getSpriteBatch().setColor(Color.WHITE);
+            }
         }
 
         // 4. Mobile Traps
@@ -303,6 +359,12 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
 
         // 6. Render Player
         renderPlayer(player);
+
+        // 7. Render Fog of War (Gradient Black Hole)
+        // Must be done before HUD but after everything else
+        float viewW = camera.viewportWidth * camera.zoom;
+        float viewH = camera.viewportHeight * camera.zoom;
+        fogRenderer.render(player.getX() * UNIT_SCALE + 8, player.getY() * UNIT_SCALE + 8, viewW, viewH);
 
         game.getSpriteBatch().end();
 
@@ -567,6 +629,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         win.setModal(true);
         win.getTitleLabel().setAlignment(Align.center);
         TextField nameField = new TextField("MySave", game.getSkin());
+        GameLogger.debug("GameScreen", "Opening Save Dialog");
         Table content = new Table();
         content.add(new Label("Name:", game.getSkin())).padRight(10);
         content.add(nameField).growX();
@@ -597,6 +660,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
 
                 s.setInventoryWeaponTypes(p.getInventoryWeaponTypes());
                 SaveManager.saveGame(s, name);
+                GameLogger.info("GameScreen", "Game saved as: " + name);
                 win.remove();
                 pauseTable.setVisible(true);
             }
@@ -646,6 +710,8 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         uiStage.dispose();
         if (hud != null)
             hud.dispose();
+        if (fogRenderer != null)
+            fogRenderer.dispose();
     }
 
     @Override
@@ -666,5 +732,12 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
 
     @Override
     public void hide() {
+    }
+
+    /**
+     * Get the game world for external access (e.g., armor selection screen)
+     */
+    public GameWorld getGameWorld() {
+        return gameWorld;
     }
 }

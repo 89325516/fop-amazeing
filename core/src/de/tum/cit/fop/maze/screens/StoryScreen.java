@@ -20,6 +20,7 @@ public class StoryScreen implements Screen {
     private final MazeRunnerGame game;
     private final Stage stage;
     private final String nextMapPath;
+    private ScrollPane scrollPane;
 
     private static final String STORY_TEXT = "[DOCTOR]: Wake up. Can you hear me? \n\n" +
             "Listen carefully. The world as we knew it is gone. \n" +
@@ -34,7 +35,8 @@ public class StoryScreen implements Screen {
     public StoryScreen(MazeRunnerGame game, String nextMapPath) {
         this.game = game;
         this.nextMapPath = nextMapPath;
-        this.stage = new Stage(new ScreenViewport(), game.getSpriteBatch());
+        // Use FitViewport to ensure consistent display across all screen sizes
+        this.stage = new Stage(new com.badlogic.gdx.utils.viewport.FitViewport(1920, 1080), game.getSpriteBatch());
 
         Table root = new Table();
         root.setFillParent(true);
@@ -51,9 +53,27 @@ public class StoryScreen implements Screen {
         textLabel.setAlignment(Align.center);
 
         // ScrollPane for text in case it's long
-        ScrollPane scroll = new ScrollPane(textLabel, game.getSkin());
-        scroll.setFadeScrollBars(false);
-        root.add(scroll).width(800).height(400).padBottom(40).row();
+        scrollPane = new ScrollPane(textLabel, game.getSkin());
+        scrollPane.setFadeScrollBars(false);
+
+        // Auto-focus scroll on hover so user doesn't need to click
+        scrollPane.addListener(new com.badlogic.gdx.scenes.scene2d.InputListener() {
+            @Override
+            public void enter(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y, int pointer,
+                    Actor fromActor) {
+                stage.setScrollFocus(scrollPane);
+            }
+
+            @Override
+            public void exit(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y, int pointer,
+                    Actor toActor) {
+                // Optional: clear focus on exit, or keep it.
+            }
+        });
+
+        // Use percentage width for responsive layout
+        root.add(scrollPane).width(com.badlogic.gdx.scenes.scene2d.ui.Value.percentWidth(0.6f, root))
+                .height(com.badlogic.gdx.scenes.scene2d.ui.Value.percentHeight(0.6f, root)).padBottom(40).row();
 
         // Continue Button
         TextButton btn = new TextButton("INITIALIZE MISSION", game.getSkin());
@@ -70,6 +90,10 @@ public class StoryScreen implements Screen {
     @Override
     public void show() {
         Gdx.input.setInputProcessor(stage);
+        // Initial scroll focus
+        if (scrollPane != null) {
+            stage.setScrollFocus(scrollPane);
+        }
     }
 
     @Override

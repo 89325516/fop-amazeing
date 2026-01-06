@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.utils.ObjectMap;
 
 /**
  * Manages game assets (textures, animations) and their slicing coordinates.
@@ -22,9 +23,13 @@ public class TextureManager implements Disposable {
         public Animation<TextureRegion> enemyWalk; // Slime
         public Animation<TextureRegion> batFly; // Bat (Optional)
 
+        // Legacy Wall Regions (Fallbacks)
         public TextureRegion wallRegion;
+        public TextureRegion wallRegion2x1, wallRegion3x1, wallRegion2x2, wallRegion3x3;
+
         public TextureRegion floorRegion; // Default
-        public TextureRegion floorDungeon, floorDesert, floorForest, floorIce, floorLava, floorRain, floorSpace;
+        public TextureRegion floorDungeon, floorDesert, floorGrassland, floorJungle, floorIce, floorLava, floorRain,
+                        floorSpace;
         public TextureRegion entryRegion;
         public TextureRegion exitRegion;
         public TextureRegion trapRegion;
@@ -34,9 +39,19 @@ public class TextureManager implements Disposable {
         public Animation<TextureRegion> heartBreak;
         public TextureRegion arrowRegion;
 
+        // White pixel for drawing solid color rectangles (health bars, etc.)
+        public TextureRegion whitePixel;
+
         // Fallback
         private TextureRegion fallbackRegion;
         private Texture fallbackTexture;
+        private Texture whitePixelTexture;
+
+        // Wall Asset Cache
+        // Key: "theme_WxH" e.g., "grassland_2x1" -> List of variants
+        private ObjectMap<String, Array<TextureRegion>> wallStaticCache = new ObjectMap<>();
+        // Key: "theme_WxH" e.g., "space_3x3"
+        private ObjectMap<String, Animation<TextureRegion>> wallAnimCache = new ObjectMap<>();
 
         /**
          * Creates TextureManager using a shared TextureAtlas.
@@ -60,6 +75,15 @@ public class TextureManager implements Disposable {
                 this.fallbackTexture = new Texture(pixmap);
                 pixmap.dispose();
                 this.fallbackRegion = new TextureRegion(fallbackTexture);
+
+                // Create white pixel for drawing solid rectangles
+                com.badlogic.gdx.graphics.Pixmap whitePix = new com.badlogic.gdx.graphics.Pixmap(1, 1,
+                                com.badlogic.gdx.graphics.Pixmap.Format.RGBA8888);
+                whitePix.setColor(com.badlogic.gdx.graphics.Color.WHITE);
+                whitePix.fill();
+                this.whitePixelTexture = new Texture(whitePix);
+                whitePix.dispose();
+                this.whitePixel = new TextureRegion(whitePixelTexture);
 
                 // Load raw texture for attacks to avoid atlas trimming issues (e.g. whitespace
                 // stripping)
@@ -85,30 +109,11 @@ public class TextureManager implements Disposable {
                 // Atlas is now provided externally to avoid duplicate loading
 
                 // 1. Player
-                // "character" is the name of the region (from character.png)
                 TextureRegion charRegion = findRegionSafe("character");
 
-                System.out
-                                .println("Character Region Size: " + charRegion.getRegionWidth() + "x"
-                                                + charRegion.getRegionHeight());
-
                 // Split the region into tiles
-                // Split the region into tiles (16x32 for character)
-                // If fallback, it's 16x16, splitting 16x32 might fail or produce weirdness?
-                // Split handles strict matching or no? region.split returns tiles based on
-                // block size.
-                // If region is 16x16 and we ask for 16x32, it returns empty or fails?
-                // LibGDX split checks region dimensions.
-                // Let's ensure fallback is big enough or adapt.
-                // Fallback is 16x16. Splitting 16x32 will effectively crash or return empty.
-                // For safety, let's make the fallback 64x128 or something reusable?
-                // Or just use 16x16 and hope split works?
-                // Actually, if charRegion is fallback (16x16), splitting 16x32 produces [0][0]
-                // only?
-
                 TextureRegion[][] charTiles;
                 if (charRegion == fallbackRegion) {
-                        // Create a fake array of regions pointing to fallback
                         charTiles = new TextureRegion[4][4];
                         for (int i = 0; i < 4; i++)
                                 for (int j = 0; j < 4; j++)
@@ -117,22 +122,13 @@ public class TextureManager implements Disposable {
                         charTiles = charRegion.split(16, 32);
                 }
 
-                // Multi-frame Animations & Standing Frames
-                // Assuming 4 rows: 0=Down, 1=Up, 2=Right, 3=Left (Based on previous code
-                // indices)
-
                 // Stand Frames (Frame 0)
                 playerDownStand = charTiles[0][0];
                 playerRightStand = charTiles[1][0];
                 playerUpStand = charTiles[2][0];
                 playerLeftStand = charTiles[3][0];
 
-                // Walk Animations (Frames 0, 1, 2, 3 - or 1, 2, 3, 1?
-                // Standard LPC is 9 frames usually. But here we have 4.
-                // If 4 frames: usually 0 is stand, 1 is stride, 2 is stand, 3 is stride.
-                // Previous code used: 0, 1, 2, 1. (Ping pong)
-                // Let's keep 0, 1, 2, 1 pattern as originally intended but using 16x32 tiles.
-
+                // Walk Animations
                 playerDown = new Animation<>(0.15f, charTiles[0][0], charTiles[0][1], charTiles[0][2], charTiles[0][3]);
                 playerRight = new Animation<>(0.15f, charTiles[1][0], charTiles[1][1], charTiles[1][2],
                                 charTiles[1][3]);
@@ -156,8 +152,7 @@ public class TextureManager implements Disposable {
                         objTiles = objRegion.split(16, 16);
                 }
 
-                // Hearts: Row 0, starting at Col 4. (Based on user image: Chests(0,1),
-                // Crystal(2), Blank(3), Hearts(4..8))
+                // Hearts
                 heartRegion = objTiles[0][4];
 
                 Array<TextureRegion> heartFrames = new Array<>();
@@ -166,7 +161,7 @@ public class TextureManager implements Disposable {
                 }
                 heartBreak = new Animation<>(0.1f, heartFrames, Animation.PlayMode.NORMAL);
 
-                // Arrow: Row 1, Col 1 (Assuming safe)
+                // Arrow
                 arrowRegion = objTiles[1][1];
 
                 // 2. Mobs (Slime) - from "mobs" region
@@ -198,9 +193,13 @@ public class TextureManager implements Disposable {
                         tiles = tileRegion.split(16, 16);
                 }
 
-                // Note: "things" region not currently used. trapRegion uses objTiles instead.
-
                 wallRegion = tiles[0][6]; // Wall Stone
+                // Fallback for multi-tile walls
+                wallRegion2x1 = wallRegion;
+                wallRegion3x1 = wallRegion;
+                wallRegion2x2 = wallRegion;
+                wallRegion3x3 = wallRegion;
+
                 floorRegion = tiles[1][1]; // Dirt Floor
                 exitRegion = tiles[0][2]; // Door Closed
                 entryRegion = tiles[3][6]; // Stairs Down
@@ -208,11 +207,9 @@ public class TextureManager implements Disposable {
                 // Trap: Use Green Crystal from objects [0][2] as visual for 'Magic Trap'
                 trapRegion = objTiles[0][2];
 
-                // Key: Guessing Row 4 (where Coins are) Col 1?
-                // If correct, [4][0] is Coin (User saw yellow circles).
-                // Let's try [4][1] for Key.
+                // Key
                 keyRegion = objTiles[4][1];
-                // Guessing Potion at [4][2] or similar. If not, we reuse Key tint.
+                // Potion
                 if (objTiles[4].length > 2) {
                         potionRegion = objTiles[4][2];
                 } else {
@@ -224,91 +221,241 @@ public class TextureManager implements Disposable {
                 playerAttackLeft = playerLeft;
                 playerAttackRight = playerRight;
 
-                // 4. Attack Animations from test.png (Raw Texture)
+                // 4. Attack Animations from test.png
                 if (attackTexture != null && attackTexture != fallbackTexture) {
-                        try {
-                                // Rows 0-3 are presumably walk (16x32), so attack rows start at y = 4 * 32 =
-                                // 128
-                                // We assume Attack frames are WIDER (e.g. 32px) to accommodate weapon swing.
-
-                                // Row 4: Down (Index 4 in 0-indexed rows of height 32)
-                                // y = 128. Width = 32.
-                                int attackFrameWidth = 32;
-                                int attackFrameHeight = 32;
-                                int startY = 128; // 4 * 32
-
-                                // Helper to get frames
-                                // Row 4: Down
-                                TextureRegion d0 = new TextureRegion(attackTexture, 0 * attackFrameWidth, startY,
-                                                attackFrameWidth, attackFrameHeight);
-                                TextureRegion d1 = new TextureRegion(attackTexture, 1 * attackFrameWidth, startY,
-                                                attackFrameWidth, attackFrameHeight);
-                                TextureRegion d2 = new TextureRegion(attackTexture, 2 * attackFrameWidth, startY,
-                                                attackFrameWidth, attackFrameHeight);
-                                TextureRegion d3 = new TextureRegion(attackTexture, 3 * attackFrameWidth, startY,
-                                                attackFrameWidth, attackFrameHeight);
-                                // 1-4-4-1 distribution (10 frames, 0.02s each => 0.2s total)
-                                playerAttackDown = new Animation<>(0.02f, d0, d1, d1, d1, d1, d2, d2, d2, d2, d3);
-                                playerAttackDown.setPlayMode(Animation.PlayMode.NORMAL);
-
-                                // Row 5: Up
-                                TextureRegion u0 = new TextureRegion(attackTexture, 0 * attackFrameWidth, startY + 32,
-                                                attackFrameWidth, attackFrameHeight);
-                                TextureRegion u1 = new TextureRegion(attackTexture, 1 * attackFrameWidth, startY + 32,
-                                                attackFrameWidth, attackFrameHeight);
-                                TextureRegion u2 = new TextureRegion(attackTexture, 2 * attackFrameWidth, startY + 32,
-                                                attackFrameWidth, attackFrameHeight);
-                                TextureRegion u3 = new TextureRegion(attackTexture, 3 * attackFrameWidth, startY + 32,
-                                                attackFrameWidth, attackFrameHeight);
-                                playerAttackUp = new Animation<>(0.02f, u0, u1, u1, u1, u1, u2, u2, u2, u2, u3);
-                                playerAttackUp.setPlayMode(Animation.PlayMode.NORMAL);
-
-                                // Row 6: Right
-                                TextureRegion r0 = new TextureRegion(attackTexture, 0 * attackFrameWidth, startY + 64,
-                                                attackFrameWidth, attackFrameHeight);
-                                TextureRegion r1 = new TextureRegion(attackTexture, 1 * attackFrameWidth, startY + 64,
-                                                attackFrameWidth, attackFrameHeight);
-                                TextureRegion r2 = new TextureRegion(attackTexture, 2 * attackFrameWidth, startY + 64,
-                                                attackFrameWidth, attackFrameHeight);
-                                TextureRegion r3 = new TextureRegion(attackTexture, 3 * attackFrameWidth, startY + 64,
-                                                attackFrameWidth, attackFrameHeight);
-                                playerAttackRight = new Animation<>(0.02f, r0, r1, r1, r1, r1, r2, r2, r2, r2, r3);
-                                playerAttackRight.setPlayMode(Animation.PlayMode.NORMAL);
-
-                                // Row 7: Left
-                                TextureRegion l0 = new TextureRegion(attackTexture, 0 * attackFrameWidth, startY + 96,
-                                                attackFrameWidth, attackFrameHeight);
-                                TextureRegion l1 = new TextureRegion(attackTexture, 1 * attackFrameWidth, startY + 96,
-                                                attackFrameWidth, attackFrameHeight);
-                                TextureRegion l2 = new TextureRegion(attackTexture, 2 * attackFrameWidth, startY + 96,
-                                                attackFrameWidth, attackFrameHeight);
-                                TextureRegion l3 = new TextureRegion(attackTexture, 3 * attackFrameWidth, startY + 96,
-                                                attackFrameWidth, attackFrameHeight);
-                                playerAttackLeft = new Animation<>(0.02f, l0, l1, l1, l1, l1, l2, l2, l2, l2, l3);
-                                playerAttackLeft.setPlayMode(Animation.PlayMode.NORMAL);
-                        } catch (Exception e) {
-                                System.err.println("Error loading attack animations: " + e.getMessage());
-                                // Keep default (which is playerWalk)
-                        }
+                        loadAttackAnimations();
                 }
+
                 // 5. Load Optimized Floor Textures
                 floorDungeon = loadTextureSafe("images/floors/tile_dungeon_stone.png");
                 floorDesert = loadTextureSafe("images/floors/tile_desert_sand.png");
-                floorForest = loadTextureSafe("images/floors/tile_forest_grass.png");
+                floorGrassland = loadTextureSafe("images/floors/tile_grassland_grass.png");
                 floorIce = loadTextureSafe("images/floors/tile_ice_frozen.png");
                 floorLava = loadTextureSafe("images/floors/tile_lava_magma.png");
                 floorRain = loadTextureSafe("images/floors/tile_rain_puddle.png");
                 floorSpace = loadTextureSafe("images/floors/tile_space_metal.png");
+                floorJungle = loadTextureSafe("images/floors/tile_jungle_floor.png");
+
+                // 6. Load Arrow Texture (Standalone)
+                TextureRegion loadedArrow = loadTextureSafe("images/items/item_arrow.png");
+                if (loadedArrow != fallbackRegion) {
+                        arrowRegion = loadedArrow;
+                }
+
+                // 7. Load Dynamic Wall Assets
+                loadWallAssets();
+        }
+
+        private void loadAttackAnimations() {
+                try {
+                        int attackFrameWidth = 32;
+                        int attackFrameHeight = 32;
+                        int startY = 128; // 4 * 32
+
+                        // Row 4: Down
+                        TextureRegion d0 = new TextureRegion(attackTexture, 0 * attackFrameWidth, startY,
+                                        attackFrameWidth, attackFrameHeight);
+                        TextureRegion d1 = new TextureRegion(attackTexture, 1 * attackFrameWidth, startY,
+                                        attackFrameWidth, attackFrameHeight);
+                        TextureRegion d2 = new TextureRegion(attackTexture, 2 * attackFrameWidth, startY,
+                                        attackFrameWidth, attackFrameHeight);
+                        TextureRegion d3 = new TextureRegion(attackTexture, 3 * attackFrameWidth, startY,
+                                        attackFrameWidth, attackFrameHeight);
+                        playerAttackDown = new Animation<>(0.02f, d0, d1, d1, d1, d1, d2, d2, d2, d2, d3);
+                        playerAttackDown.setPlayMode(Animation.PlayMode.NORMAL);
+
+                        // Row 5: Up
+                        TextureRegion u0 = new TextureRegion(attackTexture, 0 * attackFrameWidth, startY + 32,
+                                        attackFrameWidth, attackFrameHeight);
+                        TextureRegion u1 = new TextureRegion(attackTexture, 1 * attackFrameWidth, startY + 32,
+                                        attackFrameWidth, attackFrameHeight);
+                        TextureRegion u2 = new TextureRegion(attackTexture, 2 * attackFrameWidth, startY + 32,
+                                        attackFrameWidth, attackFrameHeight);
+                        TextureRegion u3 = new TextureRegion(attackTexture, 3 * attackFrameWidth, startY + 32,
+                                        attackFrameWidth, attackFrameHeight);
+                        playerAttackUp = new Animation<>(0.02f, u0, u1, u1, u1, u1, u2, u2, u2, u2, u3);
+                        playerAttackUp.setPlayMode(Animation.PlayMode.NORMAL);
+
+                        // Row 6: Right
+                        TextureRegion r0 = new TextureRegion(attackTexture, 0 * attackFrameWidth, startY + 64,
+                                        attackFrameWidth, attackFrameHeight);
+                        TextureRegion r1 = new TextureRegion(attackTexture, 1 * attackFrameWidth, startY + 64,
+                                        attackFrameWidth, attackFrameHeight);
+                        TextureRegion r2 = new TextureRegion(attackTexture, 2 * attackFrameWidth, startY + 64,
+                                        attackFrameWidth, attackFrameHeight);
+                        TextureRegion r3 = new TextureRegion(attackTexture, 3 * attackFrameWidth, startY + 64,
+                                        attackFrameWidth, attackFrameHeight);
+                        playerAttackRight = new Animation<>(0.02f, r0, r1, r1, r1, r1, r2, r2, r2, r2, r3);
+                        playerAttackRight.setPlayMode(Animation.PlayMode.NORMAL);
+
+                        // Row 7: Left
+                        TextureRegion l0 = new TextureRegion(attackTexture, 0 * attackFrameWidth, startY + 96,
+                                        attackFrameWidth, attackFrameHeight);
+                        TextureRegion l1 = new TextureRegion(attackTexture, 1 * attackFrameWidth, startY + 96,
+                                        attackFrameWidth, attackFrameHeight);
+                        TextureRegion l2 = new TextureRegion(attackTexture, 2 * attackFrameWidth, startY + 96,
+                                        attackFrameWidth, attackFrameHeight);
+                        TextureRegion l3 = new TextureRegion(attackTexture, 3 * attackFrameWidth, startY + 96,
+                                        attackFrameWidth, attackFrameHeight);
+                        playerAttackLeft = new Animation<>(0.02f, l0, l1, l1, l1, l1, l2, l2, l2, l2, l3);
+                        playerAttackLeft.setPlayMode(Animation.PlayMode.NORMAL);
+                } catch (Exception e) {
+                        System.err.println("Error loading attack animations: " + e.getMessage());
+                }
+        }
+
+        /**
+         * Loads wall assets for various themes and sizes based on conventions.
+         */
+        private void loadWallAssets() {
+                String[] themes = { "dungeon", "grassland", "desert", "ice", "jungle", "space" };
+                // 7 sizes: 2x2, 3x2, 2x3, 2x4, 4x2, 3x3, 4x4
+                int[][] sizes = {
+                                { 2, 2 }, { 3, 2 }, { 2, 3 }, { 2, 4 }, { 4, 2 }, { 3, 3 }, { 4, 4 }
+                };
+
+                for (String theme : themes) {
+                        for (int[] size : sizes) {
+                                int w = size[0];
+                                int h = size[1];
+                                String sizeSuffix = w + "x" + h;
+                                String key = theme + "_" + sizeSuffix;
+                                Array<TextureRegion> variants = new Array<>();
+
+                                // Load variants v1, v2
+                                for (int v = 1; v <= 2; v++) {
+                                        String path = "images/walls/wall_" + theme + "_" + sizeSuffix + "_v" + v
+                                                        + ".png";
+                                        if (com.badlogic.gdx.Gdx.files.internal(path).exists()) {
+                                                try {
+                                                        Texture tex = new Texture(
+                                                                        com.badlogic.gdx.Gdx.files.internal(path));
+                                                        TextureRegion reg = new TextureRegion(tex);
+                                                        variants.add(reg);
+                                                        // Cache color for grout logic
+                                                        calculateAndCacheColor(tex, reg);
+                                                        // System.out.println("Loaded " + path);
+                                                } catch (Exception e) {
+                                                        System.err.println("Failed to load wall variant: " + path);
+                                                }
+                                        }
+                                }
+
+                                // Legacy Fallback (if no variants found)
+                                if (variants.size == 0) {
+                                        String staticPath = "images/walls/wall_" + theme + "_" + sizeSuffix + ".png";
+                                        if (com.badlogic.gdx.Gdx.files.internal(staticPath).exists()) {
+                                                try {
+                                                        Texture staticTex = new Texture(com.badlogic.gdx.Gdx.files
+                                                                        .internal(staticPath));
+                                                        TextureRegion reg = new TextureRegion(staticTex);
+                                                        variants.add(reg);
+                                                        calculateAndCacheColor(staticTex, reg);
+                                                } catch (Exception e) {
+                                                        // ignore
+                                                }
+                                        }
+                                }
+
+                                if (variants.size > 0) {
+                                        wallStaticCache.put(key, variants);
+                                }
+                        }
+                }
+        }
+
+        /**
+         * Returns a wall texture region for the given theme, size, and position.
+         * Position is used to deterministically select a variant.
+         */
+        public TextureRegion getWallRegion(String theme, int width, int height, int x, int y) {
+                String usedTheme = (theme == null) ? "dungeon" : theme.toLowerCase();
+                String key = usedTheme + "_" + width + "x" + height;
+
+                if (wallStaticCache.containsKey(key)) {
+                        Array<TextureRegion> variants = wallStaticCache.get(key);
+                        if (variants != null && variants.size > 0) {
+                                // Better hash for ~50/50 distribution using XOR
+                                int hash = Math.abs((x * 73856093) ^ (y * 19349663));
+                                return variants.get(hash % variants.size);
+                        }
+                }
+
+                // Fallback: Generic Size
+                // If variant not found
+                if (width == 2 && height == 1)
+                        return wallRegion2x1;
+                if (width == 3 && height == 1)
+                        return wallRegion3x1;
+                if (width == 2 && height == 2)
+                        return wallRegion2x2;
+                if (width == 3 && height == 3)
+                        return wallRegion3x3;
+
+                return wallRegion; // Ultimate fallback
         }
 
         private TextureRegion loadTextureSafe(String path) {
                 try {
                         Texture t = new Texture(com.badlogic.gdx.Gdx.files.internal(path));
+                        // [NEW] Calculate and cache average color for Grout
+                        calculateAndCacheColor(t, new TextureRegion(t));
                         return new TextureRegion(t);
                 } catch (Exception e) {
-                        System.err.println("Failed to load texture: " + path);
+                        // System.err.println("Failed to load texture: " + path);
                         return fallbackRegion;
                 }
+        }
+
+        // [NEW] Cache for average colors of textures
+        private final com.badlogic.gdx.utils.ObjectMap<TextureRegion, com.badlogic.gdx.graphics.Color> regionColorCache = new com.badlogic.gdx.utils.ObjectMap<>();
+
+        private void calculateAndCacheColor(Texture texture, TextureRegion region) {
+                try {
+                        if (!texture.getTextureData().isPrepared()) {
+                                texture.getTextureData().prepare();
+                        }
+                        com.badlogic.gdx.graphics.Pixmap pixmap = texture.getTextureData().consumePixmap();
+
+                        long r = 0, g = 0, b = 0;
+                        int pixelCount = 0;
+                        int width = pixmap.getWidth();
+                        int height = pixmap.getHeight();
+
+                        // Sample pixels (every 4th pixel for performance)
+                        for (int x = 0; x < width; x += 4) {
+                                for (int y = 0; y < height; y += 4) {
+                                        int colorInt = pixmap.getPixel(x, y);
+                                        // RGBA8888
+                                        r += (colorInt & 0xff000000) >>> 24;
+                                        g += (colorInt & 0x00ff0000) >>> 16;
+                                        b += (colorInt & 0x0000ff00) >>> 8;
+                                        pixelCount++;
+                                }
+                        }
+
+                        if (texture.getTextureData()
+                                        .getType() == com.badlogic.gdx.graphics.TextureData.TextureDataType.Pixmap) {
+                                pixmap.dispose();
+                        }
+
+                        if (pixelCount > 0) {
+                                regionColorCache.put(region, new com.badlogic.gdx.graphics.Color(
+                                                (r / pixelCount) / 255f,
+                                                (g / pixelCount) / 255f,
+                                                (b / pixelCount) / 255f,
+                                                1f));
+                        } else {
+                                regionColorCache.put(region, com.badlogic.gdx.graphics.Color.GRAY);
+                        }
+                } catch (Exception e) {
+                        System.err.println("Failed to calculate average color: " + e.getMessage());
+                        regionColorCache.put(region, com.badlogic.gdx.graphics.Color.GRAY);
+                }
+        }
+
+        public com.badlogic.gdx.graphics.Color getTextureColor(TextureRegion region) {
+                return regionColorCache.get(region, com.badlogic.gdx.graphics.Color.GRAY);
         }
 
         @Override
@@ -322,20 +469,47 @@ public class TextureManager implements Disposable {
                 if (fallbackTexture != null) {
                         fallbackTexture.dispose();
                 }
-                // Dispose specific floor textures if they are backed by their own textures
-                // (which they are)
+                if (whitePixelTexture != null) {
+                        whitePixelTexture.dispose();
+                }
+
                 disposeRegionTexture(floorDungeon);
                 disposeRegionTexture(floorDesert);
-                disposeRegionTexture(floorForest);
+                disposeRegionTexture(floorGrassland);
+                disposeRegionTexture(floorJungle);
                 disposeRegionTexture(floorIce);
                 disposeRegionTexture(floorLava);
                 disposeRegionTexture(floorRain);
                 disposeRegionTexture(floorSpace);
+                disposeRegionTexture(arrowRegion);
+
+                for (Array<TextureRegion> variants : wallStaticCache.values()) {
+                        for (TextureRegion reg : variants) {
+                                disposeRegionTexture(reg);
+                        }
+                }
         }
 
         private void disposeRegionTexture(TextureRegion region) {
                 if (region != null && region.getTexture() != null && region != fallbackRegion) {
-                        region.getTexture().dispose();
+                        // Only dispose if it's NOT atlas or fallback.
+                        // Rough check using atlas variable
+                        if (atlas != null) {
+                                boolean isAtlas = false;
+                                for (Texture t : atlas.getTextures())
+                                        if (t == region.getTexture())
+                                                isAtlas = true;
+                                if (isAtlas)
+                                        return;
+                        }
+
+                        if (region.getTexture() != fallbackTexture &&
+                                        region.getTexture() != attackTexture) {
+                                try {
+                                        region.getTexture().dispose();
+                                } catch (Exception e) {
+                                }
+                        }
                 }
         }
 }

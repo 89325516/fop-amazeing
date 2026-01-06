@@ -91,7 +91,9 @@ public class GameSettings {
         userEnemyDetectRange = prefs.getFloat("enemyDetectRange", DEFAULT_ENEMY_DETECT_RANGE);
         userHitDistance = prefs.getFloat("hitDistance", DEFAULT_HIT_DISTANCE);
         userHitDistance = prefs.getFloat("hitDistance", DEFAULT_HIT_DISTANCE);
+        userHitDistance = prefs.getFloat("hitDistance", DEFAULT_HIT_DISTANCE);
         userCameraZoom = prefs.getFloat("cameraZoom", DEFAULT_CAMERA_ZOOM);
+        userFogEnabled = prefs.getBoolean("fogEnabled", false);
 
         KEY_UP = prefs.getInteger("key_up", com.badlogic.gdx.Input.Keys.UP);
         KEY_DOWN = prefs.getInteger("key_down", com.badlogic.gdx.Input.Keys.DOWN);
@@ -120,6 +122,7 @@ public class GameSettings {
         userEnemyDetectRange = enemyDetectRange;
         userHitDistance = hitDistance;
         userCameraZoom = cameraZoom;
+        userFogEnabled = fogEnabled;
 
         // 保存到文件
         Preferences prefs = Gdx.app.getPreferences(PREFS_NAME);
@@ -132,6 +135,7 @@ public class GameSettings {
         prefs.putFloat("enemyDetectRange", userEnemyDetectRange);
         prefs.putFloat("hitDistance", userHitDistance);
         prefs.putFloat("cameraZoom", userCameraZoom);
+        prefs.putBoolean("fogEnabled", userFogEnabled);
         prefs.flush();
     }
 
@@ -164,7 +168,21 @@ public class GameSettings {
         enemyChaseSpeed = userEnemyChaseSpeed;
         enemyDetectRange = userEnemyDetectRange;
         hitDistance = userHitDistance;
+        fogEnabled = userFogEnabled;
         cameraZoom = DEFAULT_CAMERA_ZOOM; // Force new default zoom (0.67 for 15x15 view)
+    }
+
+    // ==================== 迷雾模式 (Fog of War) ====================
+    public static boolean fogEnabled = false;
+    private static boolean userFogEnabled = false;
+
+    public static void setFogEnabled(boolean enabled) {
+        fogEnabled = enabled;
+        userFogEnabled = enabled;
+    }
+
+    public static boolean isFogEnabled() {
+        return fogEnabled;
     }
 
     /**
@@ -179,6 +197,7 @@ public class GameSettings {
         userEnemyChaseSpeed = DEFAULT_ENEMY_CHASE_SPEED;
         userEnemyDetectRange = DEFAULT_ENEMY_DETECT_RANGE;
         userHitDistance = DEFAULT_HIT_DISTANCE;
+        userFogEnabled = false;
 
         // 同时更新当前值
         resetToUserDefaults();

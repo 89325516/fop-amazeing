@@ -19,12 +19,22 @@ public class EntityFactory {
 
     static {
         // === 注册默认实体 ===
-        register(GameConfig.OBJECT_ID_WALL, Wall::new);
+        // ID=0 now creates 2x2 walls (no more 1x1 walls)
+        register(GameConfig.OBJECT_ID_WALL, (x, y) -> new Wall(x, y, 2, 2));
         register(GameConfig.OBJECT_ID_EXIT, Exit::new);
         register(GameConfig.OBJECT_ID_TRAP, Trap::new);
         register(GameConfig.OBJECT_ID_ENEMY, Enemy::new);
         register(GameConfig.OBJECT_ID_KEY, Key::new);
         register(GameConfig.OBJECT_ID_MOBILE_TRAP, MobileTrap::new);
+
+        // Register Multi-tile Walls (7 sizes: 2x2, 3x2, 2x3, 2x4, 4x2, 3x3, 4x4)
+        register(GameConfig.OBJECT_ID_WALL_2X2, (x, y) -> new Wall(x, y, 2, 2));
+        register(GameConfig.OBJECT_ID_WALL_3X2, (x, y) -> new Wall(x, y, 3, 2));
+        register(GameConfig.OBJECT_ID_WALL_2X3, (x, y) -> new Wall(x, y, 2, 3));
+        register(GameConfig.OBJECT_ID_WALL_2X4, (x, y) -> new Wall(x, y, 2, 4));
+        register(GameConfig.OBJECT_ID_WALL_4X2, (x, y) -> new Wall(x, y, 4, 2));
+        register(GameConfig.OBJECT_ID_WALL_3X3, (x, y) -> new Wall(x, y, 3, 3));
+        register(GameConfig.OBJECT_ID_WALL_4X4, (x, y) -> new Wall(x, y, 4, 4));
 
         // 注意：ID 1 (Entry) 通常不生成实体对象，而是设置玩家起始位置，
         // 所以这里不注册它，或者注册一个空操作（视 MapLoader 逻辑而定）。

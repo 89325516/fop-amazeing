@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
 import de.tum.cit.fop.maze.utils.MapGenerator;
+import de.tum.cit.fop.maze.utils.GameLogger;
 
 public class MenuScreen implements Screen {
 
@@ -51,6 +52,7 @@ public class MenuScreen implements Screen {
         newGameButton.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
+                GameLogger.info("MenuScreen", "New Game clicked");
                 // Go to Story Screen first, passing null to indicate default Level 1
                 game.setScreen(new StoryScreen(game, "maps/level-1.properties"));
             }
@@ -97,6 +99,18 @@ public class MenuScreen implements Screen {
             }
         });
 
+        // Shop Button (NEW)
+        TextButton shopButton = new TextButton("Shop", game.getSkin());
+        table.add(shopButton).width(300).height(60).padBottom(20).row();
+
+        shopButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                GameLogger.info("MenuScreen", "Shop clicked");
+                game.setScreen(new ShopScreen(game));
+            }
+        });
+
         // 4. "Settings" Button
         TextButton settingsButton = new TextButton("Settings", game.getSkin());
         table.add(settingsButton).width(300).height(60).padBottom(20).row();
@@ -115,6 +129,7 @@ public class MenuScreen implements Screen {
         exitButton.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
+                GameLogger.info("MenuScreen", "Exit clicked");
                 Gdx.app.exit();
             }
         });
@@ -187,10 +202,12 @@ public class MenuScreen implements Screen {
 
         TextButton closeBtn = new TextButton("Cancel", game.getSkin());
         closeBtn.addListener(new ChangeListener() {
+
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 win.remove();
             }
+
         });
         win.add(closeBtn).padBottom(10);
 
@@ -440,15 +457,84 @@ public class MenuScreen implements Screen {
 
         // 3. 底部按钮
         Table botTable = new Table();
+
+        // === Difficulty Presets (NEW) ===
+        Table difficultyTable = new Table();
+        difficultyTable.add(new Label("Difficulty: ", game.getSkin())).padRight(10);
+
+        String[] presets = { "Easy", "Normal", "Hard", "Nightmare", "Custom" };
+        final int[] selectedPreset = { 1 }; // Default: Normal
+        final de.tum.cit.fop.maze.config.RandomMapConfig[] customConfigHolder = { null };
+
+        for (int i = 0; i < presets.length; i++) {
+            final int presetIndex = i;
+            TextButton presetBtn = new TextButton(presets[i], game.getSkin());
+            if (i == selectedPreset[0]) {
+                presetBtn.setColor(0.3f, 0.7f, 0.3f, 1f); // Highlight default
+            }
+            presetBtn.addListener(new ChangeListener() {
+                @Override
+                public void changed(ChangeEvent event, Actor actor) {
+                    selectedPreset[0] = presetIndex;
+                    // Update button colors
+                    for (Actor a : difficultyTable.getChildren()) {
+                        if (a instanceof TextButton) {
+                            ((TextButton) a).setColor(Color.WHITE);
+                        }
+                    }
+                    presetBtn.setColor(0.3f, 0.7f, 0.3f, 1f);
+
+                    // If Custom clicked, open dialog
+                    if (presetIndex == 4) {
+                        RandomMapConfigDialog dialog = new RandomMapConfigDialog(game,
+                                customConfigHolder[0] != null ? customConfigHolder[0]
+                                        : new de.tum.cit.fop.maze.config.RandomMapConfig(),
+                                (activeConfig) -> {
+                                    customConfigHolder[0] = activeConfig;
+                                },
+                                () -> {
+                                    // On cancel
+                                });
+                        stage.addActor(dialog);
+                    }
+                }
+            });
+            difficultyTable.add(presetBtn).width(90).pad(3);
+        }
+
+        win.row();
+        win.add(difficultyTable).padBottom(15).row();
+
         TextButton genBtn = new TextButton("Generate New Map", game.getSkin());
         genBtn.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 win.remove();
-                // 生成新文件名：maps/random/random_yyyyMMdd_HHmmss.properties
                 String timeSuffix = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
                 String newName = "maps/random/random_" + timeSuffix + ".properties";
-                startRandomGeneration(newName);
+
+                // Get config based on selected preset
+                de.tum.cit.fop.maze.config.RandomMapConfig config;
+                switch (selectedPreset[0]) {
+                    case 0:
+                        config = de.tum.cit.fop.maze.config.RandomMapConfig.EASY;
+                        break;
+                    case 2:
+                        config = de.tum.cit.fop.maze.config.RandomMapConfig.HARD;
+                        break;
+                    case 3:
+                        config = de.tum.cit.fop.maze.config.RandomMapConfig.NIGHTMARE;
+                        break;
+                    case 4: // Custom
+                        config = customConfigHolder[0];
+                        if (config == null)
+                            config = de.tum.cit.fop.maze.config.RandomMapConfig.NORMAL; // Fallback
+                        break;
+                    default:
+                        config = de.tum.cit.fop.maze.config.RandomMapConfig.NORMAL;
+                        break;
+                }
+                startRandomGeneration(newName, config);
             }
         });
 
@@ -472,14 +558,21 @@ public class MenuScreen implements Screen {
 
     // 重载方法以支持指定文件名
     private void startRandomGeneration(String fileName) {
+        startRandomGeneration(fileName, de.tum.cit.fop.maze.config.RandomMapConfig.NORMAL);
+    }
+
+    // 使用配置生成随机地图
+    private void startRandomGeneration(String fileName, de.tum.cit.fop.maze.config.RandomMapConfig config) {
+        loadingLabel.setText("Generating " + config.getWidth() + "x" + config.getHeight() + " Map...");
         loadingLabel.setVisible(true);
         new Thread(() -> {
-            MapGenerator gen = new MapGenerator();
-            gen.generateAndSave(fileName);
-            // 确保回到主线程切换场景
+            MapGenerator gen = new MapGenerator(config);
+            gen.generateAndSave(fileName, config);
+            // 确保回到主线程切换场景 - 使用 ArmorSelectScreen
             Gdx.app.postRunnable(() -> {
                 loadingLabel.setVisible(false);
-                game.goToGame(fileName);
+                // 跳转到护甲选择界面而不是直接进入游戏
+                game.setScreen(new ArmorSelectScreen(game, fileName));
             });
         }).start();
     }

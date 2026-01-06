@@ -17,7 +17,11 @@ public class WeaponSystemTest {
 
         // Now has 3
         boolean pickedUp4th = player.pickupWeapon(new Sword(0, 0));
-        assertFalse(pickedUp4th, "Should not pick up 4th weapon");
+        assertTrue(pickedUp4th, "Should pick up 4th weapon (Limit is 4)");
+
+        // Now has 4 (Full)
+        boolean pickedUp5th = player.pickupWeapon(new Sword(0, 0));
+        assertFalse(pickedUp5th, "Should not pick up 5th weapon (Limit is 4)");
     }
 
     @Test

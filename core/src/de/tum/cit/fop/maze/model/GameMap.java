@@ -1,130 +1,248 @@
 package de.tum.cit.fop.maze.model;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.badlogic.gdx.utils.IntMap;
+import de.tum.cit.fop.maze.utils.GameLogger;
 
-/*
- * ╔═══════════════════════════════════════════════════════════════════════════╗
- * ║  ⚠️  CORE ENGINE FILE - DO NOT MODIFY WITHOUT TEAM LEAD APPROVAL ⚠️      ║
- * ╠═══════════════════════════════════════════════════════════════════════════╣
- * ║  This file is part of the CORE ENGINE responsible for:                    ║
- * ║  • Storing parsed map data from .properties files                         ║
- * ║  • Spatial partitioning for O(1) wall collision lookups (IntMap)          ║
- * ║  • Managing dynamic objects list and map boundaries                       ║
- * ║                                                                           ║
- * ║  PERFORMANCE CRITICAL: The IntMap/wallMap structure provides O(1)         ║
- * ║  collision detection. Changing to ArrayList will cause severe lag on      ║
- * ║  large maps (tested: >100 walls causes frame drops on low-end machines).  ║
- * ║                                                                           ║
- * ║  If you must modify, ensure:                                              ║
- * ║  1. All existing methods retain their signatures                          ║
- * ║  2. O(1) lookup for getWall() is preserved                                ║
- * ║  3. Test with level-5.properties (largest map) after changes              ║
- * ╚═══════════════════════════════════════════════════════════════════════════╝
- */
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
- * GameMap 用于存储当前关卡的所有数据。
- * 它包含所有的游戏对象列表以及玩家的初始位置。
+ * GameMap - 重构版
+ * 
+ * 核心改进：
+ * 1. 明确区分"可游玩区域"和"边界墙"
+ * 2. 使用 WallEntity 表示完整墙体
+ * 3. O(1) 碰撞查询通过占用格子集合实现
  */
 public class GameMap {
-    // 存储地图的像素或网格宽/高 (基于最远的物体位置)
-    private int width = 0;
-    private int height = 0;
 
-    // 存储所有的实体对象 (墙, 敌人, 钥匙, 出口等)
+    // 边界宽度（固定2格，最小墙体单元）
+    public static final int BORDER_WIDTH = 2;
+
+    // 可游玩区域尺寸（不含边界）
+    private int playableWidth = 0;
+    private int playableHeight = 0;
+
+    // 总地图尺寸（含边界）= playable + 2 * BORDER_WIDTH
+    private int totalWidth = 0;
+    private int totalHeight = 0;
+
+    // 所有墙体实体
+    private List<WallEntity> walls;
+
+    // 所有被墙体占用的格子（用于 O(1) 碰撞检测）
+    // Key = x + (y << 16)
+    private Set<Long> occupiedCells;
+
+    // 兼容旧代码：通过坐标获取墙体引用
+    private IntMap<WallEntity> wallLookup;
+
+    // 动态对象（敌人、陷阱、钥匙等）
     private List<GameObject> dynamicObjects;
-    // 空间分割优化：使用 IntMap 存储静态墙壁，Key = x + (y << 16)
-    // 这允许 O(1) 的碰撞检测查找和 O(1) 的视锥体剔除查询
-    private com.badlogic.gdx.utils.IntMap<Wall> wallMap;
 
-    // 玩家的初始出生点 (对应 ID=1 的 Entry Point)
-    private float playerStartX = 0;
-    private float playerStartY = 0;
+    // 玩家出生点（相对于总地图，含边界偏移）
+    private float playerStartX = BORDER_WIDTH;
+    private float playerStartY = BORDER_WIDTH;
 
-    // Exit position cache for O(1) lookup in CollisionManager
+    // 出口位置
     private int exitX = -1;
     private int exitY = -1;
 
+    // 主题
+    private String theme = "Grassland";
+
     public GameMap() {
+        this.walls = new ArrayList<>();
+        this.occupiedCells = new HashSet<>();
+        this.wallLookup = new IntMap<>();
         this.dynamicObjects = new ArrayList<>();
-        this.wallMap = new com.badlogic.gdx.utils.IntMap<>();
     }
 
     /**
-     * 向地图添加一个对象，并根据对象位置自动更新地图边界
+     * 初始化地图尺寸（可游玩区域）
+     * 边界墙会自动添加
+     */
+    public void initializeSize(int playableWidth, int playableHeight) {
+        this.playableWidth = playableWidth;
+        this.playableHeight = playableHeight;
+        this.totalWidth = playableWidth + 2 * BORDER_WIDTH;
+        this.totalHeight = playableHeight + 2 * BORDER_WIDTH;
+
+        GameLogger.info("GameMap", String.format(
+                "Initialized: Playable=%dx%d, Total=%dx%d (border=%d)",
+                playableWidth, playableHeight, totalWidth, totalHeight, BORDER_WIDTH));
+    }
+
+    /**
+     * 添加墙体实体
+     */
+    public void addWall(WallEntity wall) {
+        walls.add(wall);
+
+        // 注册所有占用的格子
+        for (Long cellKey : wall.getOccupiedCells()) {
+            occupiedCells.add(cellKey);
+            // 兼容旧代码的查询方式
+            int cellIntKey = cellKey.intValue(); // 简化，假设坐标不超过16位
+            wallLookup.put(cellIntKey, wall);
+        }
+
+        // 动态更新地图尺寸（如果墙体超出当前范围）
+        int maxX = wall.getOriginX() + wall.getGridWidth();
+        int maxY = wall.getOriginY() + wall.getGridHeight();
+        if (maxX > totalWidth)
+            totalWidth = maxX;
+        if (maxY > totalHeight)
+            totalHeight = maxY;
+    }
+
+    /**
+     * 添加动态对象（敌人、陷阱等）
      */
     public void addGameObject(GameObject obj) {
-        // 空间分割：静态墙壁入 Map，其他入 List
-        if (obj instanceof Wall) {
-            int key = (int) obj.getX() + ((int) obj.getY() << 16);
-            wallMap.put(key, (Wall) obj);
+        if (obj instanceof WallEntity) {
+            addWall((WallEntity) obj);
+        } else if (obj instanceof Wall) {
+            // 兼容旧 Wall 类：转换为 WallEntity
+            Wall oldWall = (Wall) obj;
+            int typeId = getTypeIdForSize((int) oldWall.getWidth(), (int) oldWall.getHeight());
+            WallEntity entity = new WallEntity(
+                    (int) oldWall.getX(), (int) oldWall.getY(),
+                    (int) oldWall.getWidth(), (int) oldWall.getHeight(),
+                    typeId, false);
+            addWall(entity);
         } else {
-            this.dynamicObjects.add(obj);
-            // Cache Exit position for O(1) lookup
+            dynamicObjects.add(obj);
+
+            // 缓存出口位置
             if (obj instanceof Exit) {
                 this.exitX = (int) obj.getX();
                 this.exitY = (int) obj.getY();
             }
-        }
 
-        // 动态更新地图尺寸，方便相机知道边界在哪里
-        // 假设每个格子大小是 1 单位，那么边界就是坐标 + 1
-        if ((int) obj.getX() + 1 > width) {
-            width = (int) obj.getX() + 1;
-        }
-        if ((int) obj.getY() + 1 > height) {
-            height = (int) obj.getY() + 1;
+            // 动态更新地图尺寸
+            int objMaxX = (int) obj.getX() + 1;
+            int objMaxY = (int) obj.getY() + 1;
+            if (objMaxX > totalWidth)
+                totalWidth = objMaxX;
+            if (objMaxY > totalHeight)
+                totalHeight = objMaxY;
         }
     }
 
     /**
-     * 设置玩家的出生点 (当解析到 ID=1 时调用)
+     * 根据墙体尺寸获取类型ID
+     */
+    private int getTypeIdForSize(int w, int h) {
+        if (w == 2 && h == 2)
+            return de.tum.cit.fop.maze.config.GameConfig.OBJECT_ID_WALL_2X2;
+        if (w == 3 && h == 2)
+            return de.tum.cit.fop.maze.config.GameConfig.OBJECT_ID_WALL_3X2;
+        if (w == 2 && h == 3)
+            return de.tum.cit.fop.maze.config.GameConfig.OBJECT_ID_WALL_2X3;
+        if (w == 2 && h == 4)
+            return de.tum.cit.fop.maze.config.GameConfig.OBJECT_ID_WALL_2X4;
+        if (w == 4 && h == 2)
+            return de.tum.cit.fop.maze.config.GameConfig.OBJECT_ID_WALL_4X2;
+        if (w == 3 && h == 3)
+            return de.tum.cit.fop.maze.config.GameConfig.OBJECT_ID_WALL_3X3;
+        if (w == 4 && h == 4)
+            return de.tum.cit.fop.maze.config.GameConfig.OBJECT_ID_WALL_4X4;
+        return de.tum.cit.fop.maze.config.GameConfig.OBJECT_ID_WALL_2X2; // 默认
+    }
+
+    /**
+     * O(1) 检查格子是否被墙体占用
+     */
+    public boolean isOccupied(int x, int y) {
+        long key = x + ((long) y << 16);
+        return occupiedCells.contains(key);
+    }
+
+    /**
+     * 检查坐标是否在有效地图范围内
+     */
+    public boolean isInBounds(int x, int y) {
+        return x >= 0 && x < totalWidth && y >= 0 && y < totalHeight;
+    }
+
+    /**
+     * 检查坐标是否在可游玩区域内（不含边界）
+     */
+    public boolean isInPlayableArea(int x, int y) {
+        return x >= BORDER_WIDTH && x < BORDER_WIDTH + playableWidth
+                && y >= BORDER_WIDTH && y < BORDER_WIDTH + playableHeight;
+    }
+
+    /**
+     * 获取指定位置的墙体（兼容旧代码）
+     */
+    public Wall getWall(int x, int y) {
+        if (x < 0 || y < 0)
+            return null;
+        int key = x + (y << 16);
+        WallEntity entity = wallLookup.get(key);
+        if (entity != null) {
+            // 返回兼容的 Wall 对象
+            return new Wall(entity.getOriginX(), entity.getOriginY(),
+                    entity.getGridWidth(), entity.getGridHeight());
+        }
+        return null;
+    }
+
+    /**
+     * 获取指定位置的墙体实体
+     */
+    public WallEntity getWallEntity(int x, int y) {
+        if (x < 0 || y < 0)
+            return null;
+        int key = x + (y << 16);
+        return wallLookup.get(key);
+    }
+
+    /**
+     * 获取所有墙体实体
+     */
+    public List<WallEntity> getWalls() {
+        return walls;
+    }
+
+    /**
+     * 设置玩家出生点
      */
     public void setPlayerStart(float x, float y) {
         this.playerStartX = x;
         this.playerStartY = y;
-
-        // 即使没有实体物体，出生点也算作地图的一部分，需要更新边界
-        if ((int) x + 1 > width)
-            width = (int) x + 1;
-        if ((int) y + 1 > height)
-            height = (int) y + 1;
     }
 
-    // --- Getters ---
+    // ===== Getters =====
 
     public List<GameObject> getDynamicObjects() {
         return dynamicObjects;
     }
 
-    /**
-     * 全部对象列表（仅用于传统遍历兼容，不推荐高性能场景使用）
-     */
     public List<GameObject> getAllGameObjects() {
         List<GameObject> all = new ArrayList<>(dynamicObjects);
-        for (Wall w : wallMap.values()) {
-            all.add(w);
-        }
+        all.addAll(walls);
         return all;
     }
 
-    /**
-     * O(1) 获取指定位置的墙壁
-     */
-    public Wall getWall(int x, int y) {
-        if (x < 0 || y < 0)
-            return null; // 边界检查
-        int key = x + (y << 16);
-        return wallMap.get(key);
-    }
-
     public int getWidth() {
-        return width;
+        return totalWidth;
     }
 
     public int getHeight() {
-        return height;
+        return totalHeight;
+    }
+
+    public int getPlayableWidth() {
+        return playableWidth;
+    }
+
+    public int getPlayableHeight() {
+        return playableHeight;
     }
 
     public float getPlayerStartX() {
@@ -141,5 +259,13 @@ public class GameMap {
 
     public int getExitY() {
         return exitY;
+    }
+
+    public String getTheme() {
+        return theme;
+    }
+
+    public void setTheme(String theme) {
+        this.theme = theme;
     }
 }

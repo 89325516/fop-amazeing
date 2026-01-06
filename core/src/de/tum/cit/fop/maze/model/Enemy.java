@@ -1,7 +1,9 @@
 package de.tum.cit.fop.maze.model;
 
+import de.tum.cit.fop.maze.config.GameConfig;
 import de.tum.cit.fop.maze.config.GameSettings;
 import de.tum.cit.fop.maze.model.weapons.WeaponEffect;
+import de.tum.cit.fop.maze.utils.GameLogger;
 import java.util.Random;
 
 /*
@@ -69,7 +71,14 @@ public class Enemy extends GameObject {
     private final float homeX;
     private final float homeY;
 
-    private int health = de.tum.cit.fop.maze.config.GameConfig.ENEMY_DEFAULT_HEALTH;
+    private int health = GameConfig.ENEMY_DEFAULT_HEALTH;
+    private int maxHealth = GameConfig.ENEMY_DEFAULT_HEALTH;
+
+    // === Shield System (for complex levels) ===
+    private DamageType attackDamageType = DamageType.PHYSICAL; // What damage this enemy deals
+    private DamageType shieldType = null; // null = no shield
+    private int maxShield = 0;
+    private int currentShield = 0;
 
     public Enemy(float x, float y) {
         super(x, y);
@@ -83,18 +92,74 @@ public class Enemy extends GameObject {
         pickRandomDirection();
     }
 
+    /**
+     * Extended constructor for enemies with shields (complex levels).
+     * 
+     * @param x            X 坐标
+     * @param y            Y 坐标
+     * @param health       生命值
+     * @param attackType   攻击伤害类型
+     * @param shieldType   护盾类型（null 表示无护盾）
+     * @param shieldAmount 护盾值
+     */
+    public Enemy(float x, float y, int health, DamageType attackType,
+            DamageType shieldType, int shieldAmount) {
+        this(x, y);
+        this.health = health;
+        this.maxHealth = health;
+        this.attackDamageType = attackType;
+        this.shieldType = shieldType;
+        this.maxShield = shieldAmount;
+        this.currentShield = shieldAmount;
+    }
+
+    /**
+     * Original takeDamage (backward compatible, treats as PHYSICAL).
+     */
     public boolean takeDamage(int amount) {
+        return takeDamage(amount, DamageType.PHYSICAL);
+    }
+
+    /**
+     * Take damage with type consideration for shield system.
+     * 
+     * @param amount 伤害量
+     * @param type   伤害类型
+     * @return false (GameScreen checks isRemovable for removal)
+     */
+    public boolean takeDamage(int amount, DamageType type) {
         if (state == EnemyState.DEAD)
             return false;
-        this.health -= amount;
+
+        int remainingDamage = amount;
+
+        // Check if shield blocks this damage type
+        if (hasShield() && shieldType == type) {
+            // Shield absorbs damage
+            if (currentShield >= amount) {
+                currentShield -= amount;
+                remainingDamage = 0;
+            } else {
+                remainingDamage = amount - currentShield;
+                currentShield = 0;
+            }
+        }
+        // Note: If damage type doesn't match shield type, damage goes directly to
+        // health
+
+        if (remainingDamage > 0) {
+            this.health -= remainingDamage;
+        }
+
         this.hurtTimer = 0.2f; // Flash red for 0.2s
+
         if (this.health <= 0) {
             this.state = EnemyState.DEAD;
             this.deathTimer = 5.0f;
             // Clear status effects
             this.currentEffect = WeaponEffect.NONE;
         }
-        return false; // Never return true for immediate removal, GameScreen checks isRemovable()
+        return false; // Never return true for immediate removal
     }
 
     public boolean isDead() {
@@ -137,8 +202,60 @@ public class Enemy extends GameObject {
         return health;
     }
 
+    public int getMaxHealth() {
+        return maxHealth;
+    }
+
     public int getSkillPointReward() {
         return 10; // Default reward
+    }
+
+    // === Shield System Getters ===
+
+    public boolean hasShield() {
+        return shieldType != null && currentShield > 0;
+    }
+
+    public float getShieldPercentage() {
+        if (maxShield <= 0)
+            return 0f;
+        return (float) currentShield / maxShield;
+    }
+
+    public float getHealthPercentage() {
+        if (maxHealth <= 0)
+            return 0f;
+        return (float) health / maxHealth;
+    }
+
+    public boolean isShieldPhysical() {
+        return shieldType == DamageType.PHYSICAL;
+    }
+
+    public DamageType getShieldType() {
+        return shieldType;
+    }
+
+    public int getCurrentShield() {
+        return currentShield;
+    }
+
+    public int getMaxShield() {
+        return maxShield;
+    }
+
+    public DamageType getAttackDamageType() {
+        return attackDamageType;
+    }
+
+    public void setAttackDamageType(DamageType type) {
+        this.attackDamageType = type;
+    }
+
+    public void setShield(DamageType type, int amount) {
+        this.shieldType = type;
+        this.maxShield = amount;
+        this.currentShield = amount;
     }
 
     public void knockback(float sourceX, float sourceY, float strengthMultiplier, CollisionManager cm) {
@@ -175,7 +292,7 @@ public class Enemy extends GameObject {
                 if (Math.abs(knockbackVx) > 5.0f) {
                     takeDamage(1); // Small impact damage
                     // Visual/Audio could be added here
-                    System.out.println("Enemy hit wall hard! (X)");
+                    GameLogger.debug("Enemy", "Enemy hit wall hard! (X) Vel: " + knockbackVx);
                 }
                 knockbackVx = -knockbackVx * 0.5f; // Bounce X (0.5 elasticity)
             }
@@ -183,7 +300,7 @@ public class Enemy extends GameObject {
                 // Y Axis Collision
                 if (Math.abs(knockbackVy) > 5.0f) {
                     takeDamage(1); // Small impact damage
-                    System.out.println("Enemy hit wall hard! (Y)");
+                    GameLogger.debug("Enemy", "Enemy hit wall hard! (Y) Vel: " + knockbackVy);
                 }
                 knockbackVy = -knockbackVy * 0.5f; // Bounce Y (0.5 elasticity)
             }
@@ -228,7 +345,7 @@ public class Enemy extends GameObject {
                 if (dotTimer >= 1.0f) { // Damage every 1 second
                     takeDamage(1);
                     dotTimer = 0f;
-                    System.out.println("Enemy takes DOT from " + currentEffect);
+                    GameLogger.debug("Enemy", "Enemy takes DOT from " + currentEffect);
                 }
             }
 

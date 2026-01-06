@@ -108,6 +108,20 @@ public class SettingsScreen implements Screen {
         });
         gameplayTable.add(runSlider).width(150);
         gameplayTable.add(runLabel).width(40).padLeft(5);
+        gameplayTable.row();
+
+        // Fog of War Toggle
+        gameplayTable.add(new Label("Fog of War:", skin)).right().padRight(10);
+        TextButton fogBtn = new TextButton(GameSettings.isFogEnabled() ? "ON" : "OFF", skin);
+        fogBtn.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                boolean newState = !GameSettings.isFogEnabled();
+                GameSettings.setFogEnabled(newState);
+                fogBtn.setText(newState ? "ON" : "OFF");
+            }
+        });
+        gameplayTable.add(fogBtn).width(100).left();
 
         root.add(gameplayTable).colspan(2).padBottom(20).row();
 

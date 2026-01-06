@@ -2,16 +2,19 @@ package de.tum.cit.fop.maze.screens;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.Label;
-import com.badlogic.gdx.scenes.scene2d.ui.Table;
-import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import de.tum.cit.fop.maze.MazeRunnerGame;
+import de.tum.cit.fop.maze.utils.AchievementManager;
+
+import java.util.List;
 
 public class VictoryScreen implements Screen {
 
@@ -20,9 +23,28 @@ public class VictoryScreen implements Screen {
     private final de.tum.cit.fop.maze.utils.SimpleParticleSystem particleSystem;
     private final Texture backgroundTexture;
 
+    // Statistics
+    private int killCount = 0;
+    private int coinsCollected = 0;
+    private List<String> newAchievements = null;
+
+    /**
+     * Original constructor (backward compatible)
+     */
     public VictoryScreen(MazeRunnerGame game, String lastMapPath) {
+        this(game, lastMapPath, 0, 0, null);
+    }
+
+    /**
+     * Extended constructor with statistics and achievements
+     */
+    public VictoryScreen(MazeRunnerGame game, String lastMapPath, int killCount,
+            int coinsCollected, List<String> newAchievements) {
         this.game = game;
         this.stage = new Stage(new ScreenViewport(), game.getSpriteBatch());
+        this.killCount = killCount;
+        this.coinsCollected = coinsCollected;
+        this.newAchievements = newAchievements;
 
         // Determine theme
         de.tum.cit.fop.maze.utils.SimpleParticleSystem.Theme theme = getTheme(lastMapPath);
@@ -36,12 +58,51 @@ public class VictoryScreen implements Screen {
         stage.addActor(table);
 
         Label title = new Label("VICTORY!", game.getSkin(), "title");
-        table.add(title).padBottom(50).row();
+        table.add(title).padBottom(30).row();
 
         // Dynamic Story Text
         String storyText = getStoryText(lastMapPath);
         Label subtitle = new Label(storyText, game.getSkin());
-        table.add(subtitle).padBottom(50).row();
+        table.add(subtitle).padBottom(20).row();
+
+        // === Statistics Display ===
+        if (killCount > 0 || coinsCollected > 0) {
+            Table statsTable = new Table();
+            statsTable.pad(10);
+
+            if (killCount > 0) {
+                Label killLabel = new Label("Enemies Defeated: " + killCount, game.getSkin());
+                killLabel.setColor(Color.RED);
+                statsTable.add(killLabel).padRight(30);
+            }
+
+            if (coinsCollected > 0) {
+                Label coinLabel = new Label("Coins Collected: " + coinsCollected, game.getSkin());
+                coinLabel.setColor(Color.GOLD);
+                statsTable.add(coinLabel);
+            }
+
+            table.add(statsTable).padBottom(20).row();
+        }
+
+        // === New Achievements Display ===
+        if (newAchievements != null && !newAchievements.isEmpty()) {
+            Label achievementTitle = new Label("New Achievements!", game.getSkin());
+            achievementTitle.setColor(Color.CYAN);
+            table.add(achievementTitle).padBottom(10).row();
+
+            HorizontalGroup achievementGroup = new HorizontalGroup();
+            achievementGroup.space(15);
+
+            for (String achievement : newAchievements) {
+                Table card = createAchievementCard(achievement);
+                achievementGroup.addActor(card);
+            }
+
+            ScrollPane scrollPane = new ScrollPane(achievementGroup, game.getSkin());
+            scrollPane.setScrollingDisabled(false, true);
+            table.add(scrollPane).width(600).padBottom(20).row();
+        }
 
         // Calculate Next Level Logic
         final String nextMapPath = calculateNextLevel(lastMapPath);
@@ -61,22 +122,40 @@ public class VictoryScreen implements Screen {
             public void changed(ChangeEvent event, Actor actor) {
                 // Check if map exists, if not generate it
                 if (!Gdx.files.internal(nextMapPath).exists() && !Gdx.files.local(nextMapPath).exists()) {
-                    new de.tum.cit.fop.maze.utils.MapGenerator().generateAndSave(nextMapPath);
+                    de.tum.cit.fop.maze.config.RandomMapConfig config = de.tum.cit.fop.maze.config.RandomMapConfig.NORMAL
+                            .copy();
+
+                    int nextLevel = getLevelNumber(nextMapPath);
+                    String nextTheme = "Grassland";
+                    if (nextLevel >= 5 && nextLevel <= 8)
+                        nextTheme = "Desert";
+                    else if (nextLevel >= 9 && nextLevel <= 12)
+                        nextTheme = "Ice";
+                    else if (nextLevel >= 13 && nextLevel <= 16)
+                        nextTheme = "Jungle";
+                    else if (nextLevel >= 17 && nextLevel <= 20)
+                        nextTheme = "Space";
+
+                    config.setTheme(nextTheme);
+
+                    // Increase difficulty slightly
+                    config.setDifficulty(Math.min(5, (nextLevel / 4) + 1));
+
+                    new de.tum.cit.fop.maze.utils.MapGenerator(config).generateAndSave(nextMapPath);
                 }
                 game.setScreen(new GameScreen(game, nextMapPath, true));
             }
         });
-        table.add(nextBtn).width(300).height(60).padBottom(20).row();
+        table.add(nextBtn).width(300).height(60).padBottom(15).row();
 
         TextButton skillBtn = new TextButton("Open Skill Tree", game.getSkin());
         skillBtn.addListener(new ChangeListener() {
-
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 game.setScreen(new SkillScreen(game, lastMapPath));
             }
         });
-        table.add(skillBtn).width(300).height(60).padBottom(20).row();
+        table.add(skillBtn).width(300).height(60).padBottom(15).row();
 
         TextButton menuBtn = new TextButton("Back to Menu", game.getSkin());
         menuBtn.addListener(new ChangeListener() {
@@ -88,19 +167,37 @@ public class VictoryScreen implements Screen {
         table.add(menuBtn).width(300).height(60);
     }
 
+    /**
+     * Create a simple achievement card display
+     */
+    private Table createAchievementCard(String achievementName) {
+        Table card = new Table();
+        card.pad(8);
+        card.setBackground(game.getSkin().newDrawable("white", new Color(0.2f, 0.4f, 0.6f, 0.9f)));
+
+        Label nameLabel = new Label(achievementName, game.getSkin());
+        nameLabel.setColor(Color.WHITE);
+        nameLabel.setAlignment(Align.center);
+        nameLabel.setFontScale(0.9f);
+        card.add(nameLabel).width(120).center();
+
+        return card;
+    }
+
     private String getStoryText(String mapPath) {
         if (mapPath == null)
             return "You retrieved the Chip!";
 
-        if (mapPath.contains("level-1")) {
-            return "You found the ancient key in the forest!";
-        } else if (mapPath.contains("level-2")) {
-            return "You survived the scorching sands!";
-        } else if (mapPath.contains("level-3")) {
+        int level = getLevelNumber(mapPath);
+        if (level >= 1 && level <= 4) {
+            return "You found the ancient key in the grasslands!";
+        } else if (level >= 5 && level <= 8) {
+            return "You survived the scorching sands of the desert!";
+        } else if (level >= 9 && level <= 12) {
             return "You conquered the frozen wasteland!";
-        } else if (mapPath.contains("level-4")) {
+        } else if (level >= 13 && level <= 16) {
             return "You navigated the deadly jungle!";
-        } else if (mapPath.contains("level-5")) {
+        } else if (level >= 17 && level <= 20) {
             return "You escaped the alien station!";
         } else {
             return "You retrieved the Chip!";
@@ -110,17 +207,34 @@ public class VictoryScreen implements Screen {
     private de.tum.cit.fop.maze.utils.SimpleParticleSystem.Theme getTheme(String mapPath) {
         if (mapPath == null)
             return de.tum.cit.fop.maze.utils.SimpleParticleSystem.Theme.FOREST;
-        if (mapPath.contains("level-1"))
+
+        int level = getLevelNumber(mapPath);
+        if (level >= 1 && level <= 4)
             return de.tum.cit.fop.maze.utils.SimpleParticleSystem.Theme.FOREST;
-        if (mapPath.contains("level-2"))
+        if (level >= 5 && level <= 8)
             return de.tum.cit.fop.maze.utils.SimpleParticleSystem.Theme.DESERT;
-        if (mapPath.contains("level-3"))
-            return de.tum.cit.fop.maze.utils.SimpleParticleSystem.Theme.RAIN; // Ice/Wet
-        if (mapPath.contains("level-4"))
+        if (level >= 9 && level <= 12)
+            return de.tum.cit.fop.maze.utils.SimpleParticleSystem.Theme.RAIN;
+        if (level >= 13 && level <= 16)
             return de.tum.cit.fop.maze.utils.SimpleParticleSystem.Theme.JUNGLE;
-        if (mapPath.contains("level-5"))
+        if (level >= 17 && level <= 20)
             return de.tum.cit.fop.maze.utils.SimpleParticleSystem.Theme.SPACE;
+
         return de.tum.cit.fop.maze.utils.SimpleParticleSystem.Theme.FOREST;
+    }
+
+    private int getLevelNumber(String mapPath) {
+        try {
+            String clean = mapPath.replace("maps/level-", "").replace(".properties", "");
+            // Handle local path case just in case
+            if (clean.contains("level-")) {
+                // Regex fallback if simple replace failed due to different path structure
+                clean = clean.replaceAll(".*level-", "");
+            }
+            return Integer.parseInt(clean);
+        } catch (Exception e) {
+            return 1;
+        }
     }
 
     private String getBackgroundPath(de.tum.cit.fop.maze.utils.SimpleParticleSystem.Theme theme) {

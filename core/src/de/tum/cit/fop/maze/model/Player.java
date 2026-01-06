@@ -1,8 +1,12 @@
 package de.tum.cit.fop.maze.model;
 
 import de.tum.cit.fop.maze.config.GameSettings;
+import de.tum.cit.fop.maze.model.items.Armor;
+import de.tum.cit.fop.maze.utils.GameLogger;
 import de.tum.cit.fop.maze.model.weapons.Weapon;
 import de.tum.cit.fop.maze.model.weapons.Sword;
+import de.tum.cit.fop.maze.model.weapons.Crossbow;
+import de.tum.cit.fop.maze.model.weapons.Wand;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -77,6 +81,12 @@ public class Player extends GameObject {
     private float cooldownReduction = 0.0f; // Reduction in seconds (Max 0.5s)
     private float speedBonus = 0.0f; // Flat speed addition (or multiplier)
 
+    // === Armor System ===
+    private Armor equippedArmor = null;
+
+    // === Economy System ===
+    private int coins = 0;
+
     // 碰撞箱大小 (接近 1.0)
     private static final float SIZE = 0.99f;
 
@@ -110,6 +120,7 @@ public class Player extends GameObject {
         if (!isDead && lives <= 0) {
             isDead = true;
             deathTimer = DEATH_ANIMATION_DURATION;
+            GameLogger.info("Player", "Player died (Update Check). Lives: " + lives);
         }
 
         if (invincibilityTimer > 0) {
@@ -157,7 +168,7 @@ public class Player extends GameObject {
         if (isDead && deathTimer > 0) {
             float oldTimer = deathTimer;
             deathTimer -= delta;
-            System.out.println("Death timer: " + oldTimer + " -> " + deathTimer + " (delta: " + delta + ")");
+            // GameLogger.debug("Player", "Death timer: " + oldTimer + " -> " + deathTimer);
         }
 
         // Attack Animation Timer
@@ -286,19 +297,43 @@ public class Player extends GameObject {
         this.y = y;
     }
 
+    /**
+     * Original damage method (backward compatible, treats as PHYSICAL).
+     */
     public boolean damage(int amount) {
-        if (invincibilityTimer > 0 || isDead) { // Can't damage if dead
+        return damage(amount, DamageType.PHYSICAL);
+    }
+
+    /**
+     * Take damage with type consideration for armor system.
+     * 
+     * @param amount 伤害量
+     * @param type   伤害类型
+     * @return true 如果伤害被应用
+     */
+    public boolean damage(int amount, DamageType type) {
+        if (invincibilityTimer > 0 || isDead) {
             return false;
         }
-        this.lives -= amount;
-        if (this.lives < 0)
-            this.lives = 0;
+
+        int remainingDamage = amount;
+
+        // Check if armor absorbs this damage
+        if (equippedArmor != null) {
+            remainingDamage = equippedArmor.absorbDamage(amount, type);
+        }
+
+        if (remainingDamage > 0) {
+            this.lives -= remainingDamage;
+            if (this.lives < 0)
+                this.lives = 0;
+        }
 
         // Trigger death animation if lives reach 0
         if (this.lives <= 0) {
             isDead = true;
             deathTimer = DEATH_ANIMATION_DURATION;
-            System.out.println("Death triggered in damage()! deathTimer set to: " + deathTimer);
+            GameLogger.info("Player", "Player died (Damage Check)! Amount: " + amount + " Remaining Lives: " + lives);
         }
 
         this.invincibilityTimer = GameSettings.playerInvincibilityDuration + invincibilityExtension;
@@ -380,11 +415,28 @@ public class Player extends GameObject {
     // ==================== Weapon System ====================
 
     public boolean pickupWeapon(Weapon weapon) {
-        if (inventory.size() < 3) {
+        if (inventory.size() < 4) { // Increased to 4 slots
             inventory.add(weapon);
+            GameLogger.info("Player", "Picked up weapon: " + weapon.getName());
             return true;
         }
         return false; // Inventory full
+    }
+
+    public void switchToWeapon(int index) {
+        if (index >= 0 && index < inventory.size()) {
+            currentWeaponIndex = index;
+            justSwitchedWeaponName = getCurrentWeapon().getName();
+            switchNameTimer = 2.0f;
+        }
+    }
+
+    public int getCurrentWeaponIndex() {
+        return currentWeaponIndex;
+    }
+
+    public List<Weapon> getInventory() {
+        return inventory;
     }
 
     public void switchWeapon() {
@@ -499,6 +551,10 @@ public class Player extends GameObject {
                 w = new de.tum.cit.fop.maze.model.weapons.Bow(x, y);
             else if (type.equals("MagicStaff"))
                 w = new de.tum.cit.fop.maze.model.weapons.MagicStaff(x, y);
+            else if (type.equals("Crossbow"))
+                w = new Crossbow(x, y);
+            else if (type.equals("Wand"))
+                w = new Wand(x, y);
             /* Legacy/Other types if any */
 
             if (w != null)
@@ -509,5 +565,47 @@ public class Player extends GameObject {
             inventory.add(new Sword(x, y));
         }
         currentWeaponIndex = 0;
+    }
+
+    // ==================== Armor System ====================
+
+    public void equipArmor(Armor armor) {
+        this.equippedArmor = armor;
+    }
+
+    public Armor getEquippedArmor() {
+        return equippedArmor;
+    }
+
+    public boolean hasArmor() {
+        return equippedArmor != null && equippedArmor.hasShield();
+    }
+
+    public float getArmorShieldPercentage() {
+        if (equippedArmor == null)
+            return 0f;
+        return equippedArmor.getShieldPercentage();
+    }
+
+    // ==================== Economy System ====================
+
+    public void addCoins(int amount) {
+        this.coins += amount;
+    }
+
+    public boolean spendCoins(int amount) {
+        if (coins >= amount) {
+            coins -= amount;
+            return true;
+        }
+        return false;
+    }
+
+    public int getCoins() {
+        return coins;
+    }
+
+    public void setCoins(int coins) {
+        this.coins = coins;
     }
 }

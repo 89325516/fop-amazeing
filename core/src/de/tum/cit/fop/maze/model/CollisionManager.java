@@ -1,35 +1,19 @@
 package de.tum.cit.fop.maze.model;
 
+import de.tum.cit.fop.maze.utils.GameLogger;
+
 import java.util.List;
 
-/*
- * ╔═══════════════════════════════════════════════════════════════════════════╗
- * ║  ⚠️  CORE PHYSICS FILE - DO NOT MODIFY WITHOUT TEAM LEAD APPROVAL ⚠️     ║
- * ╠═══════════════════════════════════════════════════════════════════════════╣
- * ║  This file implements COLLISION DETECTION for the entire game:            ║
- * ║  • isWalkable(x,y): O(1) wall lookup via GameMap.getWall()                ║
- * ║  • isWalkableForEnemy(x,y): Additional Exit blocking for enemies          ║
- * ║  • isWalkableForPlayer(x,y,hasKey): Exit blocking if no key               ║
- * ║  • checkCollision(mover): Detects overlap with dynamic objects            ║
- * ║                                                                           ║
- * ║  PERFORMANCE: All methods are O(1) due to IntMap in GameMap.              ║
- * ║  Switching to linear search will cause lag on large maps.                 ║
- * ║                                                                           ║
- * ║  GAME LOGIC: isWalkableForPlayer prevents escaping before getting key.    ║
- * ║  Removing this breaks the core gameplay requirement.                      ║
- * ║                                                                           ║
- * ║  If you modify collision logic, test:                                     ║
- * ║  - Player cannot walk through walls                                       ║
- * ║  - Player cannot exit without key                                         ║
- * ║  - Enemies cannot exit the map or stand on exit tiles                     ║
- * ╚═══════════════════════════════════════════════════════════════════════════╝
- */
-
 /**
- * 管理 GameObjects 之间的 collision 检测。
- * 确保玩家不会穿墙，并检测与敌人/物品的交互。
+ * CollisionManager - 重构版
+ * 
+ * 核心改进：
+ * 1. 使用 GameMap.isOccupied() 进行 O(1) 碰撞检测
+ * 2. 正确处理边界（地图边界外=不可行走）
+ * 3. 支持多格墙体的完整碰撞
  */
 public class CollisionManager {
+
     private GameMap gameMap;
 
     public CollisionManager(GameMap gameMap) {
@@ -37,61 +21,46 @@ public class CollisionManager {
     }
 
     /**
-     * 检查提议的网格位置 (x, y) 是否可移动 (即没有 Wall)。
-     * 使用整数坐标进行精确的网格碰撞检测。
-     * 
-     * @param x 提议的 x 坐标 (网格坐标)
-     * @param y 提议的 y 坐标 (网格坐标)
-     * @return 如果位置没有 Wall，则返回 true
+     * 检查格子是否可行走
+     * - 在地图范围内
+     * - 没有被墙体占用
      */
     public boolean isWalkable(int x, int y) {
-        // 检查地图边界
-        if (x < 0 || y < 0 || x >= gameMap.getWidth() || y >= gameMap.getHeight()) {
+        // 边界检查：必须在总地图范围内
+        if (!gameMap.isInBounds(x, y)) {
             return false;
         }
 
-        // 空间分割优化：O(1) 查找墙壁
-        if (gameMap.getWall(x, y) != null) {
-            return false;
-        }
-        return true;
+        // 检查是否被墙体占用
+        return !gameMap.isOccupied(x, y);
     }
 
     /**
-     * 对敌人更严格的移动检查：不能穿墙，也不能穿过出口/入口 (防止跑出地图或通过关卡)
-     * OPTIMIZED: Uses cached exit position for O(1) lookup.
+     * 敌人的移动检查：不能穿墙，不能穿过出口
      */
     public boolean isWalkableForEnemy(int x, int y) {
-        if (!isWalkable(x, y))
+        if (!isWalkable(x, y)) {
             return false;
+        }
 
-        // O(1) Exit check using cached position
+        // 敌人不能站在出口上
         if (x == gameMap.getExitX() && y == gameMap.getExitY()) {
             return false;
         }
+
         return true;
     }
 
     /**
-     * 检查玩家是否可以移动到指定位置。
-     * 如果玩家没有钥匙，不能站在 Exit 位置（防止逃出围墙）。
-     * OPTIMIZED: Uses cached exit position for O(1) lookup.
-     * 
-     * @param x      目标 x 坐标
-     * @param y      目标 y 坐标
-     * @param hasKey 玩家是否持有钥匙
-     * @return 如果可以移动则返回 true
+     * 玩家的移动检查：有钥匙才能站在出口
      */
     public boolean isWalkableForPlayer(int x, int y, boolean hasKey) {
-        if (!isWalkable(x, y))
+        if (!isWalkable(x, y)) {
             return false;
+        }
 
-        // 如果有钥匙，可以自由移动
-        if (hasKey)
-            return true;
-
-        // O(1) Exit check - 没有钥匙时不能站在出口
-        if (x == gameMap.getExitX() && y == gameMap.getExitY()) {
+        // 没有钥匙不能站在出口
+        if (!hasKey && x == gameMap.getExitX() && y == gameMap.getExitY()) {
             return false;
         }
 
@@ -99,32 +68,53 @@ public class CollisionManager {
     }
 
     /**
-     * 检查移动者当前位置是否与任何交互对象 (Enemy, Trap, Key, Exit) 重叠。
+     * 检查浮点坐标的四个角是否都可行走
+     * 用于玩家/实体的精确碰撞检测
      * 
-     * @param mover 正在移动的对象 (通常是 Player)
-     * @return 发生 collision 的对象，如果没有则返回 null。
+     * @param x      实体左下角X
+     * @param y      实体左下角Y
+     * @param size   实体尺寸（假设正方形）
+     * @param hasKey 玩家是否有钥匙
+     */
+    public boolean canMoveTo(float x, float y, float size, boolean hasKey) {
+        float padding = 0.05f; // 边缘容差
+
+        // 检查四个角
+        return isWalkableForPlayer((int) (x + padding), (int) (y + padding), hasKey)
+                && isWalkableForPlayer((int) (x + size - padding), (int) (y + padding), hasKey)
+                && isWalkableForPlayer((int) (x + size - padding), (int) (y + size - padding), hasKey)
+                && isWalkableForPlayer((int) (x + padding), (int) (y + size - padding), hasKey);
+    }
+
+    /**
+     * 检查移动者与动态对象的碰撞
      */
     public GameObject checkCollision(GameObject mover) {
         int moverX = Math.round(mover.getX());
         int moverY = Math.round(mover.getY());
 
-        // 只需要遍历动态物体 (性能优化)
         List<GameObject> objects = gameMap.getDynamicObjects();
         for (GameObject obj : objects) {
             if (obj == mover)
-                continue; // 不要与自己 collision
+                continue;
 
             int objX = Math.round(obj.getX());
             int objY = Math.round(obj.getY());
 
-            // 精确比较网格坐标
             if (objX == moverX && objY == moverY) {
-                // 根据类型返回有效性
-                if (obj instanceof Enemy || obj instanceof Trap || obj instanceof Key || obj instanceof Exit) {
+                if (obj instanceof Enemy || obj instanceof Trap ||
+                        obj instanceof Key || obj instanceof Exit) {
                     return obj;
                 }
             }
         }
         return null;
+    }
+
+    /**
+     * 更新关联的 GameMap
+     */
+    public void setGameMap(GameMap gameMap) {
+        this.gameMap = gameMap;
     }
 }

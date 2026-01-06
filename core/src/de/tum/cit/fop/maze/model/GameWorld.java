@@ -5,12 +5,17 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
+import de.tum.cit.fop.maze.config.GameConfig;
 import de.tum.cit.fop.maze.config.GameSettings;
 import de.tum.cit.fop.maze.effects.FloatingText;
+import de.tum.cit.fop.maze.model.items.Armor;
+import de.tum.cit.fop.maze.model.items.DroppedItem;
 import de.tum.cit.fop.maze.model.items.Potion;
 import de.tum.cit.fop.maze.model.weapons.Sword;
 import de.tum.cit.fop.maze.model.weapons.Weapon;
+import de.tum.cit.fop.maze.utils.AchievementManager;
 import de.tum.cit.fop.maze.utils.AudioManager;
+import de.tum.cit.fop.maze.utils.LootTable;
 
 import java.util.*;
 
@@ -29,7 +34,15 @@ public class GameWorld {
     private final List<FloatingText> floatingTexts;
     private boolean[][] safeGrid; // For AI pathfinding
 
+    // === New: Projectile and Loot Systems ===
+    private final List<Projectile> projectiles;
+    private final List<DroppedItem> droppedItems;
+    private DamageType levelDamageType = DamageType.PHYSICAL; // Default level damage type
+    private int levelNumber = 1;
+    private List<String> newAchievements = new ArrayList<>(); // Track newly unlocked achievements
+
     private int killCount = 0;
+    private int coinsCollected = 0; // Track coins collected this session
     private int playerDirection = 0; // 0=Down, 1=Up, 2=Left, 3=Right
 
     // Listener for events that require Screen transition (Victory, GameOver)
@@ -52,6 +65,8 @@ public class GameWorld {
         this.enemies = new ArrayList<>();
         this.mobileTraps = new ArrayList<>();
         this.floatingTexts = new ArrayList<>();
+        this.projectiles = new ArrayList<>();
+        this.droppedItems = new ArrayList<>();
 
         // Populate lists from map
         for (GameObject obj : gameMap.getDynamicObjects()) {
@@ -59,6 +74,16 @@ public class GameWorld {
                 enemies.add((Enemy) obj);
             else if (obj instanceof MobileTrap)
                 mobileTraps.add((MobileTrap) obj);
+        }
+
+        // Parse level number from path for scaling
+        try {
+            String levelStr = levelPath.replaceAll("[^0-9]", "");
+            if (!levelStr.isEmpty()) {
+                this.levelNumber = Integer.parseInt(levelStr);
+            }
+        } catch (Exception e) {
+            this.levelNumber = 1;
         }
 
         // AI Pathfinding Setup
@@ -88,8 +113,16 @@ public class GameWorld {
         // 3. Entity Updates
         updateEnemies(delta);
         updateTraps(delta);
+        updateProjectiles(delta); // NEW: Update projectiles
+        updateDroppedItems(); // NEW: Handle item pickup
         updateDynamicObjects();
         updateFloatingTexts(delta);
+
+        // 4. Update player's equipped weapon (for reload timer)
+        Weapon currentWeapon = player.getCurrentWeapon();
+        if (currentWeapon != null) {
+            currentWeapon.update(delta);
+        }
     }
 
     // --- Input Logic ---
@@ -184,9 +217,10 @@ public class GameWorld {
                         angleDiff += 360;
 
                     if (Math.abs(angleDiff) <= 90 || dist < 0.5f) {
-                        int totalDamage = currentWeapon.getDamage() + player.getDamageBonus(); // Fixed: Added player
-                                                                                               // bonus
-                        e.takeDamage(totalDamage);
+                        int totalDamage = currentWeapon.getDamage() + player.getDamageBonus();
+
+                        // Apply damage with damage type consideration
+                        e.takeDamage(totalDamage, currentWeapon.getDamageType());
                         if (e.getHealth() > 0)
                             e.applyEffect(currentWeapon.getEffect());
 
@@ -199,30 +233,10 @@ public class GameWorld {
                         kbMult = MathUtils.clamp(kbMult, 1.0f, 4.0f);
 
                         e.knockback(player.getX(), player.getY(), kbMult * player.getKnockbackMultiplier(),
-                                collisionManager); // Fixed: Added knockback multiplier
+                                collisionManager);
 
                         if (e.isDead() && !e.isRemovable()) { // Just died
-                            AudioManager.getInstance().playSound("kill");
-                            killCount++;
-
-                            int sp = e.getSkillPointReward();
-                            player.gainSkillPoints(sp);
-                            floatingTexts.add(new FloatingText(e.getX(), e.getY() + 0.5f, "+" + sp, Color.GOLD));
-
-                            // Loot
-                            if (Math.random() < 0.2f) {
-                                gameMap.addGameObject(new Potion(e.getX(), e.getY()));
-                            } else if (Math.random() < 0.25f) {
-                                int weaponType = MathUtils.random(2);
-                                GameObject drops;
-                                if (weaponType == 0)
-                                    drops = new Sword(e.getX(), e.getY());
-                                else if (weaponType == 1)
-                                    drops = new de.tum.cit.fop.maze.model.weapons.Bow(e.getX(), e.getY());
-                                else
-                                    drops = new de.tum.cit.fop.maze.model.weapons.MagicStaff(e.getX(), e.getY());
-                                gameMap.addGameObject(drops);
-                            }
+                            handleEnemyDeath(e);
                         }
                     }
                 }
@@ -435,5 +449,195 @@ public class GameWorld {
 
     public int getPlayerDirection() {
         return playerDirection;
+    }
+
+    // === New Methods for Extended Systems ===
+
+    /**
+     * Handle enemy death: play sound, award points, spawn loot, check achievements
+     */
+    private void handleEnemyDeath(Enemy e) {
+        AudioManager.getInstance().playSound("kill");
+        killCount++;
+
+        // Check first kill achievement
+        if (killCount == 1) {
+            newAchievements.addAll(AchievementManager.checkFirstKill());
+        }
+
+        // Award skill points
+        int sp = e.getSkillPointReward();
+        player.gainSkillPoints(sp);
+        floatingTexts.add(new FloatingText(e.getX(), e.getY() + 0.5f, "+" + sp, Color.GOLD));
+
+        // Generate loot using LootTable
+        DroppedItem loot = LootTable.generateLoot(e.getX(), e.getY(), levelNumber);
+        if (loot != null) {
+            droppedItems.add(loot);
+
+            // Show loot floating text
+            String lootName = loot.getDisplayName();
+            floatingTexts.add(new FloatingText(e.getX(), e.getY() + 0.3f, lootName, Color.CYAN));
+        }
+
+        // Small chance to also drop a potion (10%)
+        if (Math.random() < 0.1f) {
+            gameMap.addGameObject(new Potion(e.getX() + 0.5f, e.getY()));
+        }
+    }
+
+    /**
+     * Update all active projectiles
+     */
+    private void updateProjectiles(float delta) {
+        Iterator<Projectile> iter = projectiles.iterator();
+        while (iter.hasNext()) {
+            Projectile p = iter.next();
+
+            // Update projectile position
+            if (p.update(delta, collisionManager)) {
+                iter.remove();
+                continue;
+            }
+
+            // Check collision with enemies (player projectiles only)
+            if (p.isPlayerOwned()) {
+                for (Enemy e : enemies) {
+                    if (e.isDead())
+                        continue;
+                    if (p.hitsTarget(e)) {
+                        e.takeDamage(p.getDamage(), p.getDamageType());
+                        if (e.getHealth() > 0) {
+                            e.applyEffect(p.getEffect());
+                        }
+                        floatingTexts.add(new FloatingText(e.getX(), e.getY(), "-" + p.getDamage(), Color.ORANGE));
+                        AudioManager.getInstance().playSound("hit");
+
+                        if (e.isDead() && !e.isRemovable()) {
+                            handleEnemyDeath(e);
+                        }
+
+                        p.markHit();
+                        break;
+                    }
+                }
+            } else {
+                // Enemy projectile hitting player
+                if (p.hitsTarget(player)) {
+                    if (player.damage(p.getDamage(), p.getDamageType())) {
+                        player.knockback(p.getX(), p.getY(), 1.0f);
+                        AudioManager.getInstance().playSound("hit");
+                    }
+                    p.markHit();
+                }
+            }
+
+            // Remove if hit something
+            if (p.isExpired()) {
+                iter.remove();
+            }
+        }
+    }
+
+    /**
+     * Update dropped items and handle pickup
+     */
+    private void updateDroppedItems() {
+        Iterator<DroppedItem> iter = droppedItems.iterator();
+        while (iter.hasNext()) {
+            DroppedItem item = iter.next();
+            item.update(Gdx.graphics.getDeltaTime());
+
+            if (item.canPickUp(player)) {
+                if (item.applyToPlayer(player)) {
+                    iter.remove();
+                    AudioManager.getInstance().playSound("collect");
+
+                    // Check achievements
+                    switch (item.getType()) {
+                        case WEAPON:
+                            Weapon w = (Weapon) item.getPayload();
+                            newAchievements.addAll(AchievementManager.checkWeaponPickup(w.getName()));
+                            break;
+                        case ARMOR:
+                            Armor a = (Armor) item.getPayload();
+                            newAchievements.addAll(AchievementManager.checkArmorPickup(a.getTypeId()));
+                            break;
+                        case COIN:
+                            int amount = (Integer) item.getPayload();
+                            coinsCollected += amount;
+                            floatingTexts.add(new FloatingText(player.getX(), player.getY() + 0.5f,
+                                    "+" + amount + " coins", Color.GOLD));
+                            newAchievements.addAll(AchievementManager.checkCoinMilestone(amount));
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Fire a projectile from a ranged weapon
+     */
+    public void fireProjectile(float startX, float startY, float dirX, float dirY,
+            Weapon weapon, boolean playerOwned) {
+        float speed = GameConfig.PROJECTILE_SPEED;
+        float length = (float) Math.sqrt(dirX * dirX + dirY * dirY);
+        if (length > 0) {
+            dirX /= length;
+            dirY /= length;
+        }
+
+        String textureKey = weapon.getDamageType() == DamageType.PHYSICAL ? "arrow" : "magic_bolt";
+
+        Projectile p = new Projectile(
+                startX, startY,
+                dirX * speed, dirY * speed,
+                weapon.getDamage() + (playerOwned ? player.getDamageBonus() : 0),
+                weapon.getDamageType(),
+                weapon.getEffect(),
+                playerOwned,
+                textureKey);
+        projectiles.add(p);
+    }
+
+    // === New Getters ===
+
+    public List<Projectile> getProjectiles() {
+        return projectiles;
+    }
+
+    public List<DroppedItem> getDroppedItems() {
+        return droppedItems;
+    }
+
+    public int getKillCount() {
+        return killCount;
+    }
+
+    public int getCoinsCollected() {
+        return coinsCollected;
+    }
+
+    public List<String> getNewAchievements() {
+        return newAchievements;
+    }
+
+    public DamageType getLevelDamageType() {
+        return levelDamageType;
+    }
+
+    public void setLevelDamageType(DamageType type) {
+        this.levelDamageType = type;
+        // Also set all enemies to this damage type
+        for (Enemy e : enemies) {
+            e.setAttackDamageType(type);
+        }
+    }
+
+    public CollisionManager getCollisionManager() {
+        return collisionManager;
     }
 }

@@ -2,42 +2,69 @@
 # AI 代理规则：纹理生成与管理
 
 **CRITICAL INSTRUCTION TO AI ASSISTANTS**:
-You must strictly follow this pipeline when assisting the user with game assets. Do not deviate from these paths or standards.
-**给AI助手的重要指令**:
-在协助用户处理游戏素材时，必须严格遵守此管线。不得偏离这些路径或标准。
+You must strictly follow this pipeline when assisting the user with game assets.
+
+---
 
 ## 1. Asset Generation Constraints (生成约束)
-- **Save Location (保存位置)**: ALWAYS save generated raw images to `raw_assets/ai_generated_raw/`.
-  - ❌ NEVER save directly to `assets/` or `core/` folders.
-- **Content (内容)**: One entity per PNG image (一物一图). For animations, use "Horizontal Strip 4 Frames".
-- **Naming (命名)**: Strict snake_case.
-  - Tiles/Items: `tile_lava.png`, `item_key.png`.
-  - Animations: MUST start with `anim_` (e.g., `anim_torch.png`).
 
-## 2. Mandatory Processing Workflow (强制处理流程)
-After generating assets or receiving images, you MUST instruct the user to run (or run yourself if capable) the following workflow:
+### Save Location
+- **Raw Input**: `raw_assets/ai_generated_raw/`
+- ❌ NEVER save directly to `assets/` or `core/` folders.
 
-1.  **Background Removal**:
-    ```bash
-    python3 scripts/process_assets.py
-    ```
-    *Effect*: Cleans white backgrounds, saves to `raw_assets/ai_processed_transparent/`.
+### Content Rules
+- One entity per PNG image (一物一图).
+- ✅ ALWAYS ask for **"Solid White Background"**.
 
-2.  **Standardization (64x64)**:
-    ```bash
-    python3 scripts/standardize_assets.py
-    ```
-    *Effect*: Resizes to strict 64x64 grid, saves to `raw_assets/ai_ready_optimized/`.
+### Naming Convention (命名规范)
+| Type | Pattern | Example |
+|------|---------|---------|
+| Wall | `wall_{theme}_{WxH}_v{variant}.png` | `wall_grassland_2x2_v1.png` |
+| Tile | `tile_{theme}_{name}.png` | `tile_grassland_grass.png` |
+| Item | `item_{name}.png` | `item_key_gold.png` |
 
-## 3. Final Output Specifications (最终输出规格)
-- **Resolution**:
-  - Standard: Exactly **64x64 pixels**.
-  - Animation (`anim_`): Exactly **256x64 pixels** (Horizontal Strip).
-- **Tile Logic**: Texture fills the entire square.
-- **Item Logic**: Item is centered and scaled within the square.
-- **Location**: `raw_assets/ai_ready_optimized/` is the ONLY source of truth for game-ready textures.
+**Wall Themes**: `grassland`, `desert`, `ice`, `jungle`, `space`
+**Wall Sizes (NEW)**: `2x2`, `3x2`, `4x2`, `3x3`, `4x4`
+**Variants**: `v1`, `v2`
 
-## 4. Forbidden Actions (禁止操作)
-- ❌ DO NOT create spritesheets manually unless using a specific packing tool on the optimized folder.
-- ❌ DO NOT modify files in `ai_processed_transparent` or `ai_ready_optimized` manually; always regenerate from raw.
-- ❌ DO NOT bypass the standardization script.
+---
+
+## 2. Processing Workflow (处理流程)
+
+```bash
+python3 scripts/process_assets.py
+python3 scripts/standardize_assets.py
+cp raw_assets/ai_ready_optimized/wall_*.png assets/images/walls/
+```
+
+---
+
+## 3. Wall Height Logic (墙体高度逻辑)
+
+Walls have visual height = **logical height + 0.5** (for isolated walls).
+
+| Logical Size | Texture Size | Pixel Size |
+|--------------|--------------|------------|
+| 2x2 | 2x2.5 | 128x160 |
+| 3x2 | 3x2.5 | 192x160 |
+| 4x2 | 4x2.5 | 256x160 |
+| 3x3 | 3x3.5 | 192x224 |
+| 4x4 | 4x4.5 | 256x288 |
+
+---
+
+## 4. External AI Generation Workflow (外部生成流程)
+
+When user says: **"我要去外部生成素材装填进 {THEME} 主题的纹理素材"**
+
+Agent provides prompt list, user generates externally, places in `raw_assets/ai_generated_raw/`, says "素材已放入".
+
+---
+
+## 5. Cleanup Rules (清理规则)
+
+When replacing assets, delete from ALL directories:
+- `raw_assets/ai_generated_raw/`
+- `raw_assets/ai_processed_transparent/`
+- `raw_assets/ai_ready_optimized/`
+- `assets/images/walls/`
