@@ -9,7 +9,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.badlogic.gdx.utils.viewport.FitViewport;
 import de.tum.cit.fop.maze.MazeRunnerGame;
 
 public class GameOverScreen implements Screen {
@@ -21,7 +21,7 @@ public class GameOverScreen implements Screen {
     // Updated Constructor
     public GameOverScreen(MazeRunnerGame game, int killCount) {
         this.game = game;
-        this.stage = new Stage(new ScreenViewport(), game.getSpriteBatch());
+        this.stage = new Stage(new FitViewport(1920, 1080), game.getSpriteBatch());
         this.particleSystem = new de.tum.cit.fop.maze.utils.SimpleParticleSystem(
                 de.tum.cit.fop.maze.utils.SimpleParticleSystem.Theme.GAME_OVER);
 

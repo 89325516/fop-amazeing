@@ -11,12 +11,14 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.Align;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.badlogic.gdx.utils.viewport.FitViewport;
 import de.tum.cit.fop.maze.MazeRunnerGame;
 import de.tum.cit.fop.maze.shop.ShopItem;
 import de.tum.cit.fop.maze.shop.ShopManager;
 import de.tum.cit.fop.maze.utils.AudioManager;
+import de.tum.cit.fop.maze.utils.DialogFactory;
 import de.tum.cit.fop.maze.utils.GameLogger;
+import de.tum.cit.fop.maze.utils.UIUtils;
 
 import java.util.List;
 
@@ -103,19 +105,7 @@ public class ShopScreen implements Screen {
         scrollPane.setScrollingDisabled(true, false);
 
         // Auto-focus scroll on hover so user doesn't need to click
-        scrollPane.addListener(new com.badlogic.gdx.scenes.scene2d.InputListener() {
-            @Override
-            public void enter(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y, int pointer,
-                    Actor fromActor) {
-                stage.setScrollFocus(scrollPane);
-            }
-
-            @Override
-            public void exit(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y, int pointer,
-                    Actor toActor) {
-                // Optional: clear focus on exit, or keep it. Keeping it is usually better UX.
-            }
-        });
+        UIUtils.enableHoverScrollFocus(scrollPane, stage);
 
         // Use percentage width for responsive layout (60% of screen width)
         root.add(scrollPane).width(Value.percentWidth(0.6f, root)).height(Value.percentHeight(0.6f, root)).padBottom(20)
@@ -200,18 +190,25 @@ public class ShopScreen implements Screen {
             boolean canAfford = ShopManager.getPlayerCoins() >= item.getPrice();
             buyBtn.setColor(canAfford ? Color.WHITE : Color.DARK_GRAY);
 
-            if (canAfford) {
-                final ShopItem itemToBuy = item;
-                buyBtn.addListener(new ChangeListener() {
-                    @Override
-                    public void changed(ChangeEvent event, Actor actor) {
+            // === 修复：始终添加监听器，余额不足时给出反馈 ===
+            final ShopItem itemToBuy = item;
+            final int itemPrice = item.getPrice();
+            buyBtn.addListener(new ChangeListener() {
+                @Override
+                public void changed(ChangeEvent event, Actor actor) {
+                    int currentCoins = ShopManager.getPlayerCoins();
+                    if (currentCoins >= itemPrice) {
                         if (ShopManager.purchaseItem(itemToBuy.getId())) {
                             AudioManager.getInstance().playSound("collect");
                             refreshUI();
                         }
+                    } else {
+                        // 余额不足反馈
+                        AudioManager.getInstance().playSound("select");
+                        showInsufficientFundsDialog(itemPrice, currentCoins);
                     }
-                });
-            }
+                }
+            });
             priceTable.add(buyBtn);
         }
 
@@ -223,6 +220,13 @@ public class ShopScreen implements Screen {
     private void refreshUI() {
         coinLabel.setText("Coins: " + ShopManager.getPlayerCoins());
         showAllItems();
+    }
+
+    /**
+     * 显示余额不足提示对话框
+     */
+    private void showInsufficientFundsDialog(int itemPrice, int currentCoins) {
+        DialogFactory.showInsufficientFundsDialog(stage, skin, itemPrice, currentCoins);
     }
 
     @Override

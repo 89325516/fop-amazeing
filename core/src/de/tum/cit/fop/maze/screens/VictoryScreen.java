@@ -10,11 +10,12 @@ import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.utils.Align;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.badlogic.gdx.utils.viewport.FitViewport;
 import de.tum.cit.fop.maze.MazeRunnerGame;
 import de.tum.cit.fop.maze.utils.AchievementManager;
 
 import java.util.List;
+import de.tum.cit.fop.maze.utils.UIUtils;
 
 public class VictoryScreen implements Screen {
 
@@ -41,7 +42,7 @@ public class VictoryScreen implements Screen {
     public VictoryScreen(MazeRunnerGame game, String lastMapPath, int killCount,
             int coinsCollected, List<String> newAchievements) {
         this.game = game;
-        this.stage = new Stage(new ScreenViewport(), game.getSpriteBatch());
+        this.stage = new Stage(new FitViewport(1920, 1080), game.getSpriteBatch());
         this.killCount = killCount;
         this.coinsCollected = coinsCollected;
         this.newAchievements = newAchievements;
@@ -101,6 +102,11 @@ public class VictoryScreen implements Screen {
 
             ScrollPane scrollPane = new ScrollPane(achievementGroup, game.getSkin());
             scrollPane.setScrollingDisabled(false, true);
+            scrollPane.setFadeScrollBars(false);
+
+            // Auto-focus scroll on hover so user doesn't need to click
+            UIUtils.enableHoverScrollFocus(scrollPane, stage);
+
             table.add(scrollPane).width(600).padBottom(20).row();
         }
 

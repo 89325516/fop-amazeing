@@ -28,12 +28,15 @@ import de.tum.cit.fop.maze.model.*;
 import de.tum.cit.fop.maze.model.items.Potion;
 import de.tum.cit.fop.maze.model.weapons.Weapon;
 import de.tum.cit.fop.maze.ui.GameHUD;
+import de.tum.cit.fop.maze.utils.AchievementManager;
+import de.tum.cit.fop.maze.utils.AchievementUnlockInfo;
 import de.tum.cit.fop.maze.utils.MapLoader;
 import de.tum.cit.fop.maze.utils.SaveManager;
 import de.tum.cit.fop.maze.utils.GameLogger;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Refactored GameScreen using GameWorld Model-View Separation.
@@ -177,15 +180,29 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
     @Override
     public void onGameOver(int killCount) {
         GameLogger.info("GameScreen", "Game Over triggered! Kill count: " + killCount);
-        game.setScreen(new GameOverScreen(game, killCount));
+
+        // Build summary data
+        LevelSummaryData summaryData = new LevelSummaryData(
+                LevelSummaryData.Result.DEFEAT, currentLevelPath)
+                .setKillCount(gameWorld.getKillCount())
+                .setCoinsCollected(gameWorld.getCoinsCollected())
+                .setCompletionTime(gameWorld.getLevelElapsedTime())
+                .setTookDamage(true)
+                .setPlayerHP(0, gameWorld.getPlayer().getMaxHealth())
+                .setNewAchievements(gameWorld.getNewAchievements());
+
+        game.setScreen(new LevelSummaryScreen(game, summaryData));
     }
 
     @Override
     public void onVictory(String currentMapPath) {
-        // Auto-save logic
         Player player = gameWorld.getPlayer();
+
+        // Auto-save logic
+        // === 修复：进入下一关时恢复满血 ===
+        // 保存满血状态而非当前血量，确保下一关开始时血量恢复
         GameState state = new GameState(player.getX(), player.getY(), currentLevelPath,
-                player.getLives(), player.hasKey());
+                player.getMaxHealth(), player.hasKey()); // 使用 getMaxHealth() 而非 getLives()
         state.setSkillPoints(player.getSkillPoints());
         state.setMaxHealthBonus(player.getMaxHealthBonus());
         state.setDamageBonus(player.getDamageBonus());
@@ -193,10 +210,20 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         state.setKnockbackMultiplier(player.getKnockbackMultiplier());
         state.setCooldownReduction(player.getCooldownReduction());
         state.setSpeedBonus(player.getSpeedBonus());
-        state.setInventoryWeaponTypes(player.getInventoryWeaponTypes()); // Save inventory too
+        state.setInventoryWeaponTypes(player.getInventoryWeaponTypes());
         SaveManager.saveGame(state, "auto_save_victory");
 
-        game.setScreen(new VictoryScreen(game, currentLevelPath));
+        // Build summary data
+        LevelSummaryData summaryData = new LevelSummaryData(
+                LevelSummaryData.Result.VICTORY, currentMapPath)
+                .setKillCount(gameWorld.getKillCount())
+                .setCoinsCollected(gameWorld.getCoinsCollected())
+                .setCompletionTime(gameWorld.getLevelElapsedTime())
+                .setTookDamage(gameWorld.didPlayerTakeDamage())
+                .setPlayerHP(player.getLives(), player.getMaxHealth())
+                .setNewAchievements(gameWorld.getNewAchievements());
+
+        game.setScreen(new LevelSummaryScreen(game, summaryData));
         GameLogger.info("GameScreen", "Victory achieved! Level: " + currentLevelPath);
     }
 
@@ -375,6 +402,17 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         hud.getStage().getViewport().apply();
         hud.update(delta);
         hud.render();
+
+        // === NEW: Display achievement popups ===
+        List<String> newAchievements = gameWorld.getAndClearNewAchievements();
+        for (String achievementName : newAchievements) {
+            AchievementUnlockInfo info = AchievementManager.getAchievementInfo(achievementName);
+            hud.showAchievement(info);
+            // Add gold reward to player
+            player.addCoins(info.getGoldReward());
+            GameLogger.info("GameScreen",
+                    "Achievement popup: " + achievementName + " +" + info.getGoldReward() + " gold");
+        }
 
         if (isPaused) {
             uiStage.act(delta);
@@ -611,6 +649,24 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
             }
         }
         ScrollPane scrollPane = new ScrollPane(listTable, game.getSkin());
+        scrollPane.setFadeScrollBars(false);
+
+        // Auto-focus scroll on hover so user doesn't need to click
+        final ScrollPane sp = scrollPane;
+        scrollPane.addListener(new com.badlogic.gdx.scenes.scene2d.InputListener() {
+            @Override
+            public void enter(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y, int pointer,
+                    Actor fromActor) {
+                uiStage.setScrollFocus(sp);
+            }
+
+            @Override
+            public void exit(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y, int pointer,
+                    Actor toActor) {
+                // Keep focus for better UX
+            }
+        });
+
         win.add(scrollPane).grow().pad(10).row();
         TextButton closeBtn = new TextButton("Close", game.getSkin());
         closeBtn.addListener(new ChangeListener() {

@@ -320,7 +320,16 @@ public class Player extends GameObject {
 
         // Check if armor absorbs this damage
         if (equippedArmor != null) {
+            int beforeShield = equippedArmor.getCurrentShield();
             remainingDamage = equippedArmor.absorbDamage(amount, type);
+            int absorbed = amount - remainingDamage;
+
+            // === NEW: Track armor absorbed for achievements ===
+            if (absorbed > 0) {
+                de.tum.cit.fop.maze.utils.AchievementManager.recordArmorAbsorbed(
+                        equippedArmor.getResistType().name(), absorbed);
+                GameLogger.debug("Player", "Armor absorbed " + absorbed + " " + type + " damage");
+            }
         }
 
         if (remainingDamage > 0) {

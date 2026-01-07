@@ -21,6 +21,8 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 import de.tum.cit.fop.maze.model.Player;
 import de.tum.cit.fop.maze.model.items.Armor;
 import de.tum.cit.fop.maze.model.weapons.Weapon;
+import de.tum.cit.fop.maze.utils.AchievementRarity;
+import de.tum.cit.fop.maze.utils.AchievementUnlockInfo;
 import de.tum.cit.fop.maze.utils.TextureManager;
 
 import java.util.List;
@@ -78,6 +80,9 @@ public class GameHUD implements Disposable {
     // Cached Drawables to reduce GC pressure
     private com.badlogic.gdx.scenes.scene2d.utils.Drawable selectedSlotBg;
     private com.badlogic.gdx.scenes.scene2d.utils.Drawable normalSlotBg;
+
+    // === Achievement Popup ===
+    private AchievementPopup achievementPopup;
 
     public GameHUD(SpriteBatch batch, Player player, Viewport gameViewport, Skin skin, TextureManager tm,
             Runnable onSettingsClicked) {
@@ -185,6 +190,9 @@ public class GameHUD implements Disposable {
         reloadBar.setVisible(false);
         rootTable.row();
         rootTable.add(reloadBar).width(200).height(15).bottom().padBottom(5);
+
+        // === Achievement Popup (NEW) ===
+        achievementPopup = new AchievementPopup(stage, skin);
     }
 
     public void setTarget(float x, float y) {
@@ -388,5 +396,43 @@ public class GameHUD implements Disposable {
     @Override
     public void dispose() {
         stage.dispose();
+    }
+
+    // === Achievement Methods ===
+
+    /**
+     * Show achievement unlock popup for a single achievement.
+     * 
+     * @param info Achievement unlock info containing name, rarity, and reward
+     */
+    public void showAchievement(AchievementUnlockInfo info) {
+        if (achievementPopup != null && info != null) {
+            achievementPopup.queueAchievement(info.getName(), info.getRarity(), info.getGoldReward());
+        }
+    }
+
+    /**
+     * Show achievement popup with just a name (legacy support).
+     * Uses default rarity if not found.
+     * 
+     * @param name       Achievement name
+     * @param rarity     Achievement rarity
+     * @param goldReward Gold reward amount
+     */
+    public void showAchievement(String name, AchievementRarity rarity, int goldReward) {
+        if (achievementPopup != null) {
+            achievementPopup.queueAchievement(name, rarity, goldReward);
+        }
+    }
+
+    /**
+     * Show multiple achievements (queued).
+     * 
+     * @param achievements List of achievement unlock infos
+     */
+    public void showAchievements(java.util.List<AchievementUnlockInfo> achievements) {
+        for (AchievementUnlockInfo info : achievements) {
+            showAchievement(info);
+        }
     }
 }

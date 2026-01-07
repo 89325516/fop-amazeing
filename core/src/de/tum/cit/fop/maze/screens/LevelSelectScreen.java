@@ -11,9 +11,10 @@ import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Align;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.badlogic.gdx.utils.viewport.FitViewport;
 import de.tum.cit.fop.maze.MazeRunnerGame;
 import de.tum.cit.fop.maze.config.GameSettings;
+import de.tum.cit.fop.maze.utils.UIUtils;
 
 public class LevelSelectScreen implements Screen {
 
@@ -22,7 +23,7 @@ public class LevelSelectScreen implements Screen {
 
     public LevelSelectScreen(MazeRunnerGame game) {
         this.game = game;
-        this.stage = new Stage(new ScreenViewport(), game.getSpriteBatch());
+        this.stage = new Stage(new FitViewport(1920, 1080), game.getSpriteBatch());
 
         Table mainTable = new Table();
         mainTable.setFillParent(true);
@@ -74,6 +75,9 @@ public class LevelSelectScreen implements Screen {
         ScrollPane scrollPane = new ScrollPane(levelTable, game.getSkin());
         scrollPane.setFadeScrollBars(false);
         scrollPane.setScrollingDisabled(true, false); // Disable horizontal scrolling
+
+        // Auto-focus scroll on hover so user doesn't need to click
+        UIUtils.enableHoverScrollFocus(scrollPane, stage);
 
         // Add ScrollPane to main table
         mainTable.add(scrollPane).width(450).height(400).padBottom(20).row();

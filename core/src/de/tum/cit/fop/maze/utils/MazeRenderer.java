@@ -173,7 +173,8 @@ public class MazeRenderer {
         } else if (currentFloor == textureManager.floorIce) {
             color = new Color(0.2f, 0.3f, 0.6f, 1f);
         } else if (currentFloor == textureManager.floorGrassland) {
-            color = new Color(0.4f, 0.6f, 0.1f, 1f);
+            // 灰褐色调，匹配苔藓石板地砖
+            color = new Color(0.25f, 0.22f, 0.18f, 1f);
         } else if (currentFloor == textureManager.floorJungle) {
             color = new Color(0.05f, 0.2f, 0.05f, 1f);
         } else if (currentFloor == textureManager.floorSpace) {

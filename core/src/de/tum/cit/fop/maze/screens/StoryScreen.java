@@ -12,8 +12,9 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.Align;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.badlogic.gdx.utils.viewport.FitViewport;
 import de.tum.cit.fop.maze.MazeRunnerGame;
+import de.tum.cit.fop.maze.utils.UIUtils;
 
 public class StoryScreen implements Screen {
 
@@ -57,19 +58,7 @@ public class StoryScreen implements Screen {
         scrollPane.setFadeScrollBars(false);
 
         // Auto-focus scroll on hover so user doesn't need to click
-        scrollPane.addListener(new com.badlogic.gdx.scenes.scene2d.InputListener() {
-            @Override
-            public void enter(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y, int pointer,
-                    Actor fromActor) {
-                stage.setScrollFocus(scrollPane);
-            }
-
-            @Override
-            public void exit(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y, int pointer,
-                    Actor toActor) {
-                // Optional: clear focus on exit, or keep it.
-            }
-        });
+        UIUtils.enableHoverScrollFocus(scrollPane, stage);
 
         // Use percentage width for responsive layout
         root.add(scrollPane).width(com.badlogic.gdx.scenes.scene2d.ui.Value.percentWidth(0.6f, root))

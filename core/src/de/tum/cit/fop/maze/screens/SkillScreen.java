@@ -8,10 +8,11 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.Align;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.badlogic.gdx.utils.viewport.FitViewport;
 import de.tum.cit.fop.maze.MazeRunnerGame;
 import de.tum.cit.fop.maze.model.GameState;
 import de.tum.cit.fop.maze.utils.SaveManager;
+import de.tum.cit.fop.maze.utils.UIUtils;
 
 public class SkillScreen implements Screen {
 
@@ -45,7 +46,7 @@ public class SkillScreen implements Screen {
 
     @Override
     public void show() {
-        stage = new Stage(new ScreenViewport());
+        stage = new Stage(new FitViewport(1920, 1080), game.getSpriteBatch());
         Gdx.input.setInputProcessor(stage);
 
         Table rootTable = new Table();
@@ -149,6 +150,9 @@ public class SkillScreen implements Screen {
         ScrollPane scrollPane = new ScrollPane(skillTable, skin);
         scrollPane.setFadeScrollBars(false);
         scrollPane.setScrollingDisabled(true, false); // Vertical scrolling only
+
+        // Auto-focus scroll on hover so user doesn't need to click
+        UIUtils.enableHoverScrollFocus(scrollPane, stage);
 
         rootTable.add(scrollPane).expand().fill().pad(40).row();
 

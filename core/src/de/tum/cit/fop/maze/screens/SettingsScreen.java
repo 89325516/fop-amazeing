@@ -163,9 +163,12 @@ public class SettingsScreen implements Screen {
         btnSwitchWeapon = createKeyButton("Switch Weapon", "SWITCH_WEAPON", skin);
 
         Table keyTable = new Table();
+        // Row 1: Up, Down, Left
         addToKeyTable(keyTable, "Up:", btnUp);
         addToKeyTable(keyTable, "Down:", btnDown);
         addToKeyTable(keyTable, "Left:", btnLeft);
+        keyTable.row();
+        // Row 2: Right, Attack, Switch
         addToKeyTable(keyTable, "Right:", btnRight);
         addToKeyTable(keyTable, "Atk:", btnAttack);
         addToKeyTable(keyTable, "Switch:", btnSwitchWeapon);
@@ -218,12 +221,8 @@ public class SettingsScreen implements Screen {
     }
 
     private void addToKeyTable(Table table, String label, Actor actor) {
-        table.add(new Label(label, game.getSkin())).right().pad(5);
-        table.add(actor).left().width(100).height(35).pad(5);
-        if (table.getCells().size >= 4 && table.getCells().size % 4 == 0)
-            table.row(); // Wrap ? No.
-        // Let's do 3 columns? Or just flow.
-        // The prompt uses simpler adds.
+        table.add(new Label(label, game.getSkin())).right().padRight(5);
+        table.add(actor).left().width(100).height(35).padRight(20);
     }
 
     private String getKeyName(String keyName) {

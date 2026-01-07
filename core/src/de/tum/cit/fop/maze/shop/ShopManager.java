@@ -217,6 +217,20 @@ public class ShopManager {
     }
 
     /**
+     * 将游戏中收集的金币同步到持久化存储
+     * 在关卡结束时调用此方法
+     * 
+     * @param coinsEarned 本关卡收集的金币数
+     */
+    public static void syncCoinsFromGame(int coinsEarned) {
+        if (coinsEarned > 0) {
+            addPlayerCoins(coinsEarned);
+            GameLogger.info("ShopManager",
+                    "Synced " + coinsEarned + " coins from game. New total: " + getPlayerCoins());
+        }
+    }
+
+    /**
      * 加载购买状态到内存
      */
     private static void loadPurchaseStatus() {

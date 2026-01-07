@@ -15,6 +15,7 @@ import de.tum.cit.fop.maze.model.weapons.Sword;
 import de.tum.cit.fop.maze.model.weapons.Weapon;
 import de.tum.cit.fop.maze.utils.AchievementManager;
 import de.tum.cit.fop.maze.utils.AudioManager;
+import de.tum.cit.fop.maze.utils.GameLogger;
 import de.tum.cit.fop.maze.utils.LootTable;
 
 import java.util.*;
@@ -44,6 +45,16 @@ public class GameWorld {
     private int killCount = 0;
     private int coinsCollected = 0; // Track coins collected this session
     private int playerDirection = 0; // 0=Down, 1=Up, 2=Left, 3=Right
+
+    // === Achievement Tracking ===
+    private boolean playerTookDamage = false; // For flawless victory
+    private float levelStartTime = 0f; // For speedrun achievement
+    private float levelElapsedTime = 0f;
+    private String lastUsedWeaponName = "Sword"; // Track weapon used for kill
+
+    // Multi-kill tracking
+    private static final float MULTI_KILL_WINDOW = 5.0f; // 5 seconds window
+    private List<Float> recentKillTimes = new ArrayList<>();
 
     // Listener for events that require Screen transition (Victory, GameOver)
     public interface WorldListener {
@@ -95,6 +106,9 @@ public class GameWorld {
     }
 
     public void update(float delta) {
+        // Track level elapsed time for achievements
+        levelElapsedTime += delta;
+
         // 1. Player Update
         player.update(delta, collisionManager);
 
@@ -221,8 +235,15 @@ public class GameWorld {
 
                         // Apply damage with damage type consideration
                         e.takeDamage(totalDamage, currentWeapon.getDamageType());
-                        if (e.getHealth() > 0)
+                        if (e.getHealth() > 0) {
                             e.applyEffect(currentWeapon.getEffect());
+                            // === NEW: Track effect application for achievements ===
+                            if (currentWeapon.getEffect() != null &&
+                                    currentWeapon.getEffect() != de.tum.cit.fop.maze.model.weapons.WeaponEffect.NONE) {
+                                newAchievements.addAll(AchievementManager.recordEffectApplied(
+                                        currentWeapon.getEffect().name()));
+                            }
+                        }
 
                         floatingTexts.add(new FloatingText(e.getX(), e.getY(), "-" + totalDamage, Color.RED));
                         AudioManager.getInstance().playSound("hit");
@@ -261,6 +282,7 @@ public class GameWorld {
                 if (enemy.isDead())
                     continue;
                 if (player.damage(1)) {
+                    playerTookDamage = true; // Track for flawless victory
                     player.knockback(enemy.getX(), enemy.getY(), 2.0f);
                     AudioManager.getInstance().playSound("hit");
                 }
@@ -273,6 +295,7 @@ public class GameWorld {
             trap.update(delta, collisionManager);
             if (Vector2.dst(player.getX(), player.getY(), trap.getX(), trap.getY()) < 0.8f) {
                 if (player.damage(1)) {
+                    playerTookDamage = true; // Track for flawless victory
                     player.knockback(trap.getX(), trap.getY(), 0.5f);
                 }
             }
@@ -291,6 +314,19 @@ public class GameWorld {
                 } else if (obj instanceof Exit) {
                     if (player.hasKey()) {
                         AudioManager.getInstance().playSound("victory");
+
+                        // === NEW: Check level completion achievements ===
+                        newAchievements.addAll(AchievementManager.recordLevelComplete(
+                                currentLevelPath, playerTookDamage, levelElapsedTime));
+
+                        // Check comeback achievement (complete with 1 HP)
+                        if (player.getLives() == 1) {
+                            newAchievements.addAll(AchievementManager.checkComeback(1));
+                        }
+
+                        GameLogger.info("GameWorld", "Level completed! Time: " + levelElapsedTime +
+                                "s, Damage taken: " + playerTookDamage);
+
                         // Save State Logic could go here or be handled by Listener.
                         // Let's defer to Listener for clean separation.
                         if (listener != null)
@@ -457,13 +493,47 @@ public class GameWorld {
      * Handle enemy death: play sound, award points, spawn loot, check achievements
      */
     private void handleEnemyDeath(Enemy e) {
-        AudioManager.getInstance().playSound("kill");
         killCount++;
+        GameLogger.info("GameWorld", "Enemy died! Total Kills: " + killCount);
+
+        try {
+            AudioManager.getInstance().playSound("kill");
+        } catch (Exception ex) {
+            GameLogger.error("GameWorld", "Failed to play kill sound", ex);
+        }
+
+        float currentTime = levelElapsedTime;
 
         // Check first kill achievement
         if (killCount == 1) {
             newAchievements.addAll(AchievementManager.checkFirstKill());
         }
+
+        // === NEW: Track weapon kills for mastery achievements ===
+        Weapon currentWeapon = player.getCurrentWeapon();
+        if (currentWeapon != null) {
+            String weaponName = currentWeapon.getName();
+            newAchievements.addAll(AchievementManager.recordWeaponKill(weaponName));
+            GameLogger.debug("GameWorld", "Enemy killed with weapon: " + weaponName);
+        }
+
+        // === NEW: Check Near Death achievement (kill while at 1 HP) ===
+        if (player.getLives() == 1) {
+            newAchievements.addAll(AchievementManager.checkNearDeathKill(1));
+        }
+
+        // === NEW: Multi-kill tracking ===
+        recentKillTimes.add(currentTime);
+        // Remove kills outside the time window
+        recentKillTimes.removeIf(time -> currentTime - time > MULTI_KILL_WINDOW);
+        // Check multi-kill achievements
+        int killsInWindow = recentKillTimes.size();
+        if (killsInWindow >= 3) {
+            newAchievements.addAll(AchievementManager.checkMultiKill(killsInWindow));
+        }
+
+        // Check cumulative kill achievements
+        newAchievements.addAll(AchievementManager.checkAchievements(killCount));
 
         // Award skill points
         int sp = e.getSkillPointReward();
@@ -625,6 +695,17 @@ public class GameWorld {
         return newAchievements;
     }
 
+    /**
+     * Get and clear new achievements (for UI popup display)
+     * 
+     * @return List of achievement names that were unlocked since last call
+     */
+    public List<String> getAndClearNewAchievements() {
+        List<String> result = new ArrayList<>(newAchievements);
+        newAchievements.clear();
+        return result;
+    }
+
     public DamageType getLevelDamageType() {
         return levelDamageType;
     }
@@ -639,5 +720,13 @@ public class GameWorld {
 
     public CollisionManager getCollisionManager() {
         return collisionManager;
+    }
+
+    public float getLevelElapsedTime() {
+        return levelElapsedTime;
+    }
+
+    public boolean didPlayerTakeDamage() {
+        return playerTookDamage;
     }
 }

@@ -144,7 +144,8 @@ public class FogRenderer {
             // 纹理太小，需要放大
             // 但放大纹理会让透明圆变大，这不是我们想要的
             // 所以我们需要绘制额外的黑色边框来填充
-            drawExtraBlackBorder(playerX, playerY, drawSize, viewW, viewH);
+            // 关键修复：使用相机位置而非玩家位置来计算覆盖区域
+            drawExtraBlackBorder(playerX, playerY, drawSize, camera);
         }
 
         // 以玩家为中心绘制迷雾纹理
@@ -161,25 +162,62 @@ public class FogRenderer {
     /**
      * 绘制额外的黑色边框以填充迷雾纹理覆盖不到的屏幕区域。
      * 这确保了即使相机 zoom out 很远，屏幕边缘也是黑色的。
+     * 
+     * 关键设计：必须使用相机位置来确定覆盖区域，因为相机可能被 clamp 到地图边界，
+     * 导致相机位置与玩家位置不一致。如果只按玩家位置绘制，当玩家在地图边缘时，
+     * 远离玩家的地图区域会暴露出来。
      */
     private void drawExtraBlackBorder(float playerX, float playerY, float fogSize,
-            float viewW, float viewH) {
-        // 创建一个小的黑色纹理用于填充
-        // 使用现有的纹理绘制完全不透明的部分来填充边缘
-
+            OrthographicCamera camera) {
         float halfFog = fogSize / 2;
-        float halfViewW = viewW / 2 + 100; // 额外边距
-        float halfViewH = viewH / 2 + 100;
 
-        // 上边
+        // 使用相机的实际可见区域来计算需要覆盖的范围
+        float viewW = camera.viewportWidth * camera.zoom;
+        float viewH = camera.viewportHeight * camera.zoom;
+        float camX = camera.position.x;
+        float camY = camera.position.y;
+
+        // 相机可见区域的边界（加上安全边距）
+        float camLeft = camX - viewW / 2 - 50;
+        float camRight = camX + viewW / 2 + 50;
+        float camBottom = camY - viewH / 2 - 50;
+        float camTop = camY + viewH / 2 + 50;
+
+        // 迷雾纹理覆盖的区域（以玩家为中心）
+        float fogLeft = playerX - halfFog;
+        float fogRight = playerX + halfFog;
+        float fogBottom = playerY - halfFog;
+        float fogTop = playerY + halfFog;
+
         batch.setColor(0, 0, 0, 1);
-        drawBlackRect(playerX - halfViewW, playerY + halfFog, viewW + 200, halfViewH);
-        // 下边
-        drawBlackRect(playerX - halfViewW, playerY - halfFog - halfViewH, viewW + 200, halfViewH);
-        // 左边
-        drawBlackRect(playerX - halfFog - halfViewW, playerY - halfFog, halfViewW, fogSize);
-        // 右边
-        drawBlackRect(playerX + halfFog, playerY - halfFog, halfViewW, fogSize);
+
+        // 上边：覆盖迷雾纹理上方到相机顶部的区域
+        if (camTop > fogTop) {
+            drawBlackRect(camLeft, fogTop, camRight - camLeft, camTop - fogTop);
+        }
+
+        // 下边：覆盖迷雾纹理下方到相机底部的区域
+        if (fogBottom > camBottom) {
+            drawBlackRect(camLeft, camBottom, camRight - camLeft, fogBottom - camBottom);
+        }
+
+        // 左边：覆盖迷雾纹理左侧到相机左边的区域（只覆盖迷雾高度范围内）
+        if (fogLeft > camLeft) {
+            float rectBottom = Math.max(fogBottom, camBottom);
+            float rectTop = Math.min(fogTop, camTop);
+            if (rectTop > rectBottom) {
+                drawBlackRect(camLeft, rectBottom, fogLeft - camLeft, rectTop - rectBottom);
+            }
+        }
+
+        // 右边：覆盖迷雾纹理右侧到相机右边的区域（只覆盖迷雾高度范围内）
+        if (camRight > fogRight) {
+            float rectBottom = Math.max(fogBottom, camBottom);
+            float rectTop = Math.min(fogTop, camTop);
+            if (rectTop > rectBottom) {
+                drawBlackRect(fogRight, rectBottom, camRight - fogRight, rectTop - rectBottom);
+            }
+        }
 
         batch.setColor(Color.WHITE);
     }
@@ -191,39 +229,6 @@ public class FogRenderer {
         // 使用迷雾纹理的角落（纯黑区域）来绘制矩形
         // 角落坐标：0,0 到 10,10（肯定是纯黑的）
         batch.draw(fogTexture, x, y, width, height, 0, 0, 10, 10, false, false);
-    }
-
-    /**
-     * 旧版本 render 方法（兼容性保留，但建议使用新版本）
-     */
-    @Deprecated
-    public void render(float playerX, float playerY, float viewportWidth, float viewportHeight) {
-        if (!GameSettings.isFogEnabled()) {
-            return;
-        }
-
-        // 使用固定缩放模拟
-        boolean wasBlendingEnabled = batch.isBlendingEnabled();
-        batch.enableBlending();
-        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
-        batch.setColor(Color.WHITE);
-
-        float visionRadiusWorld = VISION_RADIUS_TILES * TILE_SIZE;
-        float drawSize = visionRadiusWorld / INNER_RADIUS_RATIO;
-
-        float minSize = Math.max(viewportWidth, viewportHeight) * 2.5f;
-        if (drawSize < minSize) {
-            // 需要绘制额外黑边
-            drawExtraBlackBorder(playerX, playerY, drawSize, viewportWidth, viewportHeight);
-        }
-
-        float drawX = playerX - drawSize / 2;
-        float drawY = playerY - drawSize / 2;
-        batch.draw(fogTexture, drawX, drawY, drawSize, drawSize);
-
-        if (!wasBlendingEnabled) {
-            batch.disableBlending();
-        }
     }
 
     /**

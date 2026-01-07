@@ -24,6 +24,7 @@ import java.util.Comparator;
 import java.util.Date;
 import de.tum.cit.fop.maze.utils.MapGenerator;
 import de.tum.cit.fop.maze.utils.GameLogger;
+import de.tum.cit.fop.maze.utils.UIUtils;
 
 public class MenuScreen implements Screen {
 
@@ -111,6 +112,18 @@ public class MenuScreen implements Screen {
             }
         });
 
+        // Achievements Button (NEW)
+        TextButton achievementsButton = new TextButton("Achievements", game.getSkin());
+        table.add(achievementsButton).width(300).height(60).padBottom(20).row();
+
+        achievementsButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                GameLogger.info("MenuScreen", "Achievements clicked");
+                game.setScreen(new AchievementScreen(game));
+            }
+        });
+
         // 4. "Settings" Button
         TextButton settingsButton = new TextButton("Settings", game.getSkin());
         table.add(settingsButton).width(300).height(60).padBottom(20).row();
@@ -191,6 +204,9 @@ public class MenuScreen implements Screen {
         scrollPane.setFadeScrollBars(false);
         scrollPane.setScrollingDisabled(true, false);
 
+        // Auto-focus scroll on hover so user doesn't need to click
+        UIUtils.enableHoverScrollFocus(scrollPane, stage);
+
         // --- 动态尺寸计算 ---
         float screenW = stage.getWidth();
         float screenH = stage.getHeight();
@@ -213,166 +229,6 @@ public class MenuScreen implements Screen {
 
         win.setSize(dialogW, dialogH);
         win.setPosition(screenW / 2 - dialogW / 2, screenH / 2 - dialogH / 2);
-
-        stage.addActor(win);
-    }
-
-    /**
-     * 显示设置窗口，允许调整游戏参数
-     */
-    private void showSettingsDialog() {
-        Window win = new Window("Game Settings", game.getSkin());
-        win.setModal(true);
-        win.getTitleLabel().setAlignment(Align.center);
-
-        Table contentTable = new Table();
-        contentTable.pad(20);
-
-        // --- 玩家行走速度 ---
-        contentTable.add(new Label("Player Walk Speed:", game.getSkin())).left();
-        final Label walkSpeedLabel = new Label(String.format("%.1f", GameSettings.playerWalkSpeed), game.getSkin());
-        Slider walkSpeedSlider = new Slider(1f, 15f, 0.5f, false, game.getSkin());
-        walkSpeedSlider.setValue(GameSettings.playerWalkSpeed);
-        walkSpeedSlider.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                GameSettings.playerWalkSpeed = ((Slider) actor).getValue();
-                walkSpeedLabel.setText(String.format("%.1f", GameSettings.playerWalkSpeed));
-            }
-        });
-        contentTable.add(walkSpeedSlider).width(200).padLeft(10);
-        contentTable.add(walkSpeedLabel).width(50).padLeft(10).row();
-
-        // --- 玩家跑步速度 ---
-        contentTable.add(new Label("Player Run Speed:", game.getSkin())).left();
-        final Label runSpeedLabel = new Label(String.format("%.1f", GameSettings.playerRunSpeed), game.getSkin());
-        Slider runSpeedSlider = new Slider(5f, 20f, 0.5f, false, game.getSkin());
-        runSpeedSlider.setValue(GameSettings.playerRunSpeed);
-        runSpeedSlider.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                GameSettings.playerRunSpeed = ((Slider) actor).getValue();
-                runSpeedLabel.setText(String.format("%.1f", GameSettings.playerRunSpeed));
-            }
-        });
-        contentTable.add(runSpeedSlider).width(200).padLeft(10);
-        contentTable.add(runSpeedLabel).width(50).padLeft(10).row();
-
-        // --- 敌人巡逻速度 ---
-        contentTable.add(new Label("Enemy Patrol Speed:", game.getSkin())).left();
-        final Label patrolSpeedLabel = new Label(String.format("%.1f", GameSettings.enemyPatrolSpeed), game.getSkin());
-        Slider patrolSpeedSlider = new Slider(0.5f, 8f, 0.5f, false, game.getSkin());
-        patrolSpeedSlider.setValue(GameSettings.enemyPatrolSpeed);
-        patrolSpeedSlider.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                GameSettings.enemyPatrolSpeed = ((Slider) actor).getValue();
-                patrolSpeedLabel.setText(String.format("%.1f", GameSettings.enemyPatrolSpeed));
-            }
-        });
-        contentTable.add(patrolSpeedSlider).width(200).padLeft(10);
-        contentTable.add(patrolSpeedLabel).width(50).padLeft(10).row();
-
-        // --- 敌人追逐速度 ---
-        contentTable.add(new Label("Enemy Chase Speed:", game.getSkin())).left();
-        final Label chaseSpeedLabel = new Label(String.format("%.1f", GameSettings.enemyChaseSpeed), game.getSkin());
-        Slider chaseSpeedSlider = new Slider(1f, 12f, 0.5f, false, game.getSkin());
-        chaseSpeedSlider.setValue(GameSettings.enemyChaseSpeed);
-        chaseSpeedSlider.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                GameSettings.enemyChaseSpeed = ((Slider) actor).getValue();
-                chaseSpeedLabel.setText(String.format("%.1f", GameSettings.enemyChaseSpeed));
-            }
-        });
-        contentTable.add(chaseSpeedSlider).width(200).padLeft(10);
-        contentTable.add(chaseSpeedLabel).width(50).padLeft(10).row();
-
-        // --- 敌人侦测范围 ---
-        contentTable.add(new Label("Enemy Detect Range:", game.getSkin())).left();
-        final Label detectRangeLabel = new Label(String.format("%.1f", GameSettings.enemyDetectRange), game.getSkin());
-        Slider detectRangeSlider = new Slider(2f, 15f, 0.5f, false, game.getSkin());
-        detectRangeSlider.setValue(GameSettings.enemyDetectRange);
-        detectRangeSlider.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                GameSettings.enemyDetectRange = ((Slider) actor).getValue();
-                detectRangeLabel.setText(String.format("%.1f", GameSettings.enemyDetectRange));
-            }
-        });
-        contentTable.add(detectRangeSlider).width(200).padLeft(10);
-        contentTable.add(detectRangeLabel).width(50).padLeft(10).row();
-
-        // --- 玩家初始生命 ---
-        contentTable.add(new Label("Player Lives:", game.getSkin())).left();
-        final Label livesLabel = new Label(String.valueOf(GameSettings.playerMaxLives), game.getSkin());
-        Slider livesSlider = new Slider(1, 10, 1, false, game.getSkin());
-        livesSlider.setValue(GameSettings.playerMaxLives);
-        livesSlider.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                GameSettings.playerMaxLives = (int) ((Slider) actor).getValue();
-                livesLabel.setText(String.valueOf(GameSettings.playerMaxLives));
-            }
-        });
-        contentTable.add(livesSlider).width(200).padLeft(10);
-        contentTable.add(livesLabel).width(50).padLeft(10).row();
-
-        // --- 相机缩放 (视野高度) ---
-        contentTable.add(new Label("Camera Zoom:", game.getSkin())).left();
-        final Label zoomLabel = new Label(String.format("%.1f", GameSettings.cameraZoom), game.getSkin());
-        // 0.5 (近/小视野) - 2.0 (远/大视野), 步长 0.1
-        Slider zoomSlider = new Slider(0.5f, 2.0f, 0.1f, false, game.getSkin());
-        zoomSlider.setValue(GameSettings.cameraZoom);
-        zoomSlider.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                GameSettings.cameraZoom = ((Slider) actor).getValue();
-                zoomLabel.setText(String.format("%.1f", GameSettings.cameraZoom));
-            }
-        });
-        contentTable.add(zoomSlider).width(200).padLeft(10);
-        contentTable.add(zoomLabel).width(50).padLeft(10).row();
-
-        win.add(contentTable).row();
-
-        // --- 按钮 ---
-        Table btnTable = new Table();
-
-        TextButton saveBtn = new TextButton("Save as Default", game.getSkin());
-        saveBtn.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                GameSettings.saveAsUserDefaults();
-                win.remove();
-            }
-        });
-
-        TextButton resetBtn = new TextButton("Reset to Factory", game.getSkin());
-        resetBtn.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                GameSettings.resetUserDefaultsToHardcoded();
-                win.remove();
-                showSettingsDialog(); // 重新打开以刷新显示
-            }
-        });
-
-        TextButton closeBtn = new TextButton("Close", game.getSkin());
-        closeBtn.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                win.remove();
-            }
-        });
-
-        btnTable.add(saveBtn).padRight(10);
-        btnTable.add(resetBtn).padRight(10);
-        btnTable.add(closeBtn);
-        win.add(btnTable).padBottom(10);
-
-        win.pack();
-        win.setPosition(stage.getWidth() / 2 - win.getWidth() / 2, stage.getHeight() / 2 - win.getHeight() / 2);
 
         stage.addActor(win);
     }
@@ -452,6 +308,9 @@ public class MenuScreen implements Screen {
 
         ScrollPane scroll = new ScrollPane(listTable, game.getSkin());
         scroll.setFadeScrollBars(false);
+
+        // Auto-focus scroll on hover so user doesn't need to click
+        UIUtils.enableHoverScrollFocus(scroll, stage);
 
         win.add(scroll).grow().pad(10).row();
 
