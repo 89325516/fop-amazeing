@@ -33,6 +33,8 @@ public class TextureManager implements Disposable {
         public TextureRegion entryRegion;
         public TextureRegion exitRegion;
         public TextureRegion trapRegion;
+        // Themed Trap Regions
+        public TextureRegion trapGrassland, trapDesert, trapIce, trapJungle, trapSpace;
         public TextureRegion keyRegion;
         public TextureRegion potionRegion;
         public TextureRegion heartRegion;
@@ -249,6 +251,13 @@ public class TextureManager implements Disposable {
 
                 // 7. Load Dynamic Wall Assets
                 loadWallAssets();
+
+                // 8. Load Themed Trap Textures
+                trapGrassland = loadTextureSafe("images/traps/trap_grassland_v1.png");
+                trapDesert = loadTextureSafe("images/traps/trap_desert_v1.png");
+                trapIce = loadTextureSafe("images/traps/trap_ice_v1.png");
+                trapJungle = loadTextureSafe("images/traps/trap_jungle_v1.png");
+                trapSpace = loadTextureSafe("images/traps/trap_space_v1.png");
         }
 
         private void loadAttackAnimations() {
@@ -398,6 +407,29 @@ public class TextureManager implements Disposable {
                         return wallRegion3x3;
 
                 return wallRegion; // Ultimate fallback
+        }
+
+        /**
+         * Returns a trap texture region for the given theme.
+         * Falls back to default trapRegion if themed texture is not available.
+         */
+        public TextureRegion getTrapRegion(String theme) {
+                if (theme == null)
+                        return trapRegion;
+                switch (theme) {
+                        case "Grassland":
+                                return trapGrassland != fallbackRegion ? trapGrassland : trapRegion;
+                        case "Desert":
+                                return trapDesert != fallbackRegion ? trapDesert : trapRegion;
+                        case "Ice":
+                                return trapIce != fallbackRegion ? trapIce : trapRegion;
+                        case "Jungle":
+                                return trapJungle != fallbackRegion ? trapJungle : trapRegion;
+                        case "Space":
+                                return trapSpace != fallbackRegion ? trapSpace : trapRegion;
+                        default:
+                                return trapRegion;
+                }
         }
 
         private TextureRegion loadTextureSafe(String path) {

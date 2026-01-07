@@ -167,23 +167,23 @@ public class MazeRenderer {
         Color color;
 
         if (currentFloor == textureManager.floorDungeon || currentFloor == textureManager.floorRegion) {
-            color = new Color(0.25f, 0.25f, 0.25f, 1f);
+            color = new Color(0.25f, 0.25f, 0.25f, 0.5f);
         } else if (currentFloor == textureManager.floorDesert) {
-            color = new Color(0.7f, 0.45f, 0.1f, 1f);
+            color = new Color(0.7f, 0.45f, 0.1f, 0.5f);
         } else if (currentFloor == textureManager.floorIce) {
-            color = new Color(0.2f, 0.3f, 0.6f, 1f);
+            color = new Color(0.2f, 0.3f, 0.6f, 0.5f);
         } else if (currentFloor == textureManager.floorGrassland) {
             // 灰褐色调，匹配苔藓石板地砖
-            color = new Color(0.25f, 0.22f, 0.18f, 1f);
+            color = new Color(0.25f, 0.22f, 0.18f, 0.5f);
         } else if (currentFloor == textureManager.floorJungle) {
-            color = new Color(0.05f, 0.2f, 0.05f, 1f);
+            color = new Color(0.05f, 0.2f, 0.05f, 0.5f);
         } else if (currentFloor == textureManager.floorSpace) {
-            color = new Color(0.05f, 0.1f, 0.3f, 1f);
+            color = new Color(0.05f, 0.1f, 0.3f, 0.5f);
         } else if (currentFloor == textureManager.floorLava) {
-            color = new Color(0.4f, 0.1f, 0.1f, 1f);
+            color = new Color(0.4f, 0.1f, 0.1f, 0.5f);
         } else {
             Color autoColor = textureManager.getTextureColor(currentFloor);
-            color = new Color(autoColor).mul(0.7f, 0.7f, 0.7f, 1f);
+            color = new Color(autoColor).mul(0.7f, 0.7f, 0.7f, 0.5f);
         }
 
         biomeColorCache.put(currentFloor, color);

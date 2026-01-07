@@ -295,7 +295,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
             if (obj instanceof Exit)
                 reg = textureManager.exitRegion;
             else if (obj instanceof Trap)
-                reg = textureManager.trapRegion;
+                reg = textureManager.getTrapRegion(theme);
             else if (obj instanceof Key)
                 reg = textureManager.keyRegion;
             else if (obj instanceof Potion)
