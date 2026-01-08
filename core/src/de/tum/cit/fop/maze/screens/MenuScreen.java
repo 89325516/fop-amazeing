@@ -6,6 +6,8 @@ import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
@@ -31,10 +33,15 @@ public class MenuScreen implements Screen {
     private final Stage stage;
     private final MazeRunnerGame game;
     private Label loadingLabel;
+    private final Texture backgroundTexture;
 
     public MenuScreen(MazeRunnerGame game) {
         this.game = game;
         var camera = new OrthographicCamera();
+
+        // 加载背景纹理
+        backgroundTexture = new Texture(Gdx.files.internal("images/menu_background.png"));
+        backgroundTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
 
         Viewport viewport = new FitViewport(1920, 1080, camera);
         stage = new Stage(viewport, game.getSpriteBatch());
@@ -440,6 +447,45 @@ public class MenuScreen implements Screen {
     public void render(float delta) {
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
+        // 绘制背景图片 - 使用Cover模式适配不同屏幕比例
+        SpriteBatch batch = game.getSpriteBatch();
+        batch.setProjectionMatrix(stage.getCamera().combined);
+        batch.begin();
+
+        // Viewport尺寸 (逻辑坐标)
+        float viewportWidth = 1920;
+        float viewportHeight = 1080;
+
+        // 背景图片原始尺寸
+        float texWidth = backgroundTexture.getWidth();
+        float texHeight = backgroundTexture.getHeight();
+
+        // 计算Cover模式的缩放比例
+        // Cover: 保持宽高比，确保图片覆盖整个viewport（可能会裁剪）
+        float viewportRatio = viewportWidth / viewportHeight;
+        float textureRatio = texWidth / texHeight;
+
+        float drawWidth, drawHeight;
+        float drawX, drawY;
+
+        if (viewportRatio > textureRatio) {
+            // Viewport更宽（如21:9），以宽度为准，高度可能超出
+            drawWidth = viewportWidth;
+            drawHeight = viewportWidth / textureRatio;
+            drawX = 0;
+            drawY = (viewportHeight - drawHeight) / 2; // 垂直居中
+        } else {
+            // Viewport更高，以高度为准，宽度可能超出
+            drawHeight = viewportHeight;
+            drawWidth = viewportHeight * textureRatio;
+            drawX = (viewportWidth - drawWidth) / 2; // 水平居中
+            drawY = 0;
+        }
+
+        batch.draw(backgroundTexture, drawX, drawY, drawWidth, drawHeight);
+        batch.end();
+
         stage.act(Math.min(Gdx.graphics.getDeltaTime(), 1 / 30f));
         stage.draw();
     }
@@ -452,6 +498,7 @@ public class MenuScreen implements Screen {
     @Override
     public void dispose() {
         stage.dispose();
+        backgroundTexture.dispose();
     }
 
     @Override
