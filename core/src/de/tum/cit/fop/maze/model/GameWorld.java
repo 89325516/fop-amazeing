@@ -729,4 +729,35 @@ public class GameWorld {
     public boolean didPlayerTakeDamage() {
         return playerTookDamage;
     }
+
+    // ==================== Developer Console Support ====================
+
+    /**
+     * 生成敌人 (供开发者控制台使用)
+     * 
+     * @param x 生成位置 X
+     * @param y 生成位置 Y
+     */
+    public void spawnEnemy(float x, float y) {
+        Enemy newEnemy = new Enemy(x, y);
+        enemies.add(newEnemy);
+        GameLogger.info("GameWorld", "Spawned enemy at (" + x + ", " + y + ")");
+    }
+
+    /**
+     * 杀死所有敌人 (供开发者控制台使用)
+     * 
+     * @return 杀死的敌人数量
+     */
+    public int killAllEnemies() {
+        int count = 0;
+        for (Enemy enemy : enemies) {
+            if (!enemy.isDead()) {
+                enemy.takeDamage(9999); // Instant kill
+                count++;
+            }
+        }
+        GameLogger.info("GameWorld", "Killed " + count + " enemies via console");
+        return count;
+    }
 }

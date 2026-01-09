@@ -131,6 +131,30 @@ public class MenuScreen implements Screen {
             }
         });
 
+        // Leaderboard Button (NEW)
+        TextButton leaderboardButton = new TextButton("Leaderboard", game.getSkin());
+        table.add(leaderboardButton).width(300).height(60).padBottom(20).row();
+
+        leaderboardButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                GameLogger.info("MenuScreen", "Leaderboard clicked");
+                game.setScreen(new LeaderboardScreen(game));
+            }
+        });
+
+        // Help Button (NEW)
+        TextButton helpButton = new TextButton("Help", game.getSkin());
+        table.add(helpButton).width(300).height(60).padBottom(20).row();
+
+        helpButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                GameLogger.info("MenuScreen", "Help clicked");
+                game.setScreen(new HelpScreen(game));
+            }
+        });
+
         // 4. "Settings" Button
         TextButton settingsButton = new TextButton("Settings", game.getSkin());
         table.add(settingsButton).width(300).height(60).padBottom(20).row();

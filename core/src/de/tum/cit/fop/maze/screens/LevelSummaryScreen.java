@@ -355,9 +355,99 @@ public class LevelSummaryScreen implements Screen {
         });
         secondary.add(menuBtn).width(200).height(65);
 
+        // Submit Score Button (Only on Victory)
+        if (data.isVictory()) {
+            TextButton submitBtn = new TextButton("Submit Score", skin);
+            submitBtn.setColor(Color.CYAN);
+            submitBtn.addListener(new ChangeListener() {
+                @Override
+                public void changed(ChangeEvent event, Actor actor) {
+                    showScoreSubmitDialog();
+                }
+            });
+            secondary.add(submitBtn).width(200).height(65).padLeft(20);
+        }
+
         footer.add(secondary);
 
         root.add(footer).padTop(30);
+    }
+
+    /**
+     * 显示分数提交对话框
+     */
+    private void showScoreSubmitDialog() {
+        // 计算分数
+        int score = de.tum.cit.fop.maze.utils.LeaderboardManager.calculateScore(
+                data.getCompletionTime(),
+                data.getKillCount(),
+                data.getCoinsCollected(),
+                data.tookDamage());
+
+        Dialog dialog = new Dialog("Submit Your Score", skin);
+        dialog.setModal(true);
+
+        Table content = new Table();
+        content.pad(20);
+
+        // 显示分数
+        Label scoreLabel = new Label("Your Score: " + score, skin);
+        scoreLabel.setColor(Color.GOLD);
+        scoreLabel.setFontScale(1.5f);
+        content.add(scoreLabel).padBottom(30).row();
+
+        // 显示排名预览
+        int rank = de.tum.cit.fop.maze.utils.LeaderboardManager.getInstance().getRank(score);
+        Label rankLabel = new Label("Rank #" + rank, skin);
+        rankLabel.setColor(Color.CYAN);
+        content.add(rankLabel).padBottom(20).row();
+
+        // 玩家名称输入
+        content.add(new Label("Enter Your Name:", skin)).padBottom(10).row();
+        final TextField nameField = new TextField("Player", skin);
+        nameField.setMaxLength(15);
+        content.add(nameField).width(300).padBottom(20).row();
+
+        dialog.getContentTable().add(content);
+
+        // 按钮
+        TextButton submitBtn = new TextButton("Submit", skin);
+        submitBtn.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                String playerName = nameField.getText().trim();
+                if (playerName.isEmpty())
+                    playerName = "Anonymous";
+
+                de.tum.cit.fop.maze.utils.LeaderboardManager.getInstance().submitScore(
+                        playerName,
+                        score,
+                        data.getMapPath(),
+                        data.getKillCount(),
+                        data.getCompletionTime());
+
+                dialog.hide();
+
+                // 显示确认
+                Dialog confirmDialog = new Dialog("Score Submitted!", skin);
+                confirmDialog.text("Your score has been saved to the leaderboard!");
+                confirmDialog.button("OK");
+                confirmDialog.show(stage);
+            }
+        });
+
+        TextButton cancelBtn = new TextButton("Cancel", skin);
+        cancelBtn.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                dialog.hide();
+            }
+        });
+
+        dialog.getButtonTable().add(submitBtn).width(120).padRight(20);
+        dialog.getButtonTable().add(cancelBtn).width(120);
+
+        dialog.show(stage);
     }
 
     private String getSubtitle() {

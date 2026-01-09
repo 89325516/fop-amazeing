@@ -57,6 +57,11 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
     private de.tum.cit.fop.maze.utils.MazeRenderer mazeRenderer;
     private de.tum.cit.fop.maze.utils.FogRenderer fogRenderer;
 
+    // --- Developer Console ---
+    private de.tum.cit.fop.maze.utils.DeveloperConsole developerConsole;
+    private de.tum.cit.fop.maze.ui.ConsoleUI consoleUI;
+    private boolean isConsoleOpen = false;
+
     private float stateTime = 0f;
     private static final float UNIT_SCALE = 16f;
     private static final float CAMERA_LERP_SPEED = 4.0f;
@@ -100,6 +105,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
 
         GameSettings.resetToUserDefaults();
         setupPauseMenu();
+        setupDeveloperConsole();
     }
 
     public GameScreen(MazeRunnerGame game, String mapPath, boolean loadPersistentStats) {
@@ -134,6 +140,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
 
         GameSettings.resetToUserDefaults();
         setupPauseMenu();
+        setupDeveloperConsole();
     }
 
     private void initGameWorld(String mapPath) {
@@ -230,6 +237,22 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
 
     @Override
     public void render(float delta) {
+        // Developer Console Toggle (handled first to prevent game input)
+        if (Gdx.input.isKeyJustPressed(Input.Keys.GRAVE) || Gdx.input.isKeyJustPressed(Input.Keys.F3)) {
+            toggleConsole();
+        }
+
+        // If console is open, only render console
+        if (isConsoleOpen) {
+            Gdx.gl.glClearColor(0.1f, 0.1f, 0.1f, 1);
+            Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
+            uiStage.act(delta);
+            uiStage.getViewport().apply();
+            uiStage.draw();
+            return;
+        }
+
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE))
             togglePause();
 
@@ -587,6 +610,32 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
 
         pauseTable.setVisible(false);
         uiStage.addActor(pauseTable);
+    }
+
+    /**
+     * 初始化开发者控制台
+     */
+    private void setupDeveloperConsole() {
+        developerConsole = new de.tum.cit.fop.maze.utils.DeveloperConsole();
+        consoleUI = new de.tum.cit.fop.maze.ui.ConsoleUI(uiStage, game.getSkin());
+        consoleUI.setConsole(developerConsole);
+        developerConsole.setGameWorld(gameWorld);
+    }
+
+    /**
+     * 切换开发者控制台显示状态
+     */
+    private void toggleConsole() {
+        isConsoleOpen = !isConsoleOpen;
+        if (isConsoleOpen) {
+            consoleUI.show();
+            // Update game world reference in case it changed
+            developerConsole.setGameWorld(gameWorld);
+            Gdx.input.setInputProcessor(uiStage);
+        } else {
+            consoleUI.hide();
+            setInputProcessors();
+        }
     }
 
     private void addMenuButton(String text, Runnable action) {

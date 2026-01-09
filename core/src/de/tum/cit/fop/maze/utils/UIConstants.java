@@ -77,4 +77,24 @@ public final class UIConstants {
     public static final Color RARITY_EPIC = new Color(0.8f, 0.4f, 1.0f, 1f);
     /** 传说 */
     public static final Color RARITY_LEGENDARY = new Color(1.0f, 0.85f, 0.2f, 1f);
+
+    // ==================== Help Screen 颜色 ====================
+
+    /** 帮助界面科技蓝边框 */
+    public static final Color HELP_BORDER_CYAN = new Color(0f, 0.83f, 1f, 1f); // #00D4FF
+
+    /** 帮助界面导航项选中背景 */
+    public static final Color HELP_NAV_SELECTED = new Color(0.1f, 0.3f, 0.5f, 0.9f);
+
+    /** 帮助界面导航项默认背景 */
+    public static final Color HELP_NAV_DEFAULT = new Color(0.12f, 0.12f, 0.16f, 0.8f);
+
+    /** 警告/危险提示颜色 */
+    public static final Color HELP_WARN = new Color(1f, 0.42f, 0.21f, 1f); // #FF6B35
+
+    /** 帮助界面内容卡片背景 */
+    public static final Color HELP_CARD_BG = new Color(0.1f, 0.1f, 0.14f, 0.95f);
+
+    /** 帮助标题颜色 (金色) */
+    public static final Color HELP_TITLE_GOLD = new Color(1f, 0.85f, 0.2f, 1f);
 }
