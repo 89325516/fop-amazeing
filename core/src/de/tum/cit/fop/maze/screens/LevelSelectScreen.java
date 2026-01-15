@@ -97,15 +97,31 @@ public class LevelSelectScreen implements Screen {
             final int levelNum = i;
             boolean isLocked = i > unlocked;
 
-            // Create Button
+            // Create a container stack for button and lock overlay
+            Stack buttonStack = new Stack();
+
+            // Create Button with just the number
             String btnText = String.valueOf(i);
             TextButton btn = new TextButton(btnText, game.getSkin());
 
             // Style the button based on lock status
             if (isLocked) {
                 btn.setColor(Color.DARK_GRAY);
-                btn.setText(i + "\n[LOCKED]");
                 btn.setDisabled(true);
+            }
+
+            buttonStack.add(btn);
+
+            // Add locked label below button if locked
+            if (isLocked) {
+                Table lockOverlay = new Table();
+                lockOverlay.bottom(); // Position at bottom
+                Label lockLabel = new Label("[LOCKED]", game.getSkin());
+                lockLabel.setFontScale(0.6f); // Smaller font to fit
+                lockLabel.setColor(Color.RED);
+                lockLabel.setAlignment(Align.center);
+                lockOverlay.add(lockLabel).padBottom(8);
+                buttonStack.add(lockOverlay);
             }
 
             // Listeners
@@ -142,7 +158,7 @@ public class LevelSelectScreen implements Screen {
                 }
             });
 
-            gridPanel.add(btn).size(100, 100).pad(15);
+            gridPanel.add(buttonStack).size(120, 100).pad(10);
             if (i % cols == 0)
                 gridPanel.row();
         }
