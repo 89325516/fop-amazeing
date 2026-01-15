@@ -32,6 +32,7 @@ public class HelpScreen implements Screen {
     private final MazeRunnerGame game;
     private final Stage stage;
     private final Skin skin;
+    private Texture backgroundTexture;
 
     // Layout
     private Table contentTable;
@@ -101,6 +102,13 @@ public class HelpScreen implements Screen {
     public HelpScreen(MazeRunnerGame game) {
         this.game = game;
         this.skin = game.getSkin();
+
+        // Load background
+        try {
+            backgroundTexture = new Texture(Gdx.files.internal("help_bg.png"));
+        } catch (Exception e) {
+            backgroundTexture = null;
+        }
 
         // 使用与其他Screen完全相同的viewport设置
         stage = new Stage(new FitViewport(1920, 1080), game.getSpriteBatch());
@@ -622,6 +630,15 @@ public class HelpScreen implements Screen {
         Gdx.gl.glClearColor(0.05f, 0.05f, 0.07f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
+        // Draw background
+        if (backgroundTexture != null) {
+            game.getSpriteBatch().begin();
+            game.getSpriteBatch().setColor(0.4f, 0.4f, 0.4f, 1f); // Dim
+            game.getSpriteBatch().draw(backgroundTexture, 0, 0, stage.getWidth(), stage.getHeight());
+            game.getSpriteBatch().setColor(1, 1, 1, 1);
+            game.getSpriteBatch().end();
+        }
+
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
             game.goToMenu();
             return;
@@ -651,6 +668,8 @@ public class HelpScreen implements Screen {
     @Override
     public void dispose() {
         stage.dispose();
+        if (backgroundTexture != null)
+            backgroundTexture.dispose();
         for (Texture t : managedTextures) {
             if (t != null)
                 t.dispose();

@@ -36,12 +36,20 @@ public class ShopScreen implements Screen {
     private Label coinLabel;
     private Table itemsTable;
     private ScrollPane scrollPane;
+    private Texture backgroundTexture;
 
     public ShopScreen(MazeRunnerGame game) {
         this.game = game;
         this.skin = game.getSkin();
         // Use FitViewport to ensure consistent display across all screen sizes
         this.stage = new Stage(new com.badlogic.gdx.utils.viewport.FitViewport(1920, 1080), game.getSpriteBatch());
+
+        // Load background
+        try {
+            backgroundTexture = new Texture(Gdx.files.internal("shop_bg.jpg"));
+        } catch (Exception e) {
+            backgroundTexture = null;
+        }
 
         setupUI();
     }
@@ -244,6 +252,15 @@ public class ShopScreen implements Screen {
         Gdx.gl.glClearColor(0.1f, 0.1f, 0.15f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
+        // Draw background
+        if (backgroundTexture != null) {
+            game.getSpriteBatch().begin();
+            game.getSpriteBatch().setColor(0.4f, 0.4f, 0.4f, 1f); // Dim
+            game.getSpriteBatch().draw(backgroundTexture, 0, 0, stage.getWidth(), stage.getHeight());
+            game.getSpriteBatch().setColor(1, 1, 1, 1);
+            game.getSpriteBatch().end();
+        }
+
         stage.act(delta);
         stage.draw();
     }
@@ -268,5 +285,7 @@ public class ShopScreen implements Screen {
     @Override
     public void dispose() {
         stage.dispose();
+        if (backgroundTexture != null)
+            backgroundTexture.dispose();
     }
 }

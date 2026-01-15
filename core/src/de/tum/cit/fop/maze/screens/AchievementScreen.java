@@ -45,6 +45,7 @@ public class AchievementScreen implements Screen {
 
     // Cached drawables for rarity backgrounds
     private TextureRegionDrawable commonBg, rareBg, epicBg, legendaryBg;
+    private Texture backgroundTexture;
 
     public AchievementScreen(MazeRunnerGame game) {
         this.game = game;
@@ -53,6 +54,13 @@ public class AchievementScreen implements Screen {
         OrthographicCamera camera = new OrthographicCamera();
         Viewport viewport = new FitViewport(1920, 1080, camera);
         stage = new Stage(viewport, game.getSpriteBatch());
+
+        // Load background
+        try {
+            backgroundTexture = new Texture(Gdx.files.internal("achievement_bg.jpg"));
+        } catch (Exception e) {
+            backgroundTexture = null;
+        }
 
         createRarityBackgrounds();
         buildUI();
@@ -398,6 +406,15 @@ public class AchievementScreen implements Screen {
         Gdx.gl.glClearColor(0.08f, 0.08f, 0.1f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
+        // Draw background
+        if (backgroundTexture != null) {
+            game.getSpriteBatch().begin();
+            game.getSpriteBatch().setColor(0.4f, 0.4f, 0.4f, 1f); // Dim
+            game.getSpriteBatch().draw(backgroundTexture, 0, 0, stage.getWidth(), stage.getHeight());
+            game.getSpriteBatch().setColor(1, 1, 1, 1);
+            game.getSpriteBatch().end();
+        }
+
         stage.act(Math.min(delta, 1 / 30f));
         stage.draw();
     }
@@ -422,5 +439,7 @@ public class AchievementScreen implements Screen {
     @Override
     public void dispose() {
         stage.dispose();
+        if (backgroundTexture != null)
+            backgroundTexture.dispose();
     }
 }

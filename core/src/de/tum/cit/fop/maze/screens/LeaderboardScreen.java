@@ -15,6 +15,7 @@ import de.tum.cit.fop.maze.utils.LeaderboardManager.LeaderboardEntry;
 import de.tum.cit.fop.maze.utils.UIUtils;
 
 import java.util.List;
+import com.badlogic.gdx.graphics.Texture;
 
 /**
  * 排行榜界面 (Leaderboard Screen)
@@ -27,9 +28,15 @@ public class LeaderboardScreen extends BaseScreen {
     private Table contentTable;
     private ScrollPane scrollPane;
     private String currentFilter = null; // null = 全部
+    private Texture backgroundTexture;
 
     public LeaderboardScreen(MazeRunnerGame game) {
         super(game);
+        try {
+            backgroundTexture = new Texture(Gdx.files.internal("leaderboard_bg.png"));
+        } catch (Exception e) {
+            backgroundTexture = null;
+        }
         buildUI();
     }
 
@@ -229,7 +236,23 @@ public class LeaderboardScreen extends BaseScreen {
         Gdx.gl.glClearColor(0.1f, 0.1f, 0.15f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
+        // Draw background
+        if (backgroundTexture != null) {
+            game.getSpriteBatch().begin();
+            game.getSpriteBatch().setColor(0.4f, 0.4f, 0.4f, 1f); // Dim
+            game.getSpriteBatch().draw(backgroundTexture, 0, 0, stage.getWidth(), stage.getHeight());
+            game.getSpriteBatch().setColor(1, 1, 1, 1);
+            game.getSpriteBatch().end();
+        }
+
         stage.act(Math.min(delta, 1 / 30f));
         stage.draw();
+    }
+
+    @Override
+    public void dispose() {
+        super.dispose();
+        if (backgroundTexture != null)
+            backgroundTexture.dispose();
     }
 }
