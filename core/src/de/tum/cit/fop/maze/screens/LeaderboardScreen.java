@@ -54,6 +54,12 @@ public class LeaderboardScreen extends BaseScreen {
 
         // 筛选按钮栏
         Table filterTable = new Table();
+
+        // 统一按钮尺寸，确保显示一致
+        float filterBtnWidth = 100f;
+        float filterBtnHeight = 45f;
+        float filterBtnPad = 8f;
+
         TextButton allBtn = new TextButton("All", skin);
         allBtn.addListener(new ChangeListener() {
             @Override
@@ -62,7 +68,7 @@ public class LeaderboardScreen extends BaseScreen {
                 refreshLeaderboard();
             }
         });
-        filterTable.add(allBtn).padRight(10);
+        filterTable.add(allBtn).width(filterBtnWidth).height(filterBtnHeight).padRight(filterBtnPad);
 
         // 添加关卡筛选按钮 (前 5 关)
         for (int i = 1; i <= 5; i++) {
@@ -76,7 +82,7 @@ public class LeaderboardScreen extends BaseScreen {
                     refreshLeaderboard();
                 }
             });
-            filterTable.add(levelBtn).padRight(5);
+            filterTable.add(levelBtn).width(filterBtnWidth).height(filterBtnHeight).padRight(filterBtnPad);
         }
 
         rootTable.add(filterTable).padBottom(15).row();

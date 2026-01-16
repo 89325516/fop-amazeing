@@ -1,300 +1,58 @@
 package de.tum.cit.fop.maze.screens;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.scenes.scene2d.Actor;
-import com.badlogic.gdx.scenes.scene2d.InputEvent;
-import com.badlogic.gdx.scenes.scene2d.InputListener;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.*;
-import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
-import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.badlogic.gdx.utils.viewport.Viewport;
 import de.tum.cit.fop.maze.MazeRunnerGame;
 import de.tum.cit.fop.maze.config.GameSettings;
-import de.tum.cit.fop.maze.utils.AudioManager;
+import de.tum.cit.fop.maze.ui.SettingsUI;
 
 public class SettingsScreen implements Screen {
 
     private final MazeRunnerGame game;
     private final Screen parentScreen;
     private final Stage stage;
+    private final Texture backgroundTexture;
 
-    // UI Elements
-    private Label statusLabel;
-    private TextButton btnUp, btnDown, btnLeft, btnRight, btnAttack, btnSwitchWeapon;
-    private Slider volumeSlider;
-    private TextButton muteBtn;
-
-    // Remapping State
-    private String remappingKeyName = null;
+    // UI Component
+    private SettingsUI settingsUI;
 
     public SettingsScreen(MazeRunnerGame game, Screen parentScreen) {
         this.game = game;
         this.parentScreen = parentScreen;
-        this.stage = new Stage(new FitViewport(1920, 1080), game.getSpriteBatch());
+
+        // Use FitViewport for UI logic, but we will handle background drawing manually
+        // to cover screen
+        Viewport viewport = new FitViewport(1920, 1080);
+        this.stage = new Stage(viewport, game.getSpriteBatch());
+
+        // Load the new settings background
+        backgroundTexture = new Texture(Gdx.files.internal("settings_bg.png")); // Ensure asset exists
+        backgroundTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
 
         Table root = new Table();
         root.setFillParent(true);
         stage.addActor(root);
 
-        Skin skin = game.getSkin();
-
-        // Title
-        root.add(new Label("Settings", skin, "title")).colspan(2).padBottom(30).row();
-
-        // --- Audio Settings ---
-        root.add(new Label("Audio", skin)).colspan(2).padBottom(5).row();
-
-        // Volume
-        Table audioTable = new Table();
-        audioTable.add(new Label("Vol:", skin)).right().padRight(10);
-        volumeSlider = new Slider(0, 1, 0.1f, false, skin);
-        volumeSlider.setValue(0.5f); // Should get from AudioManager
-        volumeSlider.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                AudioManager.getInstance().setVolume(volumeSlider.getValue());
+        // Initialize Shared UI Logic
+        settingsUI = new SettingsUI(game, stage, () -> {
+            // "Back" Action
+            GameSettings.saveAsUserDefaults(); // Save prefs
+            if (parentScreen != null) {
+                game.setScreen(parentScreen);
+            } else {
+                game.goToMenu();
             }
         });
-        audioTable.add(volumeSlider).width(200).padRight(20);
 
-        // Mute
-        boolean isEnabled = AudioManager.getInstance().isMusicEnabled();
-        muteBtn = new TextButton("Music: " + (isEnabled ? "ON" : "OFF"), skin);
-        muteBtn.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                boolean newState = !AudioManager.getInstance().isMusicEnabled();
-                AudioManager.getInstance().setMusicEnabled(newState);
-                muteBtn.setText("Music: " + (newState ? "ON" : "OFF"));
-            }
-        });
-        audioTable.add(muteBtn).width(120);
-        root.add(audioTable).colspan(2).padBottom(20).row();
-
-        // --- Gameplay Settings (Merged) ---
-        root.add(new Label("Gameplay", skin)).colspan(2).padBottom(5).row();
-        Table gameplayTable = new Table();
-
-        // Walk Speed
-        gameplayTable.add(new Label("Walk Spd:", skin)).right().padRight(10);
-        final Label walkLabel = new Label(String.format("%.1f", GameSettings.playerWalkSpeed), skin);
-        Slider walkSlider = new Slider(1f, 15f, 0.5f, false, skin);
-        walkSlider.setValue(GameSettings.playerWalkSpeed);
-        walkSlider.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                GameSettings.playerWalkSpeed = ((Slider) actor).getValue();
-                walkLabel.setText(String.format("%.1f", GameSettings.playerWalkSpeed));
-            }
-        });
-        gameplayTable.add(walkSlider).width(150);
-        gameplayTable.add(walkLabel).width(40).padLeft(5).padRight(20);
-
-        // Run Speed
-        gameplayTable.add(new Label("Run Spd:", skin)).right().padRight(10);
-        final Label runLabel = new Label(String.format("%.1f", GameSettings.playerRunSpeed), skin);
-        Slider runSlider = new Slider(5f, 20f, 0.5f, false, skin);
-        runSlider.setValue(GameSettings.playerRunSpeed);
-        runSlider.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                GameSettings.playerRunSpeed = ((Slider) actor).getValue();
-                runLabel.setText(String.format("%.1f", GameSettings.playerRunSpeed));
-            }
-        });
-        gameplayTable.add(runSlider).width(150);
-        gameplayTable.add(runLabel).width(40).padLeft(5);
-        gameplayTable.row();
-
-        // Fog of War Toggle
-        gameplayTable.add(new Label("Fog of War:", skin)).right().padRight(10);
-        TextButton fogBtn = new TextButton(GameSettings.isFogEnabled() ? "ON" : "OFF", skin);
-        fogBtn.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                boolean newState = !GameSettings.isFogEnabled();
-                GameSettings.setFogEnabled(newState);
-                fogBtn.setText(newState ? "ON" : "OFF");
-            }
-        });
-        gameplayTable.add(fogBtn).width(100).left();
-        gameplayTable.row();
-
-        // Camera Zoom / Height（相机高度调节）
-        gameplayTable.add(new Label("Camera:", skin)).right().padRight(10);
-        final Label zoomLabel = new Label(String.format("%.1fx", 1.0f / GameSettings.cameraZoom), skin);
-        Slider zoomSlider = new Slider(0.3f, 1.5f, 0.05f, false, skin);
-        zoomSlider.setValue(GameSettings.cameraZoom);
-        zoomSlider.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                GameSettings.cameraZoom = ((Slider) actor).getValue();
-                // 显示为倍数（zoom值越小，看到的范围越大）
-                zoomLabel.setText(String.format("%.1fx", 1.0f / GameSettings.cameraZoom));
-            }
-        });
-        gameplayTable.add(zoomSlider).width(150);
-        gameplayTable.add(zoomLabel).width(50).padLeft(5);
-        gameplayTable.row();
-
-        // 添加提示：迷雾模式下相机缩放不影响可见范围
-        Label fogHintLabel = new Label("* Fog mode: vision range is fixed", skin);
-        fogHintLabel.setColor(0.7f, 0.7f, 0.7f, 1f);
-        fogHintLabel.setFontScale(0.8f);
-        gameplayTable.add(fogHintLabel).colspan(6).left().padTop(5);
-
-        root.add(gameplayTable).colspan(2).padBottom(20).row();
-
-        // --- Key Bindings ---
-        root.add(new Label("Controls", skin)).colspan(2).padBottom(5).row();
-        statusLabel = new Label("Click button -> Press key", skin);
-        statusLabel.setColor(com.badlogic.gdx.graphics.Color.YELLOW);
-        root.add(statusLabel).colspan(2).padBottom(10).row();
-
-        btnUp = createKeyButton("Up", "UP", skin);
-        btnDown = createKeyButton("Down", "DOWN", skin);
-        btnLeft = createKeyButton("Left", "LEFT", skin);
-        btnRight = createKeyButton("Right", "RIGHT", skin);
-        btnAttack = createKeyButton("Attack", "ATTACK", skin);
-        btnSwitchWeapon = createKeyButton("Switch Weapon", "SWITCH_WEAPON", skin);
-
-        Table keyTable = new Table();
-        // Row 1: Up, Down, Left
-        addToKeyTable(keyTable, "Up:", btnUp);
-        addToKeyTable(keyTable, "Down:", btnDown);
-        addToKeyTable(keyTable, "Left:", btnLeft);
-        keyTable.row();
-        // Row 2: Right, Attack, Switch
-        addToKeyTable(keyTable, "Right:", btnRight);
-        addToKeyTable(keyTable, "Atk:", btnAttack);
-        addToKeyTable(keyTable, "Switch:", btnSwitchWeapon);
-        root.add(keyTable).colspan(2).padBottom(20).row();
-
-        // --- Navigation ---
-        TextButton backBtn = new TextButton(parentScreen != null ? "Resume" : "Back / Save", skin);
-        backBtn.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                // Only save settings when accessed from Main Menu (not in-game)
-                // In-game changes are session-only and reset on next level
-                if (parentScreen == null) {
-                    GameSettings.saveAsUserDefaults();
-                }
-                // Also always save key bindings (they are persistent)
-                GameSettings.saveKeyBindingsOnly();
-
-                if (parentScreen != null) {
-                    game.setScreen(parentScreen);
-                } else {
-                    game.goToMenu();
-                }
-            }
-        });
-        root.add(backBtn).colspan(2).width(200).height(50).padTop(10);
-
-        // Input Processor
-        stage.addListener(new InputListener() {
-            @Override
-            public boolean keyDown(InputEvent event, int keycode) {
-                if (remappingKeyName != null) {
-                    handleRemap(keycode);
-                    return true;
-                }
-                return false;
-            }
-        });
-    }
-
-    private TextButton createKeyButton(String label, String keyName, Skin skin) {
-        TextButton btn = new TextButton(getKeyName(keyName), skin);
-        btn.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                startRemap(keyName, btn);
-            }
-        });
-        return btn;
-    }
-
-    private void addToKeyTable(Table table, String label, Actor actor) {
-        table.add(new Label(label, game.getSkin())).right().padRight(5);
-        table.add(actor).left().width(100).height(35).padRight(20);
-    }
-
-    private String getKeyName(String keyName) {
-        int code = -1;
-        switch (keyName) {
-            case "UP":
-                code = GameSettings.KEY_UP;
-                break;
-            case "DOWN":
-                code = GameSettings.KEY_DOWN;
-                break;
-            case "LEFT":
-                code = GameSettings.KEY_LEFT;
-                break;
-            case "RIGHT":
-                code = GameSettings.KEY_RIGHT;
-                break;
-            case "ATTACK":
-                code = GameSettings.KEY_ATTACK;
-                break;
-            case "SWITCH_WEAPON":
-                code = GameSettings.KEY_SWITCH_WEAPON;
-                break;
-        }
-        return Input.Keys.toString(code);
-    }
-
-    private void startRemap(String keyName, TextButton btn) {
-        remappingKeyName = keyName;
-        statusLabel.setText("Press key for " + keyName);
-        btn.setText("...");
-    }
-
-    private void handleRemap(int keycode) {
-        if (keycode == Input.Keys.ESCAPE) {
-            remappingKeyName = null;
-            updateButtons();
-            statusLabel.setText("Cancelled");
-            return;
-        }
-        switch (remappingKeyName) {
-            case "UP":
-                GameSettings.KEY_UP = keycode;
-                break;
-            case "DOWN":
-                GameSettings.KEY_DOWN = keycode;
-                break;
-            case "LEFT":
-                GameSettings.KEY_LEFT = keycode;
-                break;
-            case "RIGHT":
-                GameSettings.KEY_RIGHT = keycode;
-                break;
-            case "ATTACK":
-                GameSettings.KEY_ATTACK = keycode;
-                break;
-            case "SWITCH_WEAPON":
-                GameSettings.KEY_SWITCH_WEAPON = keycode;
-                break;
-        }
-        remappingKeyName = null;
-        updateButtons();
-        statusLabel.setText("Saved");
-    }
-
-    private void updateButtons() {
-        btnUp.setText(getKeyName("UP"));
-        btnDown.setText(getKeyName("DOWN"));
-        btnLeft.setText(getKeyName("LEFT"));
-        btnRight.setText(getKeyName("RIGHT"));
-        btnAttack.setText(getKeyName("ATTACK"));
-        btnSwitchWeapon.setText(getKeyName("SWITCH_WEAPON"));
+        // Add the built UI to the root table
+        root.add(settingsUI.build()).expand().center();
     }
 
     @Override
@@ -304,10 +62,50 @@ public class SettingsScreen implements Screen {
 
     @Override
     public void render(float delta) {
-        Gdx.gl.glClearColor(0.1f, 0.1f, 0.2f, 1);
+        Gdx.gl.glClearColor(0.1f, 0.1f, 0.1f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
+        // --- Render Background (Cover Mode via OpenGL Viewport trick) ---
+        SpriteBatch batch = game.getSpriteBatch();
+        int screenWidth = Gdx.graphics.getBackBufferWidth();
+        int screenHeight = Gdx.graphics.getBackBufferHeight();
+
+        // 1. Set Viewport to full screen for background
+        Gdx.gl.glViewport(0, 0, screenWidth, screenHeight);
+        batch.getProjectionMatrix().setToOrtho2D(0, 0, screenWidth, screenHeight);
+        batch.begin();
+
+        drawBackgroundCover(batch, screenWidth, screenHeight);
+
+        batch.end();
+
+        // 2. Restore UI Stage Viewport
+        stage.getViewport().apply();
         stage.act(delta);
         stage.draw();
+    }
+
+    private void drawBackgroundCover(SpriteBatch batch, float screenW, float screenH) {
+        float texWidth = backgroundTexture.getWidth();
+        float texHeight = backgroundTexture.getHeight();
+        float screenRatio = screenW / screenH;
+        float textureRatio = texWidth / texHeight;
+
+        float drawWidth, drawHeight, drawX, drawY;
+
+        if (screenRatio > textureRatio) {
+            drawWidth = screenW;
+            drawHeight = screenW / textureRatio;
+            drawX = 0;
+            drawY = (screenH - drawHeight) / 2;
+        } else {
+            drawHeight = screenH;
+            drawWidth = screenH * textureRatio;
+            drawX = (screenW - drawWidth) / 2;
+            drawY = 0;
+        }
+
+        batch.draw(backgroundTexture, drawX, drawY, drawWidth, drawHeight);
     }
 
     @Override
@@ -330,5 +128,6 @@ public class SettingsScreen implements Screen {
     @Override
     public void dispose() {
         stage.dispose();
+        backgroundTexture.dispose();
     }
 }

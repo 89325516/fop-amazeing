@@ -70,6 +70,9 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
 
     private boolean isPaused = false;
     private Table pauseTable;
+    // New Settings UI Overlay
+    private Table settingsTable;
+    private de.tum.cit.fop.maze.ui.SettingsUI settingsUI;
 
     private Color biomeColor = Color.WHITE;
 
@@ -632,9 +635,10 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         pauseTable.add(title).padBottom(40).row();
 
         addMenuButton("Resume", this::togglePause);
+        addMenuButton("Resume", this::togglePause);
         addMenuButton("Settings", () -> {
             pauseTable.setVisible(false);
-            game.setScreen(new SettingsScreen(game, this));
+            showSettingsOverlay();
         });
         addMenuButton("Save Game", () -> {
             pauseTable.setVisible(false);
@@ -735,6 +739,23 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
             }
         });
         pauseTable.add(btn).width(200).padBottom(20).row();
+    }
+
+    private void showSettingsOverlay() {
+        if (settingsTable == null) {
+            settingsUI = new de.tum.cit.fop.maze.ui.SettingsUI(game, uiStage, () -> {
+                // On Back -> Hide settings, show pause menu
+                settingsTable.setVisible(false);
+                pauseTable.setVisible(true);
+            });
+            settingsTable = settingsUI.build();
+            settingsTable.setVisible(false);
+            // Center it
+            settingsTable.setFillParent(true);
+            uiStage.addActor(settingsTable);
+        }
+        settingsTable.setVisible(true);
+        settingsTable.toFront();
     }
 
     // --- Popups (Keep logic in Screen for now) ---
