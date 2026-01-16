@@ -48,7 +48,7 @@ public class HelpScreen implements Screen {
     private static final float CONTENT_WIDTH = 1200f;
 
     // Navigation sections
-    private static final String[] NAV_ITEMS = { "Controls", "Weapons", "Armor", "World", "Tips" };
+    private static final String[] NAV_ITEMS = { "Controls", "Weapons", "Armor", "World", "Console", "Tips" };
 
     // Weapon data
     private static final String[][] WEAPONS = {
@@ -264,6 +264,9 @@ public class HelpScreen implements Screen {
                 buildWorldContent();
                 break;
             case 4:
+                buildConsoleContent();
+                break;
+            case 5:
                 buildTipsContent();
                 break;
         }
@@ -505,6 +508,111 @@ public class HelpScreen implements Screen {
         Label l = new Label(text, skin);
         l.setColor(UIConstants.HELP_BORDER_CYAN);
         return l;
+    }
+
+    // ==================== Console Section ====================
+
+    private void buildConsoleContent() {
+        addSectionTitle("DEVELOPER CONSOLE");
+
+        // Introduction
+        Table introCard = createCard();
+        Label introText = new Label(
+                "The Developer Console allows you to modify game state for testing and fun. " +
+                        "Use it to enable cheats, teleport, spawn enemies, and more!",
+                skin);
+        introText.setWrap(true);
+        introText.setColor(Color.LIGHT_GRAY);
+        introCard.add(introText).width(CONTENT_WIDTH - 60).left();
+        contentTable.add(introCard).width(CONTENT_WIDTH).padBottom(20).row();
+
+        // Warning
+        addWarning("Using console commands may disable achievements and leaderboard submission!");
+
+        // How to Open
+        addSubTitle("How to Open");
+        Table keysCard = createCard();
+        addKeyRow(keysCard, "~", "Open/Close Console");
+        addKeyRow(keysCard, "F3", "Open/Close Console (alternative)");
+        addKeyRow(keysCard, "ESC", "Close Console (returns to game)");
+        addKeyRow(keysCard, "UP/DOWN", "Browse command history");
+        addKeyRow(keysCard, "ENTER", "Execute command");
+        contentTable.add(keysCard).width(CONTENT_WIDTH).padBottom(20).row();
+
+        // Essential Commands
+        addSubTitle("Essential Commands");
+        Table essentialCard = createCard();
+        addCommandRow(essentialCard, "help", "Show all available commands");
+        addCommandRow(essentialCard, "god", "Toggle invincibility (god mode)");
+        addCommandRow(essentialCard, "noclip", "Walk through walls");
+        addCommandRow(essentialCard, "give key", "Get the exit key instantly");
+        addCommandRow(essentialCard, "tp 10 15", "Teleport to coordinates (10, 15)");
+        addCommandRow(essentialCard, "heal", "Restore health to full");
+        addCommandRow(essentialCard, "win", "Complete current level");
+        contentTable.add(essentialCard).width(CONTENT_WIDTH).padBottom(20).row();
+
+        // Command Categories
+        addSubTitle("Command Categories");
+
+        // Player category
+        Table playerCat = createCard();
+        Label playerTitle = new Label("PLAYER", skin);
+        playerTitle.setColor(UIConstants.HELP_TITLE_GOLD);
+        playerCat.add(playerTitle).left().padBottom(8).row();
+        playerCat.add(new Label("god, noclip, heal, give, set", skin)).left().padBottom(4).row();
+        Label playerDesc = new Label("Control player abilities, items, and stats", skin);
+        playerDesc.setColor(Color.LIGHT_GRAY);
+        playerCat.add(playerDesc).left();
+        contentTable.add(playerCat).width(CONTENT_WIDTH).padBottom(10).row();
+
+        // World category
+        Table worldCat = createCard();
+        Label worldTitle = new Label("WORLD", skin);
+        worldTitle.setColor(UIConstants.HELP_TITLE_GOLD);
+        worldCat.add(worldTitle).left().padBottom(8).row();
+        worldCat.add(new Label("tp, spawn, kill, time", skin)).left().padBottom(4).row();
+        Label worldDesc = new Label("Teleport, spawn entities, kill enemies, control time", skin);
+        worldDesc.setColor(Color.LIGHT_GRAY);
+        worldCat.add(worldDesc).left();
+        contentTable.add(worldCat).width(CONTENT_WIDTH).padBottom(10).row();
+
+        // Level category
+        Table levelCat = createCard();
+        Label levelTitle = new Label("LEVEL", skin);
+        levelTitle.setColor(UIConstants.HELP_TITLE_GOLD);
+        levelCat.add(levelTitle).left().padBottom(8).row();
+        levelCat.add(new Label("level, restart, skip, win", skin)).left().padBottom(4).row();
+        Label levelDesc = new Label("Jump to levels, restart, skip ahead, or win instantly", skin);
+        levelDesc.setColor(Color.LIGHT_GRAY);
+        levelCat.add(levelDesc).left();
+        contentTable.add(levelCat).width(CONTENT_WIDTH).padBottom(10).row();
+
+        // Debug category
+        Table debugCat = createCard();
+        Label debugTitle = new Label("DEBUG", skin);
+        debugTitle.setColor(UIConstants.HELP_TITLE_GOLD);
+        debugCat.add(debugTitle).left().padBottom(8).row();
+        debugCat.add(new Label("status, vars, clear, fps", skin)).left().padBottom(4).row();
+        Label debugDesc = new Label("View game status, variables, toggle FPS display", skin);
+        debugDesc.setColor(Color.LIGHT_GRAY);
+        debugCat.add(debugDesc).left();
+        contentTable.add(debugCat).width(CONTENT_WIDTH).padBottom(20).row();
+
+        // Tip
+        addTip("Type 'help <command>' in console for detailed usage. Example: help tp");
+    }
+
+    private void addCommandRow(Table card, String cmd, String desc) {
+        Table row = new Table();
+        row.left();
+
+        Label cmdLabel = new Label(cmd, skin);
+        cmdLabel.setColor(UIConstants.HELP_BORDER_CYAN);
+        row.add(cmdLabel).width(200).left().padRight(30);
+
+        row.add(new Label(desc, skin)).expandX().left();
+
+        card.add(row).width(CONTENT_WIDTH - 60).left().padBottom(10).row();
     }
 
     // ==================== Tips Section ====================

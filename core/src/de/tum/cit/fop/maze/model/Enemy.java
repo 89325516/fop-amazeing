@@ -59,6 +59,16 @@ public class Enemy extends GameObject {
     private float effectTimer = 0f;
     private float dotTimer = 0f; // Damage Over Time timer
 
+    // === Movement Physics (Inertia System) ===
+    private float velocityX = 0f; // Current horizontal velocity
+    private float velocityY = 0f; // Current vertical velocity
+
+    // Physics Constants (enemies feel "heavier" than player)
+    private static float PATROL_ACCELERATION = 18.0f; // Lower = more sluggish during patrol
+    private static float CHASE_ACCELERATION = 32.0f; // Higher = more responsive during chase
+    private static float DECELERATION = 15.0f; // How fast to slow down
+    private static float VELOCITY_THRESHOLD = 0.1f; // Snap to zero below this
+
     // 巡逻逻辑
     private float patrolDirX;
     private float patrolDirY;
@@ -376,34 +386,139 @@ public class Enemy extends GameObject {
             state = EnemyState.PATROL;
         }
 
-        // 2. 执行行为
-        float moveAmount = (state == EnemyState.CHASE ? GameSettings.enemyChaseSpeed : GameSettings.enemyPatrolSpeed)
-                * delta;
-        boolean moved = false;
+        // 2. Calculate target velocity based on AI state (Inertia System)
+        float maxSpeed = (state == EnemyState.CHASE) ? GameSettings.enemyChaseSpeed : GameSettings.enemyPatrolSpeed;
+        float targetVx = 0, targetVy = 0;
 
         switch (state) {
             case PATROL:
-                moved = handlePatrol(moveAmount, delta, collisionManager);
+                calculatePatrolTarget(delta);
+                targetVx = patrolDirX * maxSpeed;
+                targetVy = patrolDirY * maxSpeed;
                 break;
             case CHASE:
-                moved = handleChase(moveAmount, player, collisionManager);
+                // Calculate chase direction with proximity slowdown
+                float dx = player.getX() - this.x;
+                float dy = player.getY() - this.y;
+                float distance = (float) Math.sqrt(dx * dx + dy * dy);
+
+                if (distance > 0.1f) {
+                    // Normalize direction
+                    float dirX = dx / distance;
+                    float dirY = dy / distance;
+
+                    // Axis-aligned movement: prefer the axis with larger difference
+                    if (Math.abs(dx) > Math.abs(dy)) {
+                        targetVx = Math.signum(dx) * maxSpeed;
+                        targetVy = 0;
+                    } else {
+                        targetVx = 0;
+                        targetVy = Math.signum(dy) * maxSpeed;
+                    }
+
+                    // Distance-adaptive slowdown: prevent overshooting when close to player
+                    if (distance < 2.0f) {
+                        float proximityFactor = distance / 2.0f; // 0.0 ~ 1.0
+                        targetVx *= proximityFactor;
+                        targetVy *= proximityFactor;
+                    }
+                }
                 break;
             case DEAD:
-                // Do nothing
+                targetVx = 0;
+                targetVy = 0;
                 break;
         }
 
-        // 3. 如果没有移动，自动对齐到最近的整数格
-        if (!moved) {
-            snapToGrid(delta);
+        // 3. Apply acceleration towards target velocity
+        float accel = (state == EnemyState.CHASE) ? CHASE_ACCELERATION : PATROL_ACCELERATION;
+        applyEnemyAcceleration(targetVx, targetVy, accel, delta);
+
+        // 4. Apply velocity to position with collision detection
+        applyEnemyPhysics(delta, collisionManager);
+    }
+
+    /**
+     * Calculate patrol direction (called each frame)
+     */
+    private void calculatePatrolTarget(float delta) {
+        // Change direction timer
+        changeDirTimer -= delta;
+        if (changeDirTimer <= 0) {
+            pickRandomDirection();
+            changeDirTimer = 2.0f + random.nextFloat() * 2.0f; // 2~4 seconds
         }
     }
 
     /**
-     * 平滑对齐到整数格
+     * Apply acceleration towards target velocity (enemy version)
      */
-    private void snapToGrid(float delta) {
-        float snapSpeed = 5.0f * delta;
+    private void applyEnemyAcceleration(float targetVx, float targetVy, float accel, float delta) {
+        float diffX = targetVx - velocityX;
+        float diffY = targetVy - velocityY;
+
+        float effectiveAccelX = (targetVx != 0) ? accel : DECELERATION;
+        float effectiveAccelY = (targetVy != 0) ? accel : DECELERATION;
+
+        float maxChangeX = effectiveAccelX * delta;
+        float maxChangeY = effectiveAccelY * delta;
+
+        velocityX += clamp(diffX, -maxChangeX, maxChangeX);
+        velocityY += clamp(diffY, -maxChangeY, maxChangeY);
+
+        // Snap to zero if below threshold
+        if (Math.abs(velocityX) < VELOCITY_THRESHOLD && targetVx == 0)
+            velocityX = 0;
+        if (Math.abs(velocityY) < VELOCITY_THRESHOLD && targetVy == 0)
+            velocityY = 0;
+    }
+
+    /**
+     * Apply velocity to position with per-axis collision detection.
+     * Also handles grid snapping when enemy stops moving.
+     */
+    private void applyEnemyPhysics(float delta, CollisionManager cm) {
+        float moveX = velocityX * delta;
+        float moveY = velocityY * delta;
+
+        // If enemy has stopped moving, apply grid snapping
+        if (Math.abs(velocityX) < 0.01f && Math.abs(velocityY) < 0.01f) {
+            snapToGrid(delta, cm);
+            return;
+        }
+
+        // Try X-axis movement
+        if (moveX != 0) {
+            if (tryMove(moveX, 0, cm)) {
+                // Moved successfully
+            } else {
+                // Wall collision: slight bounce and change patrol direction
+                velocityX = -velocityX * 0.2f;
+                if (state == EnemyState.PATROL) {
+                    pickRandomDirection();
+                }
+            }
+        }
+
+        // Try Y-axis movement
+        if (moveY != 0) {
+            if (tryMove(0, moveY, cm)) {
+                // Moved successfully
+            } else {
+                velocityY = -velocityY * 0.2f;
+                if (state == EnemyState.PATROL) {
+                    pickRandomDirection();
+                }
+            }
+        }
+    }
+
+    /**
+     * Smoothly snap enemy to the nearest grid position when stopped.
+     * This ensures enemies always rest on tile centers, not between tiles.
+     */
+    private void snapToGrid(float delta, CollisionManager cm) {
+        float snapSpeed = 10.0f * delta; // Smooth snapping
 
         float targetX = Math.round(this.x);
         float targetY = Math.round(this.y);
@@ -411,66 +526,29 @@ public class Enemy extends GameObject {
         float dx = targetX - this.x;
         float dy = targetY - this.y;
 
+        // Already snapped
         if (Math.abs(dx) < 0.01f && Math.abs(dy) < 0.01f) {
             this.x = targetX;
             this.y = targetY;
-        } else {
-            this.x += Math.signum(dx) * Math.min(Math.abs(dx), snapSpeed);
-            this.y += Math.signum(dy) * Math.min(Math.abs(dy), snapSpeed);
+            return;
+        }
+
+        // Move towards grid position
+        float moveX = Math.signum(dx) * Math.min(Math.abs(dx), snapSpeed);
+        float moveY = Math.signum(dy) * Math.min(Math.abs(dy), snapSpeed);
+
+        // Apply snap movement with collision check
+        if (Math.abs(moveX) > 0.001f) {
+            tryMove(moveX, 0, cm);
+        }
+        if (Math.abs(moveY) > 0.001f) {
+            tryMove(0, moveY, cm);
         }
     }
 
-    private boolean handlePatrol(float moveAmount, float delta, CollisionManager collisionManager) {
-        // 计时器：每隔一段时间随机换个方向
-        changeDirTimer -= delta;
-        if (changeDirTimer <= 0) {
-            pickRandomDirection();
-            changeDirTimer = 2.0f + random.nextFloat() * 2.0f; // 2~4秒换一次
-        }
-
-        // 尝试沿当前方向移动
-        boolean moved = tryMove(patrolDirX * moveAmount, patrolDirY * moveAmount, collisionManager);
-        if (!moved) {
-            // 如果撞墙了，立即换个方向
-            pickRandomDirection();
-        }
-        return moved;
-    }
-
-    private boolean handleChase(float moveAmount, Player player, CollisionManager collisionManager) {
-        // 计算与玩家的距离差
-        float dx = player.getX() - this.x;
-        float dy = player.getY() - this.y;
-
-        // 简单的轴对齐追逐算法：
-        // 优先在距离差较大的轴上移动。如果那个方向堵住了，就试另一个方向。
-
-        boolean moved = false;
-
-        if (Math.abs(dx) > Math.abs(dy)) {
-            // X轴距离更远，优先尝试水平移动
-            if (Math.abs(dx) > 0.1f) {
-                float sign = Math.signum(dx);
-                moved = tryMove(sign * moveAmount, 0, collisionManager);
-            }
-            // 如果水平走不通，尝试垂直
-            if (!moved && Math.abs(dy) > 0.1f) {
-                float sign = Math.signum(dy);
-                moved = tryMove(0, sign * moveAmount, collisionManager);
-            }
-        } else {
-            // Y轴距离更远，优先尝试垂直移动
-            if (Math.abs(dy) > 0.1f) {
-                float sign = Math.signum(dy);
-                moved = tryMove(0, sign * moveAmount, collisionManager);
-            }
-            // 如果垂直走不通，尝试水平
-            if (!moved && Math.abs(dx) > 0.1f) {
-                float sign = Math.signum(dx);
-                moved = tryMove(sign * moveAmount, 0, collisionManager);
-            }
-        }
-        return moved;
+    // Helper method
+    private static float clamp(float value, float min, float max) {
+        return Math.max(min, Math.min(max, value));
     }
 
     /**
@@ -537,5 +615,30 @@ public class Enemy extends GameObject {
 
     private float distanceToPoint(float x1, float y1, float x2, float y2) {
         return (float) Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+    }
+
+    // Physics getters/setters (for console tuning)
+    public static float getPatrolAcceleration() {
+        return PATROL_ACCELERATION;
+    }
+
+    public static float getChaseAcceleration() {
+        return CHASE_ACCELERATION;
+    }
+
+    public static float getDeceleration() {
+        return DECELERATION;
+    }
+
+    public static void setPatrolAcceleration(float val) {
+        PATROL_ACCELERATION = val;
+    }
+
+    public static void setChaseAcceleration(float val) {
+        CHASE_ACCELERATION = val;
+    }
+
+    public static void setDeceleration(float val) {
+        DECELERATION = val;
     }
 }

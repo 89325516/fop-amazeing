@@ -148,41 +148,207 @@ public class GameWorld {
             AudioManager.getInstance().playSound("select");
         }
 
-        // Movement
-        boolean isMoving = false;
-        float currentSpeed = player.getSpeed() * delta;
+        // === Movement with Inertia System ===
+        // Step 1: Get input direction
+        float inputX = 0, inputY = 0;
 
         if (Gdx.input.isKeyPressed(GameSettings.KEY_LEFT)) {
-            movePlayer(-currentSpeed, 0);
-            isMoving = true;
+            inputX -= 1;
             playerDirection = 2;
         }
         if (Gdx.input.isKeyPressed(GameSettings.KEY_RIGHT)) {
-            movePlayer(currentSpeed, 0);
-            isMoving = true;
+            inputX += 1;
             playerDirection = 3;
         }
         if (Gdx.input.isKeyPressed(GameSettings.KEY_UP)) {
-            movePlayer(0, currentSpeed);
-            isMoving = true;
+            inputY += 1;
             playerDirection = 1;
         }
         if (Gdx.input.isKeyPressed(GameSettings.KEY_DOWN)) {
-            movePlayer(0, -currentSpeed);
-            isMoving = true;
+            inputY -= 1;
             playerDirection = 0;
         }
 
+        // Step 2: Normalize diagonal movement (prevent faster diagonal speed)
+        if (inputX != 0 && inputY != 0) {
+            float length = (float) Math.sqrt(inputX * inputX + inputY * inputY);
+            inputX /= length;
+            inputY /= length;
+        }
+
+        // Step 3: Handle running state
         player.setRunning(
                 Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT) || Gdx.input.isKeyPressed(Input.Keys.SHIFT_RIGHT));
 
-        if (!isMoving) {
-            snapToGrid(delta);
+        // Step 4: Calculate target velocity
+        float maxSpeed = player.getSpeed(); // Already considers running state
+        float targetVx = inputX * maxSpeed;
+        float targetVy = inputY * maxSpeed;
+
+        // === Stop Assist & Grid Alignment ===
+        // When no input is given, help the player stop exactly on a tile center.
+        if (inputX == 0 && inputY == 0) {
+            float px = player.getX();
+            float py = player.getY();
+            float vx = player.getVelocityX();
+            float vy = player.getVelocityY();
+
+            float distX = px - Math.round(px);
+            float distY = py - Math.round(py);
+
+            // If we are very close to the center and moving slowly/stopping, snap
+            // immediately.
+            // This prevents sliding past the target tile.
+            boolean closeToCenterX = Math.abs(distX) < 0.1f;
+            boolean closeToCenterY = Math.abs(distY) < 0.1f;
+
+            if (closeToCenterX && Math.abs(vx) < 2.0f) {
+                player.setVelocity(0, vy); // Kill X velocity
+                targetVx = 0;
+                // Immediate snap if very slow
+                if (Math.abs(vx) < 0.5f) {
+                    player.setPosition(Math.round(px), py);
+                }
+            }
+
+            if (closeToCenterY && Math.abs(vy) < 2.0f) {
+                player.setVelocity(vx, 0); // Kill Y velocity
+                targetVy = 0;
+                if (Math.abs(vy) < 0.5f) {
+                    player.setPosition(px, Math.round(py));
+                }
+            }
+        }
+
+        // Step 5: Apply acceleration towards target velocity (core inertia logic)
+        player.applyAcceleration(targetVx, targetVy, delta);
+
+        // Step 6: Apply velocity to position with collision detection
+        applyPhysicsMovement(delta);
+
+        // Step 7: Update facing direction based on velocity (if moving)
+        if (player.isMoving()) {
+            updateDirectionFromVelocity();
         }
 
         // Attack
         if (Gdx.input.isKeyJustPressed(GameSettings.KEY_ATTACK)) {
             handleAttack();
+        }
+    }
+
+    /**
+     * Apply player velocity to position with per-axis collision detection.
+     * This enables wall sliding and bounce effects.
+     * Also handles grid snapping when player stops moving.
+     */
+    private void applyPhysicsMovement(float delta) {
+        // NoClip mode: bypass collision
+        if (player.isNoClip()) {
+            player.move(player.getVelocityX() * delta, player.getVelocityY() * delta);
+            return;
+        }
+
+        float vx = player.getVelocityX();
+        float vy = player.getVelocityY();
+
+        // If player has stopped moving (and target is 0), apply grid snapping
+        // Note: We check low velocity AND alignment. If Auto-Drive is active, velocity
+        // will be high.
+        if (Math.abs(vx) < 0.1f && Math.abs(vy) < 0.1f) {
+            snapPlayerToGrid(delta);
+            return;
+        }
+
+        float moveX = vx * delta;
+        float moveY = vy * delta;
+
+        // Try X-axis movement first
+        if (moveX != 0) {
+            if (canMoveToPosition(player.getX() + moveX, player.getY())) {
+                player.move(moveX, 0);
+            } else {
+                // X-axis blocked: apply wall collision physics
+                player.handleWallCollision('x');
+            }
+        }
+
+        // Then try Y-axis movement
+        if (moveY != 0) {
+            if (canMoveToPosition(player.getX(), player.getY() + moveY)) {
+                player.move(0, moveY);
+            } else {
+                // Y-axis blocked: apply wall collision physics
+                player.handleWallCollision('y');
+            }
+        }
+    }
+
+    /**
+     * Smoothly snap player to the nearest grid position when stopped.
+     * This ensures the player always rests on a tile center, not between tiles.
+     */
+    private void snapPlayerToGrid(float delta) {
+        float snapSpeed = 25.0f * delta; // Increased from 15.0f to 25.0f for snappier feel
+
+        float targetX = Math.round(player.getX());
+        float targetY = Math.round(player.getY());
+
+        float dx = targetX - player.getX();
+        float dy = targetY - player.getY();
+
+        // Already snapped
+        if (Math.abs(dx) < 0.01f && Math.abs(dy) < 0.01f) {
+            player.setPosition(targetX, targetY);
+            return;
+        }
+
+        // Move towards grid position (check collision)
+        float moveX = Math.signum(dx) * Math.min(Math.abs(dx), snapSpeed);
+        float moveY = Math.signum(dy) * Math.min(Math.abs(dy), snapSpeed);
+
+        // Apply snap movement with collision check
+        if (Math.abs(moveX) > 0.001f) {
+            if (canMoveToPosition(player.getX() + moveX, player.getY())) {
+                player.move(moveX, 0);
+            }
+        }
+        if (Math.abs(moveY) > 0.001f) {
+            if (canMoveToPosition(player.getX(), player.getY() + moveY)) {
+                player.move(0, moveY);
+            }
+        }
+    }
+
+    /**
+     * Check if player can move to the specified position.
+     * Tests all four corners of the player's collision box.
+     */
+    private boolean canMoveToPosition(float newX, float newY) {
+        float w = player.getWidth();
+        float h = player.getHeight();
+        float padding = 0.1f;
+
+        return isWalkable(newX + padding, newY + padding) &&
+                isWalkable(newX + w - padding, newY + padding) &&
+                isWalkable(newX + w - padding, newY + h - padding) &&
+                isWalkable(newX + padding, newY + h - padding);
+    }
+
+    /**
+     * Update player facing direction based on current velocity.
+     * Prioritizes the axis with higher velocity magnitude.
+     */
+    private void updateDirectionFromVelocity() {
+        float vx = player.getVelocityX();
+        float vy = player.getVelocityY();
+
+        if (Math.abs(vx) > Math.abs(vy)) {
+            // Horizontal movement dominates
+            playerDirection = vx > 0 ? 3 : 2; // Right : Left
+        } else if (Math.abs(vy) > 0.01f) {
+            // Vertical movement dominates
+            playerDirection = vy > 0 ? 1 : 0; // Up : Down
         }
     }
 
@@ -379,6 +545,12 @@ public class GameWorld {
     }
 
     private void movePlayer(float deltaX, float deltaY) {
+        // NoClip模式：直接移动，忽略碰撞
+        if (player.isNoClip()) {
+            player.move(deltaX, deltaY);
+            return;
+        }
+
         float newX = player.getX() + deltaX;
         float newY = player.getY() + deltaY;
         float w = player.getWidth();
@@ -758,6 +930,29 @@ public class GameWorld {
             }
         }
         GameLogger.info("GameWorld", "Killed " + count + " enemies via console");
+        return count;
+    }
+
+    /**
+     * 杀死指定范围内的敌人 (供开发者控制台使用)
+     * 
+     * @param centerX 中心点 X
+     * @param centerY 中心点 Y
+     * @param radius  杀伤半径
+     * @return 杀死的敌人数量
+     */
+    public int killEnemiesNear(float centerX, float centerY, float radius) {
+        int count = 0;
+        for (Enemy enemy : enemies) {
+            if (!enemy.isDead()) {
+                float dist = Vector2.dst(centerX, centerY, enemy.getX(), enemy.getY());
+                if (dist <= radius) {
+                    enemy.takeDamage(9999);
+                    count++;
+                }
+            }
+        }
+        GameLogger.info("GameWorld", "Killed " + count + " nearby enemies via console");
         return count;
     }
 }

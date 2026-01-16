@@ -61,6 +61,8 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
     private de.tum.cit.fop.maze.utils.DeveloperConsole developerConsole;
     private de.tum.cit.fop.maze.ui.ConsoleUI consoleUI;
     private boolean isConsoleOpen = false;
+    /** 帧保护标志：控制台刚关闭时跳过ESC暂停检测，防止同帧触发暂停菜单 */
+    private boolean consoleJustClosed = false;
 
     private float stateTime = 0f;
     private static final float UNIT_SCALE = 16f;
@@ -237,13 +239,19 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
 
     @Override
     public void render(float delta) {
-        // Developer Console Toggle (handled first to prevent game input)
+        // Developer Console Toggle - 用 ~ 或 F3 打开/关闭
         if (Gdx.input.isKeyJustPressed(Input.Keys.GRAVE) || Gdx.input.isKeyJustPressed(Input.Keys.F3)) {
             toggleConsole();
         }
 
-        // If console is open, only render console
+        // If console is open, handle console-specific input and render
         if (isConsoleOpen) {
+            // ESC 专门用于关闭控制台
+            if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
+                toggleConsole(); // 关闭控制台
+                consoleJustClosed = true; // 防止下一帧触发暂停
+            }
+
             Gdx.gl.glClearColor(0.1f, 0.1f, 0.1f, 1);
             Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
@@ -253,16 +261,22 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
             return;
         }
 
-        if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE))
+        // 控制台刚关闭的帧，跳过ESC暂停检测
+        if (consoleJustClosed) {
+            consoleJustClosed = false;
+        } else if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
             togglePause();
+        }
 
         Gdx.gl.glClearColor(0.1f, 0.1f, 0.1f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         gameViewport.apply();
         if (!isPaused) {
-            gameWorld.update(delta);
-            stateTime += delta;
+            // Apply time scale from developer console
+            float effectiveDelta = delta * developerConsole.getTimeScale();
+            gameWorld.update(effectiveDelta);
+            stateTime += effectiveDelta;
         } else {
             updateCamera(0); // Still update camera if needed (e.g. initial frame)
         }
@@ -620,6 +634,52 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         consoleUI = new de.tum.cit.fop.maze.ui.ConsoleUI(uiStage, game.getSkin());
         consoleUI.setConsole(developerConsole);
         developerConsole.setGameWorld(gameWorld);
+
+        // 设置关卡控制监听器，实现 level/restart/skip/win 命令
+        developerConsole.setLevelChangeListener(new de.tum.cit.fop.maze.utils.DeveloperConsole.LevelChangeListener() {
+            @Override
+            public void onLevelChange(int levelNumber) {
+                // 跳转到指定关卡
+                String newLevelPath = "maps/level-" + levelNumber + ".properties";
+                toggleConsole(); // 关闭控制台
+                initGameWorld(newLevelPath);
+                setupDeveloperConsole(); // 重新初始化控制台
+            }
+
+            @Override
+            public void onRestart() {
+                // 重新开始当前关卡
+                toggleConsole();
+                initGameWorld(currentLevelPath);
+                setupDeveloperConsole();
+            }
+
+            @Override
+            public void onSkip() {
+                // 跳到下一关
+                int currentLevel = 1;
+                try {
+                    String levelStr = currentLevelPath.replaceAll("[^0-9]", "");
+                    if (!levelStr.isEmpty()) {
+                        currentLevel = Integer.parseInt(levelStr);
+                    }
+                } catch (Exception e) {
+                    currentLevel = 1;
+                }
+                int nextLevel = Math.min(currentLevel + 1, 5);
+                String newLevelPath = "maps/level-" + nextLevel + ".properties";
+                toggleConsole();
+                initGameWorld(newLevelPath);
+                setupDeveloperConsole();
+            }
+
+            @Override
+            public void onWin() {
+                // Directly trigger victory
+                toggleConsole();
+                onVictory(currentLevelPath);
+            }
+        });
     }
 
     /**
@@ -634,6 +694,8 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
             Gdx.input.setInputProcessor(uiStage);
         } else {
             consoleUI.hide();
+            // 设置帧保护标志，防止同帧ESC被再次检测并触发暂停菜单
+            consoleJustClosed = true;
             setInputProcessors();
         }
     }

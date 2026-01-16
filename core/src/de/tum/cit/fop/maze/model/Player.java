@@ -54,6 +54,19 @@ public class Player extends GameObject {
     private static final float KNOCKBACK_STRENGTH = 10.0f;
     private static final float KNOCKBACK_FRICTION = 5.0f; // Match enemy knockback friction
 
+    // === Movement Physics (Inertia System) ===
+    private float velocityX = 0f; // Current horizontal velocity (tiles/second)
+    private float velocityY = 0f; // Current vertical velocity (tiles/second)
+
+    // Physics Constants (tuned for responsive yet smooth movement)
+    // Removed 'final' to allow runtime tuning via DeveloperConsole
+    private static float ACCELERATION = 45.0f; // How fast to reach max speed (tiles/s²)
+    private static float DECELERATION = 35.0f; // How fast to stop when no input (tiles/s²)
+    private static float TURN_BOOST = 1.4f; // Acceleration multiplier when reversing direction
+    private static float WALL_BOUNCE = 0.25f; // Elasticity when hitting walls at high speed
+    private static float WALL_SLIDE_MULT = 0.7f; // Velocity retention when sliding along walls
+    private static float VELOCITY_THRESHOLD = 0.1f; // Minimum velocity before snapping to zero
+
     // Animation State
     private boolean isAttacking = false;
     private float attackAnimTimer = 0f;
@@ -86,6 +99,10 @@ public class Player extends GameObject {
 
     // === Economy System ===
     private int coins = 0;
+
+    // === Cheat Flags (for Developer Console) ===
+    private boolean godMode = false;
+    private boolean noClip = false;
 
     // 碰撞箱大小 (接近 1.0)
     private static final float SIZE = 0.99f;
@@ -312,6 +329,11 @@ public class Player extends GameObject {
      * @return true 如果伤害被应用
      */
     public boolean damage(int amount, DamageType type) {
+        // God Mode: 无敌模式下不受伤害
+        if (godMode) {
+            return false;
+        }
+
         if (invincibilityTimer > 0 || isDead) {
             return false;
         }
@@ -623,5 +645,185 @@ public class Player extends GameObject {
 
     public void setCoins(int coins) {
         this.coins = coins;
+    }
+
+    // ==================== Cheat System ====================
+
+    public boolean isGodMode() {
+        return godMode;
+    }
+
+    public void setGodMode(boolean godMode) {
+        this.godMode = godMode;
+    }
+
+    public boolean isNoClip() {
+        return noClip;
+    }
+
+    public void setNoClip(boolean noClip) {
+        this.noClip = noClip;
+    }
+
+    // ==================== Movement Physics System ====================
+
+    /**
+     * Get current horizontal velocity.
+     * 
+     * @return velocityX in tiles/second
+     */
+    public float getVelocityX() {
+        return velocityX;
+    }
+
+    /**
+     * Get current vertical velocity.
+     * 
+     * @return velocityY in tiles/second
+     */
+    public float getVelocityY() {
+        return velocityY;
+    }
+
+    /**
+     * Set velocity directly (used for knockback override, wall collision, etc.)
+     */
+    public void setVelocity(float vx, float vy) {
+        this.velocityX = vx;
+        this.velocityY = vy;
+    }
+
+    /**
+     * Apply acceleration towards target velocity.
+     * This is the core physics method for smooth movement.
+     * 
+     * @param targetVx Target horizontal velocity (based on input)
+     * @param targetVy Target vertical velocity (based on input)
+     * @param delta    Frame time
+     */
+    public void applyAcceleration(float targetVx, float targetVy, float delta) {
+        // Calculate velocity difference
+        float diffX = targetVx - velocityX;
+        float diffY = targetVy - velocityY;
+
+        // Determine if accelerating or decelerating
+        boolean isAcceleratingX = (targetVx != 0);
+        boolean isAcceleratingY = (targetVy != 0);
+
+        float accelX = isAcceleratingX ? ACCELERATION : DECELERATION;
+        float accelY = isAcceleratingY ? ACCELERATION : DECELERATION;
+
+        // Turn boost: increase acceleration when reversing direction
+        if (Math.signum(targetVx) != Math.signum(velocityX) && velocityX != 0 && targetVx != 0) {
+            accelX *= TURN_BOOST;
+        }
+        if (Math.signum(targetVy) != Math.signum(velocityY) && velocityY != 0 && targetVy != 0) {
+            accelY *= TURN_BOOST;
+        }
+
+        // Apply acceleration (clamped to velocity difference)
+        float maxChangeX = accelX * delta;
+        float maxChangeY = accelY * delta;
+
+        velocityX += clamp(diffX, -maxChangeX, maxChangeX);
+        velocityY += clamp(diffY, -maxChangeY, maxChangeY);
+
+        // Snap to zero if below threshold and no input
+        if (Math.abs(velocityX) < VELOCITY_THRESHOLD && targetVx == 0) {
+            velocityX = 0;
+        }
+        if (Math.abs(velocityY) < VELOCITY_THRESHOLD && targetVy == 0) {
+            velocityY = 0;
+        }
+    }
+
+    /**
+     * Handle wall collision with bounce/slide effect.
+     * Called when movement on an axis is blocked.
+     * 
+     * @param axis 'x' or 'y'
+     */
+    public void handleWallCollision(char axis) {
+        if (axis == 'x') {
+            float speed = Math.abs(velocityX);
+            if (speed > 3.0f) {
+                // High speed: bounce back
+                velocityX = -velocityX * WALL_BOUNCE;
+            } else {
+                // Low speed: just stop
+                velocityX = 0;
+            }
+            // Apply wall slide to perpendicular axis
+            velocityY *= WALL_SLIDE_MULT;
+        } else if (axis == 'y') {
+            float speed = Math.abs(velocityY);
+            if (speed > 3.0f) {
+                velocityY = -velocityY * WALL_BOUNCE;
+            } else {
+                velocityY = 0;
+            }
+            velocityX *= WALL_SLIDE_MULT;
+        }
+    }
+
+    /**
+     * Check if player is currently moving (has velocity).
+     */
+    public boolean isMoving() {
+        return Math.abs(velocityX) > VELOCITY_THRESHOLD || Math.abs(velocityY) > VELOCITY_THRESHOLD;
+    }
+
+    /**
+     * Get current speed magnitude (for animation speed, etc.)
+     */
+    public float getCurrentSpeedMagnitude() {
+        return (float) Math.sqrt(velocityX * velocityX + velocityY * velocityY);
+    }
+
+    /**
+     * Reset velocity to zero (for teleport, respawn, etc.)
+     */
+    public void resetVelocity() {
+        velocityX = 0;
+        velocityY = 0;
+    }
+
+    // Physics constant getters (for debugging/console)
+    public static float getAcceleration() {
+        return ACCELERATION;
+    }
+
+    public static float getDeceleration() {
+        return DECELERATION;
+    }
+
+    public static float getTurnBoost() {
+        return TURN_BOOST;
+    }
+
+    public static float getWallBounce() {
+        return WALL_BOUNCE;
+    }
+
+    // Physics constant setters (for console tuning)
+    public static void setAcceleration(float val) {
+        ACCELERATION = val;
+    }
+
+    public static void setDeceleration(float val) {
+        DECELERATION = val;
+    }
+
+    public static void setTurnBoost(float val) {
+        TURN_BOOST = val;
+    }
+
+    public static void setWallBounce(float val) {
+        WALL_BOUNCE = val;
+    }
+
+    // Helper method
+    private static float clamp(float value, float min, float max) {
+        return Math.max(min, Math.min(max, value));
     }
 }

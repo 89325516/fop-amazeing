@@ -215,3 +215,6 @@ saves/
 
 ### Local Generation Guides
 DESERT_WALL_GENERATION_GUIDE.md
+
+### Local Unit Tests
+core/test/de/tum/cit/fop/maze/model/PhysicsMovementTest.java

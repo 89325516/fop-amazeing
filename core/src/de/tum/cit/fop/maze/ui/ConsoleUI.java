@@ -21,13 +21,8 @@ import java.util.List;
  * 控制台 UI 组件 (Console UI Component)
  * 
  * 在游戏中显示开发者控制台界面。
+ * 占据屏幕 70% 高度，从顶部延伸。
  * 包含输入框、输出历史显示区域。
- * 
- * 使用方法:
- * 1. 创建 ConsoleUI 实例并传入 Stage 和 Skin
- * 2. 调用 setConsole() 设置控制台引用
- * 3. 调用 show()/hide() 控制显示状态
- * 4. 在 render() 中调用 update() 更新
  */
 public class ConsoleUI {
 
@@ -41,64 +36,87 @@ public class ConsoleUI {
     private DeveloperConsole console;
     private boolean visible = false;
 
-    /** 控制台高度占屏幕比例 */
-    private static final float CONSOLE_HEIGHT_RATIO = 0.4f;
+    /** 控制台高度占屏幕比例 - 100%全屏 */
+    private static final float CONSOLE_HEIGHT_RATIO = 1.0f;
 
     /**
      * 创建控制台 UI
-     * 
-     * @param stage 要添加到的 Stage
-     * @param skin  UI 皮肤
      */
     public ConsoleUI(Stage stage, Skin skin) {
         this.stage = stage;
 
         // 创建半透明背景
         Pixmap pm = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
-        pm.setColor(0, 0, 0, 0.85f);
+        pm.setColor(0, 0, 0, 0.92f);
         pm.fill();
         bgTexture = new Texture(pm);
         pm.dispose();
 
-        // 根容器
+        // 根容器 - 显式控制位置和尺寸
         rootTable = new Table();
-        rootTable.setFillParent(true);
-        rootTable.top();
+        rootTable.top().left();
         rootTable.setBackground(new TextureRegionDrawable(new TextureRegion(bgTexture)));
 
-        // 标题栏
-        Label titleLabel = new Label("Developer Console (Press ~ or F3 to close)", skin);
-        titleLabel.setColor(Color.LIME);
-        rootTable.add(titleLabel).left().pad(10).row();
+        // === 标题栏 ===
+        Table headerTable = new Table();
+        headerTable.setBackground(createColorDrawable(new Color(0.1f, 0.15f, 0.1f, 1f)));
 
-        // 输出区域
+        Label titleLabel = new Label("  DEVELOPER CONSOLE", skin);
+        titleLabel.setColor(Color.LIME);
+        headerTable.add(titleLabel).expandX().left().padLeft(10);
+
+        Label hintLabel = new Label("[~] or [ESC] to close  ", skin);
+        hintLabel.setColor(Color.GRAY);
+        headerTable.add(hintLabel).right().padRight(10);
+
+        rootTable.add(headerTable).growX().height(35).row();
+
+        // === 输出区域 (主体) ===
         outputLabel = new Label("", skin);
         outputLabel.setColor(Color.WHITE);
         outputLabel.setWrap(true);
         outputLabel.setAlignment(Align.topLeft);
 
         Table outputContainer = new Table();
-        outputContainer.add(outputLabel).grow().top().left().pad(5);
+        outputContainer.top().left();
+        outputContainer.add(outputLabel).grow().top().left().pad(10);
 
         scrollPane = new ScrollPane(outputContainer, skin);
         scrollPane.setFadeScrollBars(false);
         scrollPane.setScrollingDisabled(true, false);
+        scrollPane.setOverscroll(false, false);
+
+        // 悬浮自动获取滚动焦点
+        scrollPane.addListener(new InputListener() {
+            @Override
+            public void enter(InputEvent event, float x, float y, int pointer, Actor fromActor) {
+                stage.setScrollFocus(scrollPane);
+            }
+        });
 
         rootTable.add(scrollPane).grow().pad(5, 10, 5, 10).row();
 
-        // 输入区域
+        // === 分隔线 ===
+        Table separator = new Table();
+        separator.setBackground(createColorDrawable(new Color(0.3f, 0.5f, 0.3f, 1f)));
+        rootTable.add(separator).growX().height(2).padLeft(10).padRight(10).row();
+
+        // === 输入区域 ===
         Table inputTable = new Table();
+        inputTable.setBackground(createColorDrawable(new Color(0.05f, 0.08f, 0.05f, 1f)));
+        inputTable.pad(8, 10, 8, 10);
+
         Label promptLabel = new Label("> ", skin);
         promptLabel.setColor(Color.LIME);
         inputField = new TextField("", skin);
-        inputField.setMessageText("Enter command...");
+        inputField.setMessageText("Enter command... (type 'help' for commands)");
 
         inputTable.add(promptLabel).padRight(5);
         inputTable.add(inputField).growX();
 
-        rootTable.add(inputTable).growX().pad(5, 10, 10, 10);
+        rootTable.add(inputTable).growX().height(45);
 
-        // 设置输入监听器
+        // === 输入监听器 ===
         inputField.addListener(new InputListener() {
             @Override
             public boolean keyDown(InputEvent event, int keycode) {
@@ -117,7 +135,8 @@ public class ConsoleUI {
                         inputField.setCursorPosition(inputField.getText().length());
                     }
                     return true;
-                } else if (keycode == Input.Keys.ESCAPE || keycode == Input.Keys.GRAVE) {
+                } else if (keycode == Input.Keys.GRAVE) {
+                    // 只用 ~ 键在 InputListener 中关闭，ESC 在 GameScreen 中处理
                     hide();
                     return true;
                 }
@@ -129,16 +148,19 @@ public class ConsoleUI {
         stage.addActor(rootTable);
     }
 
-    /**
-     * 设置控制台引用
-     */
+    private TextureRegionDrawable createColorDrawable(Color color) {
+        Pixmap pm = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
+        pm.setColor(color);
+        pm.fill();
+        Texture tex = new Texture(pm);
+        pm.dispose();
+        return new TextureRegionDrawable(new TextureRegion(tex));
+    }
+
     public void setConsole(DeveloperConsole console) {
         this.console = console;
     }
 
-    /**
-     * 执行当前输入的命令
-     */
     private void executeCurrentCommand() {
         String command = inputField.getText().trim();
         if (!command.isEmpty() && console != null) {
@@ -149,9 +171,6 @@ public class ConsoleUI {
         }
     }
 
-    /**
-     * 更新输出显示
-     */
     public void updateOutput() {
         if (console == null)
             return;
@@ -159,8 +178,8 @@ public class ConsoleUI {
         List<String> history = console.getOutputHistory();
         StringBuilder sb = new StringBuilder();
 
-        // 显示最后 50 行
-        int start = Math.max(0, history.size() - 50);
+        // 显示最后 100 行
+        int start = Math.max(0, history.size() - 100);
         for (int i = start; i < history.size(); i++) {
             sb.append(history.get(i)).append("\n");
         }
@@ -168,44 +187,42 @@ public class ConsoleUI {
         outputLabel.setText(sb.toString());
     }
 
-    /**
-     * 滚动到底部
-     */
     private void scrollToBottom() {
         scrollPane.layout();
         scrollPane.setScrollPercentY(1f);
     }
 
-    /**
-     * 显示控制台
-     */
     public void show() {
         visible = true;
         rootTable.setVisible(true);
         updateOutput();
 
-        // 设置高度
+        // 设置全宽，高度为屏幕的 70%
+        float width = stage.getWidth();
         float height = stage.getHeight() * CONSOLE_HEIGHT_RATIO;
-        rootTable.setHeight(height);
-        rootTable.setY(stage.getHeight() - height);
+        rootTable.setSize(width, height);
+
+        // 固定在屏幕顶部
+        rootTable.setPosition(0, stage.getHeight() - height);
 
         // 聚焦输入框
         stage.setKeyboardFocus(inputField);
         inputField.setText("");
+
+        // 确保布局正确
+        rootTable.invalidate();
+        rootTable.validate();
+
+        scrollToBottom();
     }
 
-    /**
-     * 隐藏控制台
-     */
     public void hide() {
         visible = false;
         rootTable.setVisible(false);
         stage.setKeyboardFocus(null);
+        stage.setScrollFocus(null);
     }
 
-    /**
-     * 切换显示状态
-     */
     public void toggle() {
         if (visible) {
             hide();
@@ -214,37 +231,24 @@ public class ConsoleUI {
         }
     }
 
-    /**
-     * 更新控制台 (在 render 循环中调用)
-     */
     public void update(float delta) {
-        if (visible) {
-            // 更新输出 (如果有新内容)
-            // 这里可以添加动画效果等
-        }
+        // 可用于动画效果
     }
 
-    /**
-     * 检查是否可见
-     */
     public boolean isVisible() {
         return visible;
     }
 
-    /**
-     * 调整大小
-     */
     public void resize(int width, int height) {
         if (visible) {
             float consoleHeight = height * CONSOLE_HEIGHT_RATIO;
-            rootTable.setHeight(consoleHeight);
-            rootTable.setY(height - consoleHeight);
+            rootTable.setSize(width, consoleHeight);
+            rootTable.setPosition(0, height - consoleHeight);
+            rootTable.invalidate();
+            rootTable.validate();
         }
     }
 
-    /**
-     * 释放资源
-     */
     public void dispose() {
         if (bgTexture != null) {
             bgTexture.dispose();
