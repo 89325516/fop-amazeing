@@ -31,41 +31,19 @@ public class LevelInfoDefs {
     private static final Map<Integer, LevelData> levelMap = new HashMap<>();
 
     static {
-        // Zone 1: The Primitive Forest (Levels 1-4)
+        // Zone 1: The Primitive Forest (Grassland) (Levels 1-4)
         LevelData zone1 = new LevelData(
-                "The Primitive Forest",
-                "The journey begins in the overgrown ruins of the old world. Nature has reclaimed these halls.",
-                "• Basic Navigation\n• Key Hunt",
+                "The Ancient Plains",
+                "Wide open plains scarred by ancient battles. Visibility is high, but so is the danger.",
+                "• Basic Navigation\n• Fast Movement",
                 "• Slimes (Slow)",
                 "• None",
                 "55AA55" // Forest Green
         );
         register(1, 4, zone1);
 
-        // Zone 2: The Scorched Sands (Levels 5-8)
+        // Zone 2: The Toxic Jungle (Levels 5-8)
         LevelData zone2 = new LevelData(
-                "The Scorched Sands",
-                "An immense desert where the sun never sets. Only the swift survive the shifting sands.",
-                "• Quicksand (Slows Speed)\n• Maze Complexity ++",
-                "• Scorpions (Fast Patrol)",
-                "• Spike Traps",
-                "FFCC33" // Desert Gold
-        );
-        register(5, 8, zone2);
-
-        // Zone 3: The Frozen Tundra (Levels 9-12)
-        LevelData zone3 = new LevelData(
-                "The Frozen Tundra",
-                "Bitter cold freezes the very air. Watch your step, for the ground offers no grip.",
-                "• Ice Floor (Slippery)\n• Snowstorm (Fog of War)",
-                "• Yetis (Knockback)",
-                "• Icicles",
-                "66CCFF" // Icy Cyan
-        );
-        register(9, 12, zone3);
-
-        // Zone 4: The Toxic Jungle (Levels 13-16)
-        LevelData zone4 = new LevelData(
                 "The Toxic Jungle",
                 "A bio-hazardous zone filled with mutated flora. The air itself is the enemy.",
                 "• Teleporters\n• Multi-layer Mazes",
@@ -73,9 +51,31 @@ public class LevelInfoDefs {
                 "• Poison Gas",
                 "AA33AA" // Toxic Purple
         );
+        register(5, 8, zone2);
+
+        // Zone 3: The Scorched Sands (Desert) (Levels 9-12)
+        LevelData zone3 = new LevelData(
+                "The Scorched Sands",
+                "An immense desert where the sun never sets. Only the swift survive the shifting sands.",
+                "• Quicksand (Slows Speed)\n• Maze Complexity ++",
+                "• Scorpions (Fast Patrol)",
+                "• Spike Traps",
+                "FFCC33" // Desert Gold
+        );
+        register(9, 12, zone3);
+
+        // Zone 4: The Frozen Tundra (Ice) (Levels 13-16)
+        LevelData zone4 = new LevelData(
+                "The Frozen Tundra",
+                "Bitter cold freezes the very air. Watch your step, for the ground offers no grip.",
+                "• Ice Floor (Slippery)\n• Snowstorm (Fog of War)",
+                "• Yetis (Knockback)",
+                "• Icicles",
+                "66CCFF" // Icy Cyan
+        );
         register(13, 16, zone4);
 
-        // Zone 5: The Orbital Station (Levels 17-20)
+        // Zone 5: The Orbital Station (Space) (Levels 17-20)
         LevelData zone5 = new LevelData(
                 "The Orbital Station",
                 "The final frontier. Gravity is optional, but survival is mandatory.",

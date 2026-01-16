@@ -4,6 +4,8 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -16,7 +18,6 @@ import de.tum.cit.fop.maze.MazeRunnerGame;
 import de.tum.cit.fop.maze.config.GameSettings;
 import de.tum.cit.fop.maze.utils.LevelInfoDefs;
 import de.tum.cit.fop.maze.utils.UIConstants;
-import de.tum.cit.fop.maze.utils.UIUtils;
 
 /**
  * The Level Select Screen, redesigned to show Zone specific lore and mission
@@ -36,11 +37,37 @@ public class LevelSelectScreen implements Screen {
     private Label missionHazardsLabel;
     private TextButton initiateBtn;
 
+    // Background Textures
+    private final Texture bgGrassland;
+    private final Texture bgJungle;
+    private final Texture bgDesert;
+    private final Texture bgIce;
+    private final Texture bgSpace;
+    private Texture currentBackground;
+
     private int selectedLevel = -1; // -1 means none selected
     private int hoveredLevel = -1; // For preview interaction
 
     public LevelSelectScreen(MazeRunnerGame game) {
         this.game = game;
+        // Load background textures
+        bgGrassland = new Texture(Gdx.files.internal("images/backgrounds/level_select_grassland.png"));
+        bgJungle = new Texture(Gdx.files.internal("images/backgrounds/level_select_jungle.png"));
+        bgDesert = new Texture(Gdx.files.internal("images/backgrounds/level_select_desert.png"));
+        bgIce = new Texture(Gdx.files.internal("images/backgrounds/level_select_ice.png"));
+        bgSpace = new Texture(Gdx.files.internal("images/backgrounds/level_select_space.png"));
+
+        // Default background
+        currentBackground = bgGrassland;
+
+        // Set texture filters for smoother scaling
+        Texture.TextureFilter filter = Texture.TextureFilter.Linear;
+        bgGrassland.setFilter(filter, filter);
+        bgJungle.setFilter(filter, filter);
+        bgDesert.setFilter(filter, filter);
+        bgIce.setFilter(filter, filter);
+        bgSpace.setFilter(filter, filter);
+
         // Use standard viewport from UIConstants
         this.stage = new Stage(new FitViewport(UIConstants.VIEWPORT_WIDTH, UIConstants.VIEWPORT_HEIGHT),
                 game.getSpriteBatch());
@@ -50,8 +77,9 @@ public class LevelSelectScreen implements Screen {
     private void buildUI() {
         Table root = new Table();
         root.setFillParent(true);
-        // Dark overlay background to make it look distinct from Main Menu
-        root.setBackground(game.getSkin().newDrawable("white", new Color(0.05f, 0.05f, 0.05f, 0.95f)));
+        // Removed dark overlay background to show dynamic background images
+        // root.setBackground(game.getSkin().newDrawable("white", new Color(0.05f,
+        // 0.05f, 0.05f, 0.95f)));
         stage.addActor(root);
 
         // --- Header ---
@@ -134,16 +162,16 @@ public class LevelSelectScreen implements Screen {
 
                 @Override
                 public void exit(InputEvent event, float x, float y, int pointer, Actor toActor) {
-                    // Start showing selected level info again if mouse leaves
-                    if (selectedLevel != -1) {
-                        updatePanels(selectedLevel);
-                    }
+                    // Optimized: Do NOT reset background on exit.
+                    // This creates a "sticky" effect where the background stays
+                    // until another button is hovered.
                 }
 
                 @Override
                 public void clicked(InputEvent event, float x, float y) {
                     if (!isLocked) {
                         selectedLevel = levelNum;
+                        updatePanels(levelNum); // Ensure panel updates on click (e.g. touch)
                         initiateBtn.setDisabled(false);
                         initiateBtn.setText("INITIATE MISSION " + levelNum);
                         initiateBtn.setColor(Color.GREEN);
@@ -163,8 +191,13 @@ public class LevelSelectScreen implements Screen {
                 gridPanel.row();
         }
 
-        // Add Grid to Root
-        root.add(gridPanel).width(800).height(650);
+        // Wrap Grid in ScrollPane
+        ScrollPane gridScroll = new ScrollPane(gridPanel, game.getSkin());
+        gridScroll.setFadeScrollBars(false);
+        gridScroll.setScrollingDisabled(true, false); // Cancel x scrolling
+
+        // Add Grid ScrollPane to Root
+        root.add(gridScroll).width(800).height(650);
 
         // 3. Right Panel (Mission Intel)
         Table rightPanel = new Table();
@@ -194,7 +227,7 @@ public class LevelSelectScreen implements Screen {
         // --- Footer ---
         Table footer = new Table();
 
-        TextButton backBtn = new TextButton("ABORT", game.getSkin());
+        TextButton backBtn = new TextButton("BACK", game.getSkin());
         backBtn.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
@@ -239,6 +272,19 @@ public class LevelSelectScreen implements Screen {
         missionFeaturesLabel.setText(data.features);
         missionEnemiesLabel.setText(data.enemies);
         missionHazardsLabel.setText(data.hazards);
+
+        // Update Background based on Level Range
+        if (level >= 1 && level <= 4) {
+            currentBackground = bgGrassland;
+        } else if (level >= 5 && level <= 8) {
+            currentBackground = bgJungle;
+        } else if (level >= 9 && level <= 12) {
+            currentBackground = bgDesert;
+        } else if (level >= 13 && level <= 16) {
+            currentBackground = bgIce;
+        } else if (level >= 17 && level <= 20) {
+            currentBackground = bgSpace;
+        }
     }
 
     private void startGame(int level) {
@@ -296,10 +342,54 @@ public class LevelSelectScreen implements Screen {
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
+        // --- Draw Dynamic Background with "Cover" Scaling ---
+        SpriteBatch batch = game.getSpriteBatch();
+
+        // 1. Reset GL Viewport to the full backbuffer size (physical screen)
+        int screenWidth = Gdx.graphics.getBackBufferWidth();
+        int screenHeight = Gdx.graphics.getBackBufferHeight();
+        Gdx.gl.glViewport(0, 0, screenWidth, screenHeight);
+
+        // 2. Set projection matrix to Ortho2D for the full screen
+        batch.getProjectionMatrix().setToOrtho2D(0, 0, screenWidth, screenHeight);
+        batch.begin();
+        batch.setColor(Color.WHITE); // Prevent color bleeding (e.g. from Green initiateBtn)
+
+        if (currentBackground != null) {
+            float texWidth = currentBackground.getWidth();
+            float texHeight = currentBackground.getHeight();
+
+            // Calculate Scale to "Cover" the screen
+            float screenRatio = (float) screenWidth / screenHeight;
+            float textureRatio = texWidth / texHeight;
+
+            float drawWidth, drawHeight;
+            float drawX, drawY;
+
+            if (screenRatio > textureRatio) {
+                // Screen is wider than texture -> Fit to width, crop height
+                drawWidth = screenWidth;
+                drawHeight = screenWidth / textureRatio;
+                drawX = 0;
+                drawY = (screenHeight - drawHeight) / 2; // Center vertically
+            } else {
+                // Screen is taller than texture -> Fit to height, crop width
+                drawHeight = screenHeight;
+                drawWidth = screenHeight * textureRatio;
+                drawX = (screenWidth - drawWidth) / 2; // Center horizontally
+                drawY = 0;
+            }
+
+            batch.draw(currentBackground, drawX, drawY, drawWidth, drawHeight);
+        }
+
+        batch.end();
+
+        // --- Draw UI Stage ---
+        // 3. Restore the correct viewport for the Stage (FitViewport logic)
+        stage.getViewport().apply();
         stage.act(delta);
         stage.draw();
-
-        // Optional: Draw a "tooltip" if needed, but panels handle this info now.
     }
 
     @Override
@@ -322,5 +412,10 @@ public class LevelSelectScreen implements Screen {
     @Override
     public void dispose() {
         stage.dispose();
+        bgGrassland.dispose();
+        bgJungle.dispose();
+        bgDesert.dispose();
+        bgIce.dispose();
+        bgSpace.dispose();
     }
 }
