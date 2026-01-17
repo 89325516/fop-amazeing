@@ -439,6 +439,89 @@ python3 scripts/process_image_strip.py \
 
 **音效存放位置**: `assets/audio/sfx/entities/`
 
+---
+
+---
+
+### 2.7 ⭐ 静止动态对象与锚点系统 (Stationary Animated Objects & Anchor System)
+
+> [!TIP]
+> **定义**：位置坐标固定 (Stationary)，但视觉上具有动态循环动画 (Animated) 的对象。
+> **场景**：陷阱特效、状态Buff、环境光效、悬浮标志。
+
+#### 2.7.1 三种锚定逻辑 (Anchor Logic)
+
+为了适应不同的视觉需求，我们定义了三种锚点策略，决定 **动画纹理 (Texture)** 相对于 **逻辑坐标 (Logical Position)** 的偏移量。
+
+| 锚点类型 | 偏移公式 (Y轴) | 适用场景 | 示例 |
+|---------|---------------|---------|------|
+| **Bottom Anchor** (底部对齐) | `Offset = 0` | 站在地面的物体 | 雕像、墙体、地刺 |
+| **Center Anchor** (中心对齐) | `Offset = TileHeight / 2` | 从中心发出的特效 | 毒雾、光柱、爆炸、Buff光环 |
+| **Top/Free Anchor** (顶部悬浮) | `Offset = TileHeight` 或 自定义浮动 | 悬浮在空中的物体 | 幽灵灯、状态图标、飞行的法球 |
+
+#### 2.7.2 叠加渲染模式 (Overlay Rendering Mode)
+
+对于复杂的场景（如：陷阱），采用 **"Base + Overlay"** 的双层渲染模式：
+
+1. **Layer 1: Static Base (静态底座)**
+   - **内容**: 地板、机械底座、魔法阵纹路
+   - **渲染**: 使用标准 Bottom Anchor (`offset=0`)
+   - **资源**: 通常是单张静态 PNG
+
+2. **Layer 2: Dynamic Overlay (动态叠加层)**
+   - **内容**: 毒气、火焰、电流、光芒
+   - **渲染**: 使用 Center Anchor (`offset=8px` for 16px tile) 或自定义偏移
+   - **资源**: 透明背景的 Sprite Sheet (4帧循环)
+
+#### 2.7.3 Prompt 生成策略 (Critical for AI)
+
+当生成叠加层资源时，必须在 Prompt 中强制一下约束：
+
+1. **分离绘制 (Separation)**:
+   ```
+   CRITICAL: Draw ONLY the [effect_name]. DO NOT draw the floor/ground/base underneath.
+   This is a TRANSPARENT OVERLAY layer.
+   ```
+
+2. **位置参考 (Positioning)**:
+   - **Center Anchor**: `The effect should originate/emit from the BOTTOM CENTER of the canvas.` (这样代码对其到底座中心时才自然)
+   - **Bottom Anchor**: `The object should stand on the BOTTOM edge of the canvas.`
+
+3. **示例**:
+   ```text
+   SUBJECT: Magic poison gas cloud overlay.
+   VIEW: Isometric, camera at bottom.
+   COMPOSITION: Gas swirling UPWARD from the bottom-center point.
+   BACKGROUND: Pure White (#FFFFFF).
+   CONSTRAINT: Do NOT draw the stone trap base. Only the green gas. 
+   ```
+
+#### 2.7.4 代码实现范式 (Implementation Pattern)
+
+```java
+// 渲染循环中
+if (obj.hasAnimation()) {
+    // 1. 绘制底座 (如果存在)
+    if (obj.hasBaseTexture()) {
+        batch.draw(baseRegion, x, y);
+    }
+    
+    // 2. 计算锚点偏移
+    float overlayY = y;
+    if (obj.anchor == Anchor.CENTER) {
+        overlayY += UNIT_SCALE / 2f; // e.g., +8px
+    } else if (obj.anchor == Anchor.TOP) {
+        overlayY += UNIT_SCALE;      // e.g., +16px
+    }
+    
+    // 3. 绘制动态叠加层
+    TextureRegion currentFrame = anim.getKeyFrame(stateTime, true);
+    batch.draw(currentFrame, x, overlayY);
+}
+```
+
+---
+
 ## 3. 素材输入规范
 
 ### 3.1 用户提供多张PNG时
@@ -1233,38 +1316,36 @@ Loop 1→2→3→4→1 creates smooth pulsing animation.
 **生成图片后执行**：
 
 ```bash
-# 基础用法（单行图片条）
+# 基础用法（完全自动）
+# 脚本会根据文件名自动推断：
+# - 包含 'trap', 'wall', 'effect' -> type=stationary, align=bottom (底部对齐)
+# - 包含 'mob', 'enemy', 'walk'   -> type=mobile, align=center (居中对齐)
+# - 自动将文件复制到正确的 assets 目录 (walls/mobs/animations)
 python3 scripts/process_image_strip.py \
-  --input raw_assets/images/boar_walk_down.png \
+  --input raw_assets/images/trap_fire.png \
   --frames 4 \
-  --name mob_boar_walk_down
+  --name anim_trap_fire
 
-# 带辅助线检测 + 邻域修复
+# 强制覆盖（如果自动推断不正确）
 python3 scripts/process_image_strip.py \
-  --input raw_assets/images/boar_walk_down.png \
+  --input raw_assets/images/floating_crystal.png \
   --frames 4 \
-  --guide-color "#FF00FF" \
-  --name mob_boar_walk_down
+  --name effect_crystal \
+  --type mobile \
+  --align center
 
-# ⭐ 推荐：多视图网格 + Canvas缩放（保持比例）
+# 多视图移动物体（完全自动）
 python3 scripts/process_image_strip.py \
-  --input raw_assets/images/boar_walk_sides.png \
+  --input raw_assets/images/boar_sides.png \
   --frames 4 \
   --rows 2 \
   --row-names "walk_right,walk_left" \
   --scale-mode canvas \
-  --guide-color "#FF00FF" \
   --name mob_boar
 
-# 4行网格（上下左右全套）
-python3 scripts/process_image_strip.py \
-  --input raw_assets/images/boar_walk_all.png \
-  --frames 4 \
-  --rows 4 \
-  --row-names "walk_right,walk_left,walk_down,walk_up" \
-  --scale-mode canvas \
-  --guide-color "#FF00FF" \
-  --name mob_boar
+> [!TIP]
+> **自动上纹理**：脚本执行成功后，会自动将处理好的文件复制到游戏资源目录 (`assets/images/walls`, `assets/images/mobs`, 或 `assets/images/animations`)。你**不需要**手动移动文件，直接运行游戏即可看到效果。
+
 ```
 
 > [!IMPORTANT]
@@ -2008,9 +2089,81 @@ Animation<TextureRegion> anim = textureManager.loadAnimatedSprite(
 
 ---
 
-## 13. 故障排除
+---
 
-### 13.1 常见问题
+## 13. 🎮 游戏代码集成指南 (Integration Guide)
+
+> [!TIP]
+> **经验总结 (Lessons Learned)**: 仅仅生成 assets 是不够的，必须确保代码知道去哪里找它们，以及如何渲染它们。
+
+### 13.1 路径对齐 (Path Alignment)
+
+`scripts/process_image_strip.py` v1.3+ 执行全自动分发，但代码必须匹配这些路径：
+
+| 实体类型 (脚本推断) | Python 脚本目标路径 | Java `TextureManager` 加载路径 | 备注 |
+|-------------------|-------------------|------------------------------|-----|
+| **Mobile** (Enemy/Mob) | `assets/images/mobs/` | `images/mobs/mob_name.png` | 通常是多视图或行走图 |
+| **Wall** (Wall Texture) | `assets/images/walls/` | `images/walls/wall_name.png` | 必须为静态图或特定尺寸 |
+| **Static** (Trap/Effect) | `assets/images/animations/` | `images/animations/anim_name.png` | **注意差异**：代码可能在找 `images/traps/` 的静态图，需修改代码指向这里 |
+
+**常见陷阱**：
+*   **陷阱路径错位**：以前的陷阱是静态图，放在 `images/traps/`。现在的动画陷阱生成在 `images/animations/`。
+*   **必须修改 `TextureManager.java`**：将 `loadTextureSafe("images/traps/...")` 改为 `loadSpriteSheetAnimation("images/animations/...")`。
+
+### 13.2 静态转动态最佳实践 (Rendering Logic)
+
+当将一个原本是静态的物体（如陷阱 Trap）升级为动画时，推荐使用 **“优先尝试动画，回退静态图”** 的模式。
+
+**TextureManager.java**:
+```java
+// 1. 定义两个字段：一个存静态，一个存动画
+public TextureRegion trapRegion;
+public Animation<TextureRegion> trapAnim;
+
+// 2. 加载资源时
+trapAnim = loadSpriteSheetAnimation("images/animations/anim_trap_xxx.png", ...);
+// 如果动画加载失败，加载静态备用（可选）
+```
+
+**GameScreen.java (Render Loop)**:
+```java
+// 渲染循环中
+if (obj instanceof Trap) {
+    // 1. 优先尝试获取动画
+    Animation<TextureRegion> anim = textureManager.getTrapAnimation(theme);
+    
+    if (anim != null) {
+        // 2. 如果有动画，计算当前帧 (StateTime 驱动)
+        TextureRegion currentFrame = anim.getKeyFrame(stateTime, true);
+        batch.draw(currentFrame, x, y, width, height);
+    } else {
+        // 3. 回退到静态图渲染
+        TextureRegion staticReg = textureManager.getTrapRegion(theme);
+        batch.draw(staticReg, x, y, width, height);
+    }
+}
+```
+
+### 13.3 渲染尺寸 (Rendering Size)
+
+*   **UNIT_SCALE vs Pixel Size**:
+    *   游戏逻辑通常使用 `UNIT_SCALE` (例如 16px = 1 tile)。
+    *   `batch.draw(region, x, y, UNIT_SCALE, UNIT_SCALE)` 会将纹理强制缩放到 16x16。
+*   **高清素材缩放**:
+    *   即使素材是 64x64，如果用上述代码绘制，它也会被缩放到 16x16 显示在屏幕上。这通常是预期的（像素密度增加）。
+    *   **溢出效果**：如果你希望素材“稍微大一点”（例如高出格子一点），需要调整绘制尺寸：
+        ```java
+        float drawSize = 24f; // 比 16f 大
+        // 居中偏移计算
+        float offset = (drawSize - UNIT_SCALE) / 2;
+        batch.draw(frame, x * UNIT_SCALE - offset, y * UNIT_SCALE - offset, drawSize, drawSize);
+        ```
+
+---
+
+## 14. 故障排除
+
+### 14.1 常见问题
 
 | 问题 | 原因 | 解决方案 |
 |-----|------|---------|
@@ -2019,7 +2172,7 @@ Animation<TextureRegion> anim = textureManager.loadAnimatedSprite(
 | 颜色变换后失真 | 超出色域边界 | 使用 `--preserve-contrast` 参数 |
 | Sprite Sheet 加载失败 | 文件路径错误 | 确认文件在 `assets/images/animations/` |
 
-### 13.2 调试命令
+### 14.2 调试命令
 
 ```bash
 # 查看视频帧信息

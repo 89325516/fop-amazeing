@@ -10,6 +10,7 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -360,9 +361,28 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
             TextureRegion reg = null;
             if (obj instanceof Exit)
                 reg = textureManager.exitRegion;
-            else if (obj instanceof Trap)
+            else if (obj instanceof Trap) {
+                // Check for animation (Overlay)
+                Animation<TextureRegion> trapAnim = textureManager.getTrapAnimation(theme);
+                if (trapAnim != null) {
+                    // 1. Draw Static Base
+                    TextureRegion base = textureManager.getTrapRegion(theme);
+                    if (base != null) {
+                        game.getSpriteBatch().draw(base, obj.getX() * UNIT_SCALE, obj.getY() * UNIT_SCALE,
+                                UNIT_SCALE, UNIT_SCALE);
+                    }
+                    // 2. Draw Animation Overlay (Offset to center)
+                    // We shift Y by UNIT_SCALE / 2 so the bottom of the effect starts at the
+                    // geometric center
+                    TextureRegion currentFrame = trapAnim.getKeyFrame(stateTime, true);
+                    float overlayY = obj.getY() * UNIT_SCALE + (UNIT_SCALE / 2f);
+
+                    game.getSpriteBatch().draw(currentFrame, obj.getX() * UNIT_SCALE, overlayY,
+                            UNIT_SCALE, UNIT_SCALE);
+                    continue; // Skip generic rendering for this object
+                }
                 reg = textureManager.getTrapRegion(theme);
-            else if (obj instanceof Key)
+            } else if (obj instanceof Key)
                 reg = textureManager.keyRegion;
             else if (obj instanceof Potion)
                 reg = textureManager.potionRegion;
