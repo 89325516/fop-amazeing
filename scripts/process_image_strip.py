@@ -40,7 +40,9 @@ from pathlib import Path
 DEFAULT_FRAME_SIZE = 64
 OUTPUT_DIR = "raw_assets/ai_ready_optimized"
 FINAL_ANIM_DIR = "assets/images/animations"
+FINAL_ANIM_DIR = "assets/images/animations"
 FINAL_MOB_DIR = "assets/images/mobs"
+FINAL_WALL_DIR = "assets/images/walls"
 
 # Default guide line color: Magenta
 DEFAULT_GUIDE_COLOR = "#FF00FF"
@@ -55,7 +57,7 @@ DEFAULT_PIXEL_SIZE = 4  # Downscale factor for pixelation (higher = blockier)
 
 def ensure_dirs():
     """Create necessary directories if they don't exist."""
-    for d in [OUTPUT_DIR, FINAL_ANIM_DIR, FINAL_MOB_DIR, "raw_assets/images"]:
+    for d in [OUTPUT_DIR, FINAL_ANIM_DIR, FINAL_MOB_DIR, FINAL_WALL_DIR, "raw_assets/images"]:
         os.makedirs(d, exist_ok=True)
 
 
@@ -395,41 +397,53 @@ def crop_to_content(img, padding_pct=0.02):
     return img.crop((x1, y1, x2, y2))
 
 
-def standardize_frames_unified(frames, target_size, mode='content'):
+def standardize_frames_unified(frames, target_size, mode='content', align='center', entity_type='stationary'):
     """
-    Standardize all frames using a UNIFIED bounding box.
-    This ensures all frames are aligned consistently.
+    Standardize all frames with different strategies based on entity type.
+    
+    Args:
+        frames: List of PIL Images
+        target_size: Target frame size in pixels
+        mode: 'content' (crop to content) or 'canvas' (scale entire frame)
+        align: 'center', 'bottom', or 'top' - vertical alignment of content
+        entity_type: 
+            - 'stationary': Static objects (traps, effects). Uses UNIFIED bounding box 
+                           to preserve relative positions. Best with align='bottom'.
+            - 'mobile': Moving entities (enemies, NPCs). Each frame is cropped and 
+                       centered INDEPENDENTLY. Best with align='center'.
+    
+    Alignment Logic:
+        STATIONARY (trap, effect, decoration):
+            - All frames cropped to the SAME unified bounding box
+            - Scaled identically to maintain relative positions
+            - Bottom-aligned so base stays in place during animation
+        
+        MOBILE (enemy, NPC, player):
+            - Each frame cropped to its OWN content bounding box
+            - Each frame centered independently
+            - Allows different frame sizes (e.g., attack frame larger than walk)
     """
     # Get original frame size (assuming all same size)
     orig_w, orig_h = frames[0].size
     
-    if mode == 'canvas':
-        # "Canvas" mode: Scale the entire input frame to fit target_size.
-        scale = min(target_size / orig_w, target_size / orig_h)
+    # Collect all bounding boxes
+    all_bboxes = []
+    for frame in frames:
+        bbox = frame.getbbox()
+        if bbox:
+            all_bboxes.append(bbox)
+        else:
+            all_bboxes.append(None)
     
-    else:
-        # "Content" mode: Find minimal bbox across all frames
-        all_bboxes = []
-        for frame in frames:
-            bbox = frame.getbbox()
-            if bbox:
-                all_bboxes.append(bbox)
-        
-        if not all_bboxes:
-            return [Image.new("RGBA", (target_size, target_size), (0, 0, 0, 0)) for _ in frames]
-        
-        # Calculate unified bounding box (max of all)
-        max_width = max(bbox[2] - bbox[0] for bbox in all_bboxes)
-        max_height = max(bbox[3] - bbox[1] for bbox in all_bboxes)
-        
-        # Calculate scale to fit in target_size
-        scale = min(target_size / max_width, target_size / max_height) * 0.95  # 95% to add margin
+    if not any(all_bboxes):
+        return [Image.new("RGBA", (target_size, target_size), (0, 0, 0, 0)) for _ in frames]
     
-    # Second pass: process each frame with the SAME scale and centering
     processed = []
     
     if mode == 'canvas':
-        # Simple resize of full frame (Canvas Mode)
+        # "Canvas" mode: Scale the entire input frame to fit target_size
+        scale = min(target_size / orig_w, target_size / orig_h)
+        
         for frame in frames:
             w, h = frame.size
             final_w = int(w * scale)
@@ -441,26 +455,94 @@ def standardize_frames_unified(frames, target_size, mode='content'):
                 
             resized = frame.resize((final_w, final_h), Image.LANCZOS)
             
-            # Center on target canvas
+            # Apply alignment
             canvas = Image.new("RGBA", (target_size, target_size), (0, 0, 0, 0))
             off_x = (target_size - final_w) // 2
-            off_y = (target_size - final_h) // 2
+            
+            if align == 'bottom':
+                off_y = target_size - final_h
+            elif align == 'top':
+                off_y = 0
+            else:  # center
+                off_y = (target_size - final_h) // 2
+            
             canvas.paste(resized, (off_x, off_y))
             processed.append(canvas)
             
-    else:
-        # Content mode logic (original)
-        for frame in frames:
-            bbox = frame.getbbox()
-            if not bbox:
+    elif entity_type == 'stationary':
+        # ========== STATIONARY MODE ==========
+        # Use UNIFIED bounding box to preserve relative positions between frames
+        # Best for: traps, effects, decorations where base alignment matters
+        
+        valid_bboxes = [b for b in all_bboxes if b is not None]
+        union_x1 = min(b[0] for b in valid_bboxes)
+        union_y1 = min(b[1] for b in valid_bboxes)
+        union_x2 = max(b[2] for b in valid_bboxes)
+        union_y2 = max(b[3] for b in valid_bboxes)
+        
+        union_width = union_x2 - union_x1
+        union_height = union_y2 - union_y1
+        
+        # Calculate scale to fit in target_size
+        scale = min(target_size / union_width, target_size / union_height) * 0.95
+        unified_scaled_w = int(union_width * scale)
+        unified_scaled_h = int(union_height * scale)
+        
+        for i, frame in enumerate(frames):
+            if all_bboxes[i] is None:
                 processed.append(Image.new("RGBA", (target_size, target_size), (0, 0, 0, 0)))
                 continue
             
-            # Crop to content
+            # Crop to the UNIFIED bounding box (same for all frames)
+            cropped = frame.crop((union_x1, union_y1, union_x2, union_y2))
+            
+            if unified_scaled_w <= 0 or unified_scaled_h <= 0:
+                processed.append(Image.new("RGBA", (target_size, target_size), (0, 0, 0, 0)))
+                continue
+            
+            resized = cropped.resize((unified_scaled_w, unified_scaled_h), Image.LANCZOS)
+            
+            # Apply alignment
+            canvas = Image.new("RGBA", (target_size, target_size), (0, 0, 0, 0))
+            x_offset = (target_size - unified_scaled_w) // 2
+            
+            if align == 'bottom':
+                y_offset = target_size - unified_scaled_h
+            elif align == 'top':
+                y_offset = 0
+            else:  # center
+                y_offset = (target_size - unified_scaled_h) // 2
+            
+            canvas.paste(resized, (x_offset, y_offset))
+            processed.append(canvas)
+    
+    else:
+        # ========== MOBILE MODE ==========
+        # Each frame cropped and centered INDEPENDENTLY
+        # Best for: enemies, NPCs, player characters
+        
+        # First pass: find the MAX content size across all frames for uniform scaling
+        max_content_w = 0
+        max_content_h = 0
+        for bbox in all_bboxes:
+            if bbox:
+                max_content_w = max(max_content_w, bbox[2] - bbox[0])
+                max_content_h = max(max_content_h, bbox[3] - bbox[1])
+        
+        # Calculate scale based on largest content
+        scale = min(target_size / max_content_w, target_size / max_content_h) * 0.95
+        
+        for i, frame in enumerate(frames):
+            bbox = all_bboxes[i]
+            if bbox is None:
+                processed.append(Image.new("RGBA", (target_size, target_size), (0, 0, 0, 0)))
+                continue
+            
+            # Crop to THIS frame's individual bounding box
             cropped = frame.crop(bbox)
             content_w, content_h = cropped.size
             
-            # Use the unified scale factor
+            # Scale using the unified scale factor (consistent size across frames)
             scaled_w = int(content_w * scale)
             scaled_h = int(content_h * scale)
             
@@ -470,10 +552,11 @@ def standardize_frames_unified(frames, target_size, mode='content'):
             
             resized = cropped.resize((scaled_w, scaled_h), Image.LANCZOS)
             
-            # Center in target canvas
+            # CENTER each frame independently (crucial for mobile entities)
             canvas = Image.new("RGBA", (target_size, target_size), (0, 0, 0, 0))
             x_offset = (target_size - scaled_w) // 2
-            y_offset = (target_size - scaled_h) // 2
+            y_offset = (target_size - scaled_h) // 2  # Always center for mobile
+            
             canvas.paste(resized, (x_offset, y_offset))
             processed.append(canvas)
     
@@ -553,7 +636,7 @@ def pixelate_frame(frame, factor):
     return pixelated
 
 
-def process_image_strip(input_path, num_frames, guide_color, target_size, name, scale_mode='content', pixelate_factor=None):
+def process_image_strip(input_path, num_frames, guide_color, target_size, name, scale_mode='content', align='bottom', entity_type='stationary', pixelate_factor=None):
     """
     Process a 4-frame image strip into a game-ready sprite sheet.
     
@@ -564,6 +647,8 @@ def process_image_strip(input_path, num_frames, guide_color, target_size, name, 
         target_size: Target frame size in pixels
         name: Base name for output files
         scale_mode: 'content' or 'canvas'
+        align: 'center', 'bottom', or 'top' - vertical alignment of content
+        entity_type: 'stationary' (traps, effects) or 'mobile' (enemies, NPCs)
         pixelate_factor: If set, apply pixel art stylization with this factor
     
     Returns:
@@ -614,8 +699,8 @@ def process_image_strip(input_path, num_frames, guide_color, target_size, name, 
         
         processed_frames_step1.append(frame)
     
-    # Standardize ALL frames with UNIFIED bounding box or canvas scaling
-    processed_frames = standardize_frames_unified(processed_frames_step1, target_size, scale_mode)
+    # Standardize ALL frames with appropriate strategy
+    processed_frames = standardize_frames_unified(processed_frames_step1, target_size, scale_mode, align, entity_type)
     
     # Report content coverage
     for i, frame in enumerate(processed_frames):
@@ -650,6 +735,45 @@ def process_image_strip(input_path, num_frames, guide_color, target_size, name, 
     return output_path, output_name
 
 
+def automatic_config_from_name(name, entity_type_arg, align_arg, scale_mode_arg):
+    """
+    Automatically deduce configuration based on file/asset name.
+    
+    Rules:
+    - 'stationary' (align=bottom, mode=content): trap, wall, decoration, effect, static, item
+    - 'mobile' (align=center, mode=content): mob, enemy, player, character, npc, boss
+    """
+    name_lower = name.lower()
+    
+    # 1. Deduce Entity Type
+    if entity_type_arg:
+        entity_type = entity_type_arg
+    else:
+        if any(k in name_lower for k in ['trap', 'wall', 'decor', 'effect', 'static', 'item', 'bush', 'tree', 'rock']):
+            entity_type = 'stationary'
+        else:
+            entity_type = 'mobile'  # Default to mobile (safest for characters)
+    
+    # 2. Deduce Alignment
+    if align_arg:
+        align = align_arg
+    else:
+        if entity_type == 'stationary':
+            align = 'bottom'
+        else:
+            align = 'center'
+            
+    # 3. Deduce Scale Mode
+    if scale_mode_arg:
+        scale_mode = scale_mode_arg
+    else:
+        # Default to 'content' for almost everything unless specifically told 'canvas'
+        scale_mode = 'content'
+        
+    print(f"  🤖 Auto-Config: Type={entity_type}, Align={align}, Mode={scale_mode}")
+    return entity_type, align, scale_mode
+
+
 def main():
     parser = argparse.ArgumentParser(
         description='Process image strips containing animation frames',
@@ -666,8 +790,12 @@ def main():
                         help='Comma-separated names for each row (e.g., "walk_down,walk_up")')
     parser.add_argument('--guide-color', '-g', default=None,
                         help=f'Hex color of guide lines (default: None, e.g., "#FF00FF")')
-    parser.add_argument('--scale-mode', default='content', choices=['content', 'canvas'],
-                        help='Scaling strategy: "content" (crop & max fit) or "canvas" (scale entire frame, preserves relative size)')
+    parser.add_argument('--scale-mode', default=None, choices=['content', 'canvas'],
+                        help='Scaling strategy (default: auto, usually "content")')
+    parser.add_argument('--type', '-t', dest='entity_type', default=None, choices=['stationary', 'mobile'],
+                        help='Entity type (default: auto-detected from name)')
+    parser.add_argument('--align', '-a', default=None, choices=['center', 'bottom', 'top'],
+                        help='Vertical alignment (default: auto-detected from type)')
     parser.add_argument('--output-size', '-s', type=int, default=DEFAULT_FRAME_SIZE,
                         help=f'Target frame size (default: {DEFAULT_FRAME_SIZE})')
     parser.add_argument('--name', '-n', required=True,
@@ -680,13 +808,21 @@ def main():
     args = parser.parse_args()
     
     print("=" * 60)
-    print("Image Strip Processing Pipeline v1.1 (Grid Support)")
+    print("Image Strip Processing Pipeline v1.3 (Auto-Config)")
     print("=" * 60)
+    
+    # Apply automatic configuration
+    args.entity_type, args.align, args.scale_mode = automatic_config_from_name(
+        args.name, args.entity_type, args.align, args.scale_mode
+    )
+    
     print(f"Input: {args.input}")
     print(f"Frames per row: {args.frames}")
     print(f"Rows: {args.rows}")
+    print(f"Entity type: {args.entity_type}")
     print(f"Guide color: {args.guide_color or 'None (equal division)'}")
     print(f"Scale mode: {args.scale_mode}")
+    print(f"Align: {args.align}")
     print(f"Output size: {args.output_size}×{args.output_size}")
     print(f"Name: {args.name}")
     print("=" * 60)
@@ -763,15 +899,23 @@ def main():
             # Process this row
             output_path, output_name = process_image_strip(
                 temp_path, args.frames, args.guide_color,
-                args.output_size, row_name, args.scale_mode, args.pixelate
+                args.output_size, row_name, args.scale_mode, args.align, args.entity_type, args.pixelate
             )
             generated_files.append((row_suffix, output_path, output_name))
         
         # Copy all to final directory
         if not args.no_copy:
             import shutil
-            is_mob = any(x in args.name.lower() for x in ['mob_', 'enemy_', 'walk_', 'attack_'])
-            target_dir = FINAL_MOB_DIR if is_mob else FINAL_ANIM_DIR
+            name_lower = args.name.lower()
+            is_wall = 'wall' in name_lower
+            is_mob = any(x in name_lower for x in ['mob_', 'enemy_', 'walk_', 'attack_', 'boss'])
+            
+            if is_wall:
+                target_dir = FINAL_WALL_DIR
+            elif is_mob:
+                target_dir = FINAL_MOB_DIR 
+            else:
+                target_dir = FINAL_ANIM_DIR
             
             for row_suffix, output_path, output_name in generated_files:
                 dst = os.path.join(target_dir, output_name)
@@ -781,14 +925,22 @@ def main():
         # Single row - original behavior
         output_path, output_name = process_image_strip(
             args.input, args.frames, args.guide_color,
-            args.output_size, args.name, args.scale_mode, args.pixelate
+            args.output_size, args.name, args.scale_mode, args.align, args.entity_type, args.pixelate
         )
         
         # Copy to final directory
         if not args.no_copy:
             import shutil
-            is_mob = any(x in args.name.lower() for x in ['mob_', 'enemy_', 'walk_', 'attack_'])
-            target_dir = FINAL_MOB_DIR if is_mob else FINAL_ANIM_DIR
+            name_lower = args.name.lower()
+            is_wall = 'wall' in name_lower
+            is_mob = any(x in name_lower for x in ['mob_', 'enemy_', 'walk_', 'attack_', 'boss'])
+            
+            if is_wall:
+                target_dir = FINAL_WALL_DIR
+            elif is_mob:
+                target_dir = FINAL_MOB_DIR 
+            else:
+                target_dir = FINAL_ANIM_DIR
             
             dst = os.path.join(target_dir, output_name)
             shutil.copy(output_path, dst)
