@@ -41,6 +41,12 @@ public class TextureManager implements Disposable {
         public TextureRegion trapRegion;
         // Themed Trap Regions
         public TextureRegion trapGrassland, trapDesert, trapIce, trapJungle, trapSpace;
+        // [NEW] Themed Trap Animations
+        public Animation<TextureRegion> trapGrasslandAnim;
+        public Animation<TextureRegion> trapDesertAnim;
+        public Animation<TextureRegion> trapIceAnim;
+        public Animation<TextureRegion> trapJungleAnim;
+        public Animation<TextureRegion> trapSpaceAnim;
         public TextureRegion keyRegion;
         public TextureRegion potionRegion;
         public TextureRegion heartRegion;
@@ -265,10 +271,24 @@ public class TextureManager implements Disposable {
 
                 // 8. Load Themed Trap Textures
                 trapGrassland = loadTextureSafe("images/traps/trap_grassland_v1.png");
+                // [NEW] Load Grassland Trap Animation (Fog Overlay)
+                trapGrasslandAnim = loadSpriteSheetAnimation("images/animations/anim_trap_grassland_fog_4f.png", 4, 64,
+                                0.15f);
+
                 trapDesert = loadTextureSafe("images/traps/trap_desert_v1.png");
+                trapDesertAnim = loadSpriteSheetAnimation("images/animations/anim_trap_desert_sandstorm_4f.png", 4, 64,
+                                0.15f);
+
                 trapIce = loadTextureSafe("images/traps/trap_ice_v1.png");
+                trapIceAnim = loadSpriteSheetAnimation("images/animations/anim_trap_ice_frost_4f.png", 4, 64, 0.15f);
+
                 trapJungle = loadTextureSafe("images/traps/trap_jungle_v1.png");
+                trapJungleAnim = loadSpriteSheetAnimation("images/animations/anim_trap_jungle_spores_4f.png", 4, 64,
+                                0.15f);
+
                 trapSpace = loadTextureSafe("images/traps/trap_space_v1.png");
+                trapSpaceAnim = loadSpriteSheetAnimation("images/animations/anim_trap_space_shock_4f.png", 4, 64,
+                                0.15f);
         }
 
         private void loadAttackAnimations() {
@@ -498,6 +518,29 @@ public class TextureManager implements Disposable {
                                 return trapSpace != fallbackRegion ? trapSpace : trapRegion;
                         default:
                                 return trapRegion;
+                }
+        }
+
+        /**
+         * Returns the trap animation for the given theme.
+         * Returns null if no animation exists for that theme.
+         */
+        public Animation<TextureRegion> getTrapAnimation(String theme) {
+                if (theme == null)
+                        return null;
+                switch (theme) {
+                        case "Grassland":
+                                return trapGrasslandAnim;
+                        case "Desert":
+                                return trapDesertAnim;
+                        case "Ice":
+                                return trapIceAnim;
+                        case "Jungle":
+                                return trapJungleAnim;
+                        case "Space":
+                                return trapSpaceAnim;
+                        default:
+                                return null;
                 }
         }
 
