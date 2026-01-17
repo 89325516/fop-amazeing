@@ -19,6 +19,8 @@ import de.tum.cit.fop.maze.custom.CustomElementDefinition;
 import de.tum.cit.fop.maze.custom.CustomElementManager;
 import de.tum.cit.fop.maze.custom.ElementType;
 import de.tum.cit.fop.maze.utils.UIConstants;
+import de.tum.cit.fop.maze.utils.GameLogger;
+import de.tum.cit.fop.maze.utils.GameLogger;
 
 /**
  * Element Creator Screen - Multi-step wizard for creating custom game elements.
@@ -43,6 +45,7 @@ public class ElementCreatorScreen implements Screen {
     // Wizard state
     private CustomElementDefinition currentElement;
     private String currentAction; // For sprite upload step
+    private int selectedFrames = 4; // State for Step 2
 
     // UI Components
     private Table contentTable;
@@ -57,7 +60,8 @@ public class ElementCreatorScreen implements Screen {
                 game.getSpriteBatch());
 
         buildUI();
-        showStep(1);
+        buildUI();
+        showStep(0); // Start at Dashboard
     }
 
     private void buildUI() {
@@ -131,11 +135,18 @@ public class ElementCreatorScreen implements Screen {
         stepLabel.setText("Step " + step + " / " + TOTAL_STEPS + ": " + getStepName(step));
 
         prevBtn.setVisible(step > 1);
+        nextBtn.setVisible(step > 0); // Visible for all except Dashboard
         nextBtn.setText(step == TOTAL_STEPS ? "Create Element" : "Next >");
         nextBtn.setColor(step == TOTAL_STEPS ? Color.GREEN : Color.WHITE);
 
         switch (step) {
+            case 0:
+                prevBtn.setVisible(false);
+                nextBtn.setVisible(false);
+                buildDashboardStep();
+                break;
             case 1:
+                prevBtn.setVisible(true); // Back to dashboard
                 buildTypeSelectionStep();
                 break;
             case 2:
@@ -158,6 +169,8 @@ public class ElementCreatorScreen implements Screen {
 
     private String getStepName(int step) {
         switch (step) {
+            case 0:
+                return "Dashboard";
             case 1:
                 return "Select Element Type";
             case 2:
@@ -192,7 +205,13 @@ public class ElementCreatorScreen implements Screen {
 
         // Name input
         contentTable.add(new Label("Element Name:", skin)).padTop(30).left().row();
-        TextField nameField = new TextField("My Custom Element", skin);
+
+        String defaultName = "My Custom Element";
+        if (currentElement != null) {
+            defaultName = currentElement.getName();
+        }
+
+        TextField nameField = new TextField(defaultName, skin);
         nameField.setName("nameField");
         contentTable.add(nameField).width(400).padTop(10);
     }
@@ -201,6 +220,14 @@ public class ElementCreatorScreen implements Screen {
         Table card = new Table();
         card.setBackground(skin.newDrawable("white", new Color(0.18f, 0.18f, 0.25f, 1f)));
         card.pad(15);
+
+        // Pre-select logic
+        if (currentElement != null && currentElement.getType() == type) {
+            card.setBackground(skin.newDrawable("white", new Color(0.2f, 0.4f, 0.3f, 1f)));
+            card.setUserObject("SELECTED:" + type.name());
+        } else {
+            card.setUserObject(type.name());
+        }
 
         Label nameLabel = new Label(type.getDisplayName(), skin);
         nameLabel.setFontScale(1.3f);
@@ -217,21 +244,109 @@ public class ElementCreatorScreen implements Screen {
         selectBtn.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                // Highlight selected
+                // Clear selection from all cards
                 for (Actor a : card.getParent().getChildren()) {
                     if (a instanceof Table) {
-                        ((Table) a).setBackground(skin.newDrawable("white", new Color(0.18f, 0.18f, 0.25f, 1f)));
+                        Table t = (Table) a;
+                        t.setBackground(skin.newDrawable("white", new Color(0.18f, 0.18f, 0.25f, 1f)));
+                        // Reset userObject to just the type (remove selection marker)
+                        if (t.getUserObject() instanceof String) {
+                            String marker = (String) t.getUserObject();
+                            if (marker.startsWith("SELECTED:")) {
+                                t.setUserObject(marker.substring(9)); // Remove marker
+                            }
+                        }
                     }
                 }
+                // Mark this card as selected (green background + marker)
                 card.setBackground(skin.newDrawable("white", new Color(0.2f, 0.4f, 0.3f, 1f)));
-                card.setUserObject(type);
+                card.setUserObject("SELECTED:" + type.name());
             }
         });
         card.add(selectBtn).padTop(15).width(120).height(40);
 
-        // Store type in card for retrieval
-        card.setUserObject(type);
+        // Store type name in card for retrieval (not marked as selected yet)
         return card;
+    }
+
+    /**
+     * Validate Step 1 and initialize/update currentElement
+     */
+    private boolean validateCurrentStep() {
+        if (currentStep == 1) {
+            // Find selected type
+            ElementType selectedType = null;
+            // Iterate over typeGrid children (which is inside contentTable)
+            // Need reference to typeGrid? No, stored in contentTable?
+            // contentTable children: label, table(typeGrid), label, textfield
+
+            // Simplified: We can traverse the stage or contentTable to find the selected
+            // card
+            // Or better: store selection in a field. But UI state is source of truth.
+
+            for (Actor child : contentTable.getChildren()) {
+                if (child instanceof Table) {
+                    Table grid = (Table) child;
+                    for (Actor card : grid.getChildren()) {
+                        if (card.getUserObject() instanceof String) {
+                            String marker = (String) card.getUserObject();
+                            if (marker.startsWith("SELECTED:")) {
+                                try {
+                                    selectedType = ElementType.valueOf(marker.substring(9));
+                                } catch (Exception e) {
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (selectedType == null) {
+                // Show error - simplified by just blocking print
+                GameLogger.warn("ElementCreator", "No type selected");
+                return false;
+            }
+
+            // Get Name
+            String name = "Custom Element";
+            for (Actor child : contentTable.getChildren()) {
+                if (child instanceof TextField) {
+                    name = ((TextField) child).getText();
+                }
+            }
+
+            if (name.trim().isEmpty()) {
+                GameLogger.warn("ElementCreator", "Name is empty");
+                return false;
+            }
+
+            // Create or Update Element
+            if (currentElement == null) {
+                currentElement = new CustomElementDefinition(name, selectedType, 4);
+            } else {
+                currentElement.setName(name);
+                // Changing type is tricky as sprites depend on actions.
+                // If type changes, sprites might be invalid.
+                if (currentElement.getType() != selectedType) {
+                    currentElement = new CustomElementDefinition(name, selectedType, 4); // Reset if type changed
+                }
+            }
+            return true;
+        } else if (currentStep == 2) {
+            if (selectedFrames != currentElement.getFrameCount()) {
+                String oldId = currentElement.getId();
+                CustomElementDefinition newEl = new CustomElementDefinition(
+                        currentElement.getName(),
+                        currentElement.getType(),
+                        selectedFrames);
+                newEl.setId(oldId); // Preserve ID
+                newEl.getProperties().putAll(currentElement.getProperties());
+                newEl.getAssignedLevels().addAll(currentElement.getAssignedLevels());
+                currentElement = newEl;
+            }
+            return true;
+        }
+        return true;
     }
 
     private String getTypeDescription(ElementType type) {
@@ -257,26 +372,37 @@ public class ElementCreatorScreen implements Screen {
         Table options = new Table();
 
         // Use regular buttons with manual toggle via color
+        // Initialize state
+        if (currentElement != null) {
+            selectedFrames = currentElement.getFrameCount();
+        } else {
+            selectedFrames = 4;
+        }
+
         final TextButton btn4 = new TextButton("4 Frames (Simple)", skin);
         final TextButton btn16 = new TextButton("16 Frames (Detailed)", skin);
 
-        btn4.setColor(Color.GREEN); // Initially selected
-        btn4.setUserObject(4);
-        btn16.setUserObject(16);
+        // Update visual state helper
+        Runnable updateButtons = () -> {
+            btn4.setColor(selectedFrames == 4 ? Color.GREEN : Color.WHITE);
+            btn16.setColor(selectedFrames == 16 ? Color.GREEN : Color.WHITE);
+        };
+
+        updateButtons.run();
 
         btn4.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                btn4.setColor(Color.GREEN);
-                btn16.setColor(Color.WHITE);
+                selectedFrames = 4;
+                updateButtons.run();
             }
         });
 
         btn16.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                btn16.setColor(Color.GREEN);
-                btn4.setColor(Color.WHITE);
+                selectedFrames = 16;
+                updateButtons.run();
             }
         });
 
@@ -292,22 +418,93 @@ public class ElementCreatorScreen implements Screen {
         infoLabel.setAlignment(Align.center);
         contentTable.add(infoLabel).padTop(30);
 
-        // Store buttons for retrieval
-        Table btnGroup = new Table();
-        btnGroup.setUserObject(new TextButton[] { btn4, btn16 });
-        contentTable.setUserObject(btnGroup.getUserObject());
+    }
+
+    // ==================== Step 0: Dashboard ====================
+
+    private void buildDashboardStep() {
+        contentTable.add(new Label("Managed Elements:", skin)).padBottom(20).left().row();
+
+        Table listTable = new Table();
+        listTable.top().left();
+
+        java.util.Collection<CustomElementDefinition> elements = CustomElementManager.getInstance().getAllElements();
+
+        for (final CustomElementDefinition el : elements) {
+            Table row = new Table();
+            row.setBackground(skin.newDrawable("white", new Color(0.2f, 0.2f, 0.3f, 1f)));
+            row.pad(10);
+
+            Label nameLbl = new Label(el.getName(), skin);
+            nameLbl.setColor(Color.WHITE);
+            row.add(nameLbl).expandX().left().padRight(20);
+
+            Label typeLbl = new Label(el.getType().toString(), skin);
+            typeLbl.setColor(Color.YELLOW);
+            row.add(typeLbl).width(100).padRight(20);
+
+            TextButton editBtn = new TextButton("Edit", skin);
+            editBtn.setColor(Color.ORANGE);
+            editBtn.addListener(new ChangeListener() {
+                @Override
+                public void changed(ChangeEvent event, Actor actor) {
+                    // Load for editing
+                    currentElement = el;
+                    currentAction = null;
+                    showStep(1);
+                }
+            });
+            row.add(editBtn).width(80).height(30).padRight(10);
+
+            TextButton deleteBtn = new TextButton("Delete", skin);
+            deleteBtn.setColor(Color.RED);
+            deleteBtn.addListener(new ChangeListener() {
+                @Override
+                public void changed(ChangeEvent event, Actor actor) {
+                    CustomElementManager.getInstance().deleteElement(el.getId());
+                    showStep(0); // Refresh list
+                }
+            });
+            row.add(deleteBtn).width(80).height(30);
+
+            listTable.add(row).growX().padBottom(5).row();
+        }
+
+        ScrollPane scroll = new ScrollPane(listTable, skin);
+        contentTable.add(scroll).grow().row();
+
+        TextButton createBtn = new TextButton("+ Create New Element", skin);
+        createBtn.setColor(Color.GREEN);
+        createBtn.addListener(new ChangeListener() {
+
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                currentElement = null; // New element
+                currentAction = null;
+                showStep(1);
+            }
+        });
+        contentTable.add(createBtn).height(50).width(250).padTop(20);
     }
 
     // ==================== Step 3: Sprite Upload ====================
+
+    // Track which frame is selected
+    private int selectedFrameIndex = 0;
 
     private void buildSpriteUploadStep() {
         if (currentElement == null)
             return;
 
+        // Clear existing content to prevent duplication
+        contentTable.clearChildren();
+
         String[] actions = currentElement.getType().getActions();
         if (currentAction == null) {
             currentAction = actions[0];
         }
+
+        int frameCount = currentElement.getFrameCount();
 
         // Action tabs
         Table tabs = new Table();
@@ -320,51 +517,68 @@ public class ElementCreatorScreen implements Screen {
                 @Override
                 public void changed(ChangeEvent event, Actor actor) {
                     currentAction = action;
+                    selectedFrameIndex = 0;
                     buildSpriteUploadStep(); // Rebuild
                 }
             });
             tabs.add(tabBtn).width(120).height(40).padRight(10);
         }
-        contentTable.add(tabs).padBottom(20).row();
+        contentTable.add(tabs).padBottom(15).row();
 
-        contentTable.add(new Label("Upload sprites for action: " + currentAction, skin)).padBottom(20).row();
+        // Instructions
+        Label instructionLabel = new Label("Click a frame, then paste the image file path below", skin);
+        instructionLabel.setColor(Color.YELLOW);
+        contentTable.add(instructionLabel).padBottom(5).row();
+
+        Label hintLabel = new Label("Tip: Right-click file in Finder → Hold Option → Copy as Pathname", skin);
+        hintLabel.setFontScale(0.8f);
+        hintLabel.setColor(Color.GRAY);
+        contentTable.add(hintLabel).padBottom(15).row();
 
         // Frame grid
         Table frameGrid = new Table();
-        int frameCount = currentElement.getFrameCount();
-        int cols = frameCount <= 4 ? 4 : 8;
+        int cols = frameCount <= 4 ? 4 : 4;
 
         for (int i = 0; i < frameCount; i++) {
             final int frameIndex = i;
             Table frameSlot = new Table();
-            frameSlot.setBackground(skin.newDrawable("white", new Color(0.2f, 0.2f, 0.25f, 1f)));
+
+            // Highlight selected frame
+            if (i == selectedFrameIndex) {
+                frameSlot.setBackground(skin.newDrawable("white", new Color(0.2f, 0.5f, 0.3f, 1f)));
+            } else {
+                frameSlot.setBackground(skin.newDrawable("white", new Color(0.2f, 0.2f, 0.25f, 1f)));
+            }
             frameSlot.pad(10);
 
             Label frameLabel = new Label("Frame " + (i + 1), skin);
-            frameLabel.setFontScale(0.8f);
+            frameLabel.setFontScale(0.9f);
+            frameLabel.setColor(i == selectedFrameIndex ? Color.WHITE : Color.GOLD);
             frameSlot.add(frameLabel).row();
 
             // Path display
             String path = currentElement.getSpritePath(currentAction, i);
-            String displayPath = (path != null && !path.isEmpty()) ? "✓ Set" : "Not set";
-            Label pathLabel = new Label(displayPath, skin);
-            pathLabel.setColor(path != null ? Color.GREEN : Color.RED);
-            frameSlot.add(pathLabel).padTop(5).row();
+            String displayText = (path != null && !path.isEmpty()) ? "✓ " + getFileName(path) : "(empty)";
+            Label pathLabel = new Label(displayText, skin);
+            pathLabel.setFontScale(0.7f);
+            pathLabel.setColor(path != null && !path.isEmpty() ? Color.GREEN : Color.LIGHT_GRAY);
+            pathLabel.setEllipsis(true);
+            frameSlot.add(pathLabel).width(140).padTop(5);
 
-            // Input field
-            TextField pathField = new TextField(path != null ? path : "", skin);
-            pathField.setMessageText("Enter file path...");
-            pathField.addListener(new ChangeListener() {
+            // Make the slot clickable
+            frameSlot.setTouchable(com.badlogic.gdx.scenes.scene2d.Touchable.enabled);
+            frameSlot.addListener(new com.badlogic.gdx.scenes.scene2d.InputListener() {
+
                 @Override
-                public void changed(ChangeEvent event, Actor actor) {
-                    currentElement.setSpritePath(currentAction, frameIndex, pathField.getText());
-                    pathLabel.setText(pathField.getText().isEmpty() ? "Not set" : "✓ Set");
-                    pathLabel.setColor(pathField.getText().isEmpty() ? Color.RED : Color.GREEN);
+                public boolean touchDown(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y,
+                        int pointer, int button) {
+                    selectedFrameIndex = frameIndex;
+                    buildSpriteUploadStep();
+                    return true;
                 }
             });
-            frameSlot.add(pathField).width(200).padTop(5);
 
-            frameGrid.add(frameSlot).size(220, 120).pad(5);
+            frameGrid.add(frameSlot).size(170, 70).pad(5);
             if ((i + 1) % cols == 0) {
                 frameGrid.row();
             }
@@ -372,7 +586,167 @@ public class ElementCreatorScreen implements Screen {
 
         ScrollPane scroll = new ScrollPane(frameGrid, skin);
         scroll.setFadeScrollBars(false);
-        contentTable.add(scroll).grow();
+        contentTable.add(scroll).height(180).fillX().row();
+
+        // Path input section
+        Table inputSection = new Table();
+        inputSection.setBackground(skin.newDrawable("white", new Color(0.15f, 0.15f, 0.2f, 1f)));
+        inputSection.pad(15);
+
+        inputSection.add(new Label("Selected: Frame " + (selectedFrameIndex + 1) + " (" + currentAction + ")", skin))
+                .left().padBottom(10).row();
+
+        Table inputRow = new Table();
+        TextField pathField = new TextField("", skin);
+        pathField.setMessageText("Paste file path here (e.g., /Users/name/image.png)");
+        inputRow.add(pathField).width(500).height(40).padRight(10);
+
+        TextButton setBtn = new TextButton("Set Path", skin);
+        setBtn.setColor(Color.GREEN);
+        setBtn.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                String path = pathField.getText().trim();
+                if (!path.isEmpty()) {
+                    currentElement.setSpritePath(currentAction, selectedFrameIndex, path);
+                    // Move to next frame
+                    if (selectedFrameIndex < frameCount - 1) {
+                        selectedFrameIndex++;
+                    }
+                    buildSpriteUploadStep();
+                }
+            }
+        });
+        inputRow.add(setBtn).width(100).height(40);
+
+        inputSection.add(inputRow).row();
+
+        // Clear button
+        TextButton clearBtn = new TextButton("Clear Selected", skin);
+        clearBtn.setColor(Color.CORAL);
+        clearBtn.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                currentElement.setSpritePath(currentAction, selectedFrameIndex, null);
+                disposePreviewTextures();
+                buildSpriteUploadStep();
+            }
+        });
+        inputSection.add(clearBtn).width(150).height(35).padTop(10).left();
+
+        contentTable.add(inputSection).fillX().padTop(10).row();
+
+        // Sprite preview section
+        buildSpritePreview(frameCount);
+    }
+
+    // Preview textures - need to track for disposal
+    private java.util.List<Texture> previewTextures = new java.util.ArrayList<>();
+
+    /**
+     * Build sprite preview showing uploaded images
+     */
+    private void buildSpritePreview(int frameCount) {
+        // Count how many sprites are set
+        int setCount = 0;
+        for (int i = 0; i < frameCount; i++) {
+            String path = currentElement.getSpritePath(currentAction, i);
+            if (path != null && !path.isEmpty())
+                setCount++;
+        }
+
+        if (setCount == 0) {
+            Label noPreview = new Label("No sprites uploaded yet for " + currentAction, skin);
+            noPreview.setColor(Color.GRAY);
+            contentTable.add(noPreview).padTop(10);
+            return;
+        }
+
+        // Preview section
+        Table previewSection = new Table();
+        previewSection.setBackground(skin.newDrawable("white", new Color(0.1f, 0.15f, 0.1f, 1f)));
+        previewSection.pad(10);
+
+        Label previewLabel = new Label("Preview: " + currentAction + " (" + setCount + "/" + frameCount + " frames)",
+                skin);
+        previewLabel.setColor(Color.LIME);
+        previewSection.add(previewLabel).left().padBottom(10).row();
+
+        // Dispose previous textures
+        disposePreviewTextures();
+
+        // Preview thumbnails
+        Table thumbnailRow = new Table();
+        for (int i = 0; i < frameCount; i++) {
+            String path = currentElement.getSpritePath(currentAction, i);
+            Table thumb = new Table();
+            thumb.setBackground(skin.newDrawable("white", new Color(0.2f, 0.2f, 0.25f, 1f)));
+
+            if (path != null && !path.isEmpty()) {
+                if (path.startsWith("internal:")) {
+                    Label defaultLabel = new Label("DEF", skin);
+                    defaultLabel.setColor(Color.CYAN);
+                    thumb.add(defaultLabel).size(48, 48);
+                } else {
+                    try {
+                        // Try to load the texture
+                        com.badlogic.gdx.files.FileHandle file = Gdx.files.absolute(path);
+                        if (!file.exists()) {
+                            file = Gdx.files.local(path);
+                        }
+                        if (file.exists()) {
+                            Texture tex = new Texture(file);
+                            previewTextures.add(tex);
+                            Image img = new Image(tex);
+                            img.setScaling(com.badlogic.gdx.utils.Scaling.fit);
+                            thumb.add(img).size(48, 48);
+                        } else {
+                            Label errLabel = new Label("?", skin);
+                            errLabel.setColor(Color.RED);
+                            thumb.add(errLabel).size(48, 48);
+                        }
+                    } catch (Exception e) {
+                        Label errLabel = new Label("!", skin);
+                        errLabel.setColor(Color.ORANGE);
+                        thumb.add(errLabel).size(48, 48);
+                    }
+                }
+            } else {
+                Label emptyLabel = new Label("-", skin);
+                emptyLabel.setColor(Color.DARK_GRAY);
+                thumb.add(emptyLabel).size(48, 48);
+            }
+            thumbnailRow.add(thumb).size(56, 56).pad(3);
+        }
+        previewSection.add(thumbnailRow);
+
+        contentTable.add(previewSection).fillX().padTop(10);
+    }
+
+    /**
+     * Dispose preview textures to avoid memory leaks
+     */
+    private void disposePreviewTextures() {
+        for (Texture tex : previewTextures) {
+            try {
+                tex.dispose();
+            } catch (Exception ignored) {
+            }
+        }
+        previewTextures.clear();
+    }
+
+    /**
+     * Extract filename from full path
+     */
+    private String getFileName(String path) {
+        if (path == null || path.isEmpty())
+            return "";
+        int lastSlash = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
+        if (lastSlash >= 0 && lastSlash < path.length() - 1) {
+            return path.substring(lastSlash + 1);
+        }
+        return path;
     }
 
     // ==================== Step 4: Properties ====================
@@ -409,6 +783,7 @@ public class ElementCreatorScreen implements Screen {
                 TextField tf = new TextField(defaultVal.toString(), skin);
                 tf.setTextFieldFilter(new TextField.TextFieldFilter.DigitsOnlyFilter());
                 tf.addListener(new ChangeListener() {
+
                     @Override
                     public void changed(ChangeEvent event, Actor actor) {
                         try {
@@ -444,15 +819,38 @@ public class ElementCreatorScreen implements Screen {
         probSlider.setValue(currentElement.getSpawnProbability());
         Label probLabel = new Label(String.format("%.0f%%", probSlider.getValue() * 100), skin);
         probSlider.addListener(new ChangeListener() {
+
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 currentElement.setSpawnProbability(probSlider.getValue());
                 probLabel.setText(String.format("%.0f%%", probSlider.getValue() * 100));
             }
+
         });
         probRow.add(probSlider).width(200).left();
         probRow.add(probLabel).padLeft(10);
-        propTable.add(probRow).fillX();
+        propTable.add(probRow).fillX().padBottom(15).row(); // Added padding
+
+        // Spawn Count
+        Table countRow = new Table();
+        countRow.left();
+        countRow.add(new Label("Max Spawn Count:", skin)).width(200).left().padRight(20);
+
+        final Slider countSlider = new Slider(1, 20, 1, false, skin);
+        countSlider.setValue(currentElement.getSpawnCount());
+        final Label countLabel = new Label(String.valueOf((int) countSlider.getValue()), skin);
+
+        countSlider.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                currentElement.setSpawnCount((int) countSlider.getValue());
+                countLabel.setText(String.valueOf((int) countSlider.getValue()));
+            }
+        });
+
+        countRow.add(countSlider).width(200).left();
+        countRow.add(countLabel).padLeft(10);
+        propTable.add(countRow).fillX();
 
         contentTable.add(propTable).grow();
     }
@@ -463,42 +861,81 @@ public class ElementCreatorScreen implements Screen {
         if (currentElement == null)
             return;
 
-        contentTable.add(new Label("Select levels where this element will appear:", skin)).padBottom(20).row();
+        contentTable.add(new Label("Select levels and spawn rates:", skin)).padBottom(20).row();
 
-        Table levelGrid = new Table();
-        final java.util.Map<Integer, TextButton> levelButtons = new java.util.HashMap<>();
+        Table listTable = new Table();
+        listTable.top().left();
+
         for (int i = 1; i <= 20; i++) {
             final int level = i;
-            TextButton levelBtn = new TextButton(String.valueOf(i), skin);
-            levelBtn.setColor(currentElement.isAssignedToLevel(level) ? Color.GREEN : Color.WHITE);
-            levelButtons.put(level, levelBtn);
-            levelBtn.addListener(new ChangeListener() {
+            final boolean assigned = currentElement.isAssignedToLevel(level);
+            final float currentProb = currentElement.getSpawnProbability(level);
+
+            Table row = new Table();
+            row.pad(5);
+            row.setBackground(skin.newDrawable("white", new Color(0.2f, 0.2f, 0.2f, assigned ? 0.8f : 0.3f)));
+
+            final TextButton toggleBtn = new TextButton("Level " + level, skin);
+            toggleBtn.setChecked(assigned);
+
+            final Slider probSlider = new Slider(0f, 1f, 0.05f, false, skin);
+            probSlider.setValue(assigned ? (currentProb > 0 ? currentProb : 1.0f) : 1.0f);
+            probSlider.setTouchable(assigned ? com.badlogic.gdx.scenes.scene2d.Touchable.enabled
+                    : com.badlogic.gdx.scenes.scene2d.Touchable.disabled);
+            probSlider.setColor(assigned ? Color.WHITE : Color.GRAY);
+
+            final Label probLabel = new Label(String.format("%.0f%%", probSlider.getValue() * 100), skin);
+            probLabel.setColor(assigned ? Color.WHITE : Color.GRAY);
+
+            toggleBtn.addListener(new ChangeListener() {
                 @Override
                 public void changed(ChangeEvent event, Actor actor) {
-                    if (currentElement.isAssignedToLevel(level)) {
-                        currentElement.removeFromLevel(level);
-                        levelBtn.setColor(Color.WHITE);
+                    boolean isChecked = toggleBtn.isChecked();
+                    row.setBackground(skin.newDrawable("white", new Color(0.2f, 0.2f, 0.2f, isChecked ? 0.8f : 0.3f)));
+
+                    if (isChecked) {
+                        currentElement.assignToLevel(level, probSlider.getValue());
                     } else {
-                        currentElement.assignToLevel(level);
-                        levelBtn.setColor(Color.GREEN);
+                        currentElement.removeFromLevel(level);
+                    }
+
+                    probSlider.setTouchable(isChecked ? com.badlogic.gdx.scenes.scene2d.Touchable.enabled
+                            : com.badlogic.gdx.scenes.scene2d.Touchable.disabled);
+                    probSlider.setColor(isChecked ? Color.WHITE : Color.GRAY);
+                    probLabel.setColor(isChecked ? Color.WHITE : Color.GRAY);
+                }
+            });
+
+            probSlider.addListener(new ChangeListener() {
+                @Override
+                public void changed(ChangeEvent event, Actor actor) {
+                    if (toggleBtn.isChecked()) {
+                        currentElement.assignToLevel(level, probSlider.getValue());
+                        probLabel.setText(String.format("%.0f%%", probSlider.getValue() * 100));
                     }
                 }
             });
-            levelGrid.add(levelBtn).size(80, 60).pad(8);
-            if (i % 5 == 0) {
-                levelGrid.row();
-            }
+
+            row.add(toggleBtn).width(100).padRight(20);
+            row.add(probSlider).width(200).padRight(20);
+            row.add(probLabel).width(50);
+
+            listTable.add(row).growX().padBottom(5).row();
         }
-        contentTable.add(levelGrid).row();
+
+        ScrollPane scroll = new ScrollPane(listTable, skin);
+        scroll.setFadeScrollBars(false);
+        contentTable.add(scroll).grow().row();
 
         // Quick select buttons
         Table quickBtns = new Table();
         TextButton selectAll = new TextButton("Select All", skin);
         selectAll.addListener(new ChangeListener() {
+
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 for (int i = 1; i <= 20; i++) {
-                    currentElement.assignToLevel(i);
+                    currentElement.assignToLevel(i, 1.0f);
                 }
                 buildLevelAssignmentStep();
             }
@@ -570,69 +1007,7 @@ public class ElementCreatorScreen implements Screen {
 
     // ==================== Validation & Save ====================
 
-    private boolean validateCurrentStep() {
-        switch (currentStep) {
-            case 1:
-                // Get selected type from highlighted card
-                TextField nameField = stage.getRoot().findActor("nameField");
-                String name = nameField != null ? nameField.getText().trim() : "Custom Element";
-                if (name.isEmpty())
-                    name = "Custom Element";
-
-                ElementType selectedType = null;
-                for (Actor actor : contentTable.getChildren()) {
-                    if (actor instanceof Table) {
-                        for (Actor child : ((Table) actor).getChildren()) {
-                            if (child instanceof Table) {
-                                Table card = (Table) child;
-                                // Check if highlighted (green background)
-                                if (card.getUserObject() instanceof ElementType) {
-                                    selectedType = (ElementType) card.getUserObject();
-                                }
-                            }
-                        }
-                    }
-                }
-                if (selectedType == null) {
-                    selectedType = ElementType.ENEMY; // Default
-                }
-                // Initialize element with default 4 frames
-                currentElement = new CustomElementDefinition(name, selectedType, 4);
-                return true;
-
-            case 2:
-                // Get frame count from button colors
-                Object btnData = contentTable.getUserObject();
-                if (btnData instanceof TextButton[]) {
-                    TextButton[] buttons = (TextButton[]) btnData;
-                    for (TextButton btn : buttons) {
-                        if (btn.getColor().equals(Color.GREEN) && btn.getUserObject() instanceof Integer) {
-                            int frames = (Integer) btn.getUserObject();
-                            if (frames != currentElement.getFrameCount()) {
-                                // Recreate element with new frame count
-                                currentElement = new CustomElementDefinition(
-                                        currentElement.getName(),
-                                        currentElement.getType(),
-                                        frames);
-                            }
-                            break;
-                        }
-                    }
-                }
-                return true;
-
-            case 3:
-            case 4:
-            case 5:
-                return true; // No strict validation
-
-            case 6:
-                return true;
-
-            default:
-                return true;
-        }
-    }
+    // Old validateCurrentStep removed. logic moved to new method.
 
     private void saveAndFinish() {
         CustomElementManager.getInstance().saveElement(currentElement);

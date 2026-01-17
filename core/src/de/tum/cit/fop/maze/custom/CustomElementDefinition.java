@@ -15,14 +15,18 @@ public class CustomElementDefinition {
     private Map<String, String[]> spritePaths; // action -> frame paths
     private Map<String, Object> properties;
     private Set<Integer> assignedLevels;
-    private float spawnProbability; // 0.0 - 1.0
+    private Map<Integer, Float> levelProbabilities; // level -> probability (0.0 - 1.0)
+    private float spawnProbability; // Default/Global fallback
+    private int spawnCount = 1;
 
     public CustomElementDefinition() {
         this.id = UUID.randomUUID().toString().substring(0, 8);
         this.spritePaths = new HashMap<>();
         this.properties = new HashMap<>();
         this.assignedLevels = new HashSet<>();
-        this.spawnProbability = 0.5f;
+        this.levelProbabilities = new HashMap<>();
+        this.spawnProbability = 1.0f; // Default: always spawn
+        this.spawnCount = 1;
     }
 
     public CustomElementDefinition(String name, ElementType type, int frameCount) {
@@ -138,11 +142,43 @@ public class CustomElementDefinition {
     }
 
     public void assignToLevel(int level) {
+        assignToLevel(level, this.spawnProbability);
+    }
+
+    public void assignToLevel(int level, float probability) {
         assignedLevels.add(level);
+        if (levelProbabilities == null)
+            levelProbabilities = new HashMap<>();
+        levelProbabilities.put(level, probability);
     }
 
     public void removeFromLevel(int level) {
         assignedLevels.remove(level);
+        if (levelProbabilities != null)
+            levelProbabilities.remove(level);
+    }
+
+    public float getSpawnProbability(int level) {
+        if (levelProbabilities != null && levelProbabilities.containsKey(level)) {
+            return levelProbabilities.get(level);
+        }
+        // Fallback or default
+        if (assignedLevels.contains(level)) {
+            return spawnProbability;
+        }
+        return 0f;
+    }
+
+    public Map<Integer, Float> getLevelProbabilities() {
+        return levelProbabilities;
+    }
+
+    public void setLevelProbabilities(Map<Integer, Float> levelProbabilities) {
+        this.levelProbabilities = levelProbabilities;
+        // Sync assigned levels?
+        if (levelProbabilities != null) {
+            this.assignedLevels.addAll(levelProbabilities.keySet());
+        }
     }
 
     public boolean isAssignedToLevel(int level) {
@@ -155,6 +191,14 @@ public class CustomElementDefinition {
 
     public void setSpawnProbability(float probability) {
         this.spawnProbability = Math.max(0f, Math.min(1f, probability));
+    }
+
+    public int getSpawnCount() {
+        return spawnCount;
+    }
+
+    public void setSpawnCount(int spawnCount) {
+        this.spawnCount = Math.max(1, spawnCount); // Minimum 1
     }
 
     /**

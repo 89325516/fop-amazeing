@@ -1,18 +1,12 @@
 {
-"playerX": 16,
-"playerY": 40.550056,
-"currentLevel": "maps/level-7.properties",
-"lives": 12,
+"playerX": 6.4596987,
+"playerY": 46.99071,
+"currentLevel": "maps/level-2.properties",
+"lives": 5,
 "hasKey": true,
-"skillPoints": 550,
-"maxHealthBonus": 9,
-"damageBonus": 3,
-"cooldownReduction": 0.1,
-"speedBonus": 0.1,
+"skillPoints": 10,
+"maxHealthBonus": 2,
 "inventoryWeaponTypes": [
-	"Sword",
-	"MagicStaff",
-	"Sword",
 	"Sword"
 ]
 }

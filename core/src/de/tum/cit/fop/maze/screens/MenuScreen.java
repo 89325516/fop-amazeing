@@ -144,8 +144,8 @@ public class MenuScreen implements Screen {
             }
         });
 
-        // Element Creator Button (Developer Feature)
-        TextButton elementCreatorButton = new TextButton("Element Creator", game.getSkin());
+        // Element Manager Button (Developer Feature)
+        TextButton elementCreatorButton = new TextButton("Element Manager", game.getSkin());
         elementCreatorButton.setColor(0.6f, 0.8f, 1f, 1f); // Light blue to indicate dev feature
         table.add(elementCreatorButton).width(300).height(60).padBottom(20).row();
 

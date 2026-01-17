@@ -81,9 +81,10 @@ public class GameWorld {
 
         // Populate lists from map
         for (GameObject obj : gameMap.getDynamicObjects()) {
-            if (obj instanceof Enemy)
-                enemies.add((Enemy) obj);
-            else if (obj instanceof MobileTrap)
+            if (obj instanceof Enemy) {
+                // enemies.add((Enemy) obj); // Disabled: Unified Management handles spawning
+                // via CustomElementManager
+            } else if (obj instanceof MobileTrap)
                 mobileTraps.add((MobileTrap) obj);
         }
 
@@ -97,8 +98,132 @@ public class GameWorld {
             this.levelNumber = 1;
         }
 
+        // Spawn custom elements assigned to this level
+        spawnCustomElements();
+
         // AI Pathfinding Setup
         calculateSafePath();
+    }
+
+    /**
+     * Spawn custom elements (enemies, items, etc.) that are assigned to the current
+     * level
+     */
+    private void spawnCustomElements() {
+        try {
+            de.tum.cit.fop.maze.custom.CustomElementManager manager = de.tum.cit.fop.maze.custom.CustomElementManager
+                    .getInstance();
+
+            // Debug: Log all elements and their status
+            java.util.Collection<de.tum.cit.fop.maze.custom.CustomElementDefinition> allElements = manager
+                    .getAllElements();
+            de.tum.cit.fop.maze.utils.GameLogger.info("GameWorld",
+                    "Custom elements total: " + allElements.size() + ", checking for level " + levelNumber);
+
+            for (de.tum.cit.fop.maze.custom.CustomElementDefinition el : allElements) {
+                boolean assigned = el.isAssignedToLevel(levelNumber);
+                boolean complete = el.isComplete();
+                de.tum.cit.fop.maze.utils.GameLogger.info("GameWorld",
+                        "  - " + el.getName() + " [type=" + el.getType() +
+                                ", assignedToLevel" + levelNumber + "=" + assigned +
+                                ", complete=" + complete + "]");
+            }
+
+            java.util.List<de.tum.cit.fop.maze.custom.CustomElementDefinition> elements = manager
+                    .getElementsForLevel(levelNumber);
+
+            de.tum.cit.fop.maze.utils.GameLogger.info("GameWorld",
+                    "Elements matching level " + levelNumber + ": " + elements.size());
+
+            for (de.tum.cit.fop.maze.custom.CustomElementDefinition element : elements) {
+                if (element.getType() == de.tum.cit.fop.maze.custom.ElementType.ENEMY) {
+                    spawnCustomEnemy(element, levelNumber);
+                }
+                // TODO: Add support for other element types (items, obstacles, weapons)
+            }
+        } catch (Exception e) {
+            de.tum.cit.fop.maze.utils.GameLogger.error("GameWorld",
+                    "Failed to spawn custom elements: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Spawn a custom enemy based on element definition
+     */
+    private void spawnCustomEnemy(de.tum.cit.fop.maze.custom.CustomElementDefinition element, int level) {
+        int count = element.getSpawnCount();
+        float spawnProb = element.getSpawnProbability(level);
+
+        for (int i = 0; i < count; i++) {
+            if (Math.random() > spawnProb)
+                continue;
+
+            // Find a valid spawn position (walkable tile away from player spawn)
+            float spawnX = -1, spawnY = -1;
+            int attempts = 0;
+            int maxAttempts = 100;
+
+            while (attempts < maxAttempts) {
+                int x = 3 + (int) (Math.random() * (gameMap.getWidth() - 6));
+                int y = 3 + (int) (Math.random() * (gameMap.getHeight() - 6));
+
+                // Check if walkable and not too close to player start
+                if (collisionManager.isWalkable(x, y)) {
+                    float distToPlayer = com.badlogic.gdx.math.Vector2.dst(
+                            x, y, gameMap.getPlayerStartX(), gameMap.getPlayerStartY());
+                    if (distToPlayer > 5) {
+                        spawnX = x;
+                        spawnY = y;
+                        break;
+                    }
+                }
+                attempts++;
+            }
+
+            if (spawnX < 0) {
+                continue; // Try next spawn
+            }
+
+            // Create enemy with custom properties
+            int health = 3;
+            float moveSpeed = 2.0f;
+            int attackDamage = 1;
+
+            try {
+                Object healthVal = element.getProperties().get("health");
+                if (healthVal instanceof Number)
+                    health = ((Number) healthVal).intValue();
+
+                Object speedVal = element.getProperties().get("moveSpeed");
+                if (speedVal instanceof Number)
+                    moveSpeed = ((Number) speedVal).floatValue();
+
+                Object dmgVal = element.getProperties().get("attackDamage");
+                if (dmgVal instanceof Number)
+                    attackDamage = ((Number) dmgVal).intValue();
+            } catch (Exception e) {
+                // Use defaults
+            }
+
+            Enemy customEnemy = new Enemy(spawnX, spawnY, health,
+                    de.tum.cit.fop.maze.model.DamageType.PHYSICAL, null, 0);
+            customEnemy.setCustomElementId(element.getId());
+
+            // Set Enemy Type if defined
+            String typeStr = element.getProperty("enemyType", String.class);
+            if (typeStr != null) {
+                try {
+                    customEnemy.setEnemyType(de.tum.cit.fop.maze.model.Enemy.EnemyType.valueOf(typeStr));
+                } catch (Exception e) {
+                }
+            }
+
+            enemies.add(customEnemy);
+
+            de.tum.cit.fop.maze.utils.GameLogger.info("GameWorld",
+                    "Spawned unified enemy '" + element.getName() + "' at (" + spawnX + ", " + spawnY + ")");
+        }
     }
 
     public void setListener(WorldListener listener) {

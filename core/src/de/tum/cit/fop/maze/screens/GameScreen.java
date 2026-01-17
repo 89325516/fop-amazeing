@@ -75,6 +75,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
     private de.tum.cit.fop.maze.ui.SettingsUI settingsUI;
 
     private Color biomeColor = Color.WHITE;
+    private com.badlogic.gdx.graphics.glutils.ShaderProgram grayscaleShader;
 
     public GameScreen(MazeRunnerGame game, String saveFilePath) {
         this.game = game;
@@ -384,11 +385,27 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
             // Get directional animation based on enemy velocity
             float vx = e.getVelocityX();
             float vy = e.getVelocityY();
-            com.badlogic.gdx.graphics.g2d.Animation<TextureRegion> enemyAnim = textureManager
-                    .getEnemyAnimation(e.getType(), vx, vy);
+
+            com.badlogic.gdx.graphics.g2d.Animation<TextureRegion> enemyAnim = null;
+            boolean isCustom = false;
+
+            if (e.getCustomElementId() != null) {
+                String action = e.isDead() ? "Death" : "Move";
+                enemyAnim = de.tum.cit.fop.maze.custom.CustomElementManager.getInstance()
+                        .getAnimation(e.getCustomElementId(), action);
+                if (enemyAnim != null)
+                    isCustom = true;
+            }
+
+            if (enemyAnim == null) {
+                enemyAnim = textureManager.getEnemyAnimation(e.getType(), vx, vy);
+            }
 
             TextureRegion currentFrame;
-            if (e.isDead()) {
+            if (isCustom && e.isDead()) {
+                currentFrame = enemyAnim.getKeyFrame(stateTime, false);
+                game.getSpriteBatch().setColor(Color.WHITE);
+            } else if (e.isDead()) {
                 currentFrame = enemyAnim.getKeyFrame(0); // Static frame for dead
                 game.getSpriteBatch().setColor(Color.GRAY);
             } else if (e.isHurt()) {
@@ -408,12 +425,71 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
             }
 
             if (e.getHealth() > 0 || e.isDead()) {
-                // Render enemy centered (boar sprites are 64x64, scale to fit 16px tile)
-                float drawWidth = 24f; // Slightly larger than tile
-                float drawHeight = 24f;
+                // Grayscale for dead enemies
+                if (e.isDead()) {
+                    if (grayscaleShader == null) {
+                        String vertexShader = "attribute vec4 "
+                                + com.badlogic.gdx.graphics.glutils.ShaderProgram.POSITION_ATTRIBUTE + ";\n"
+                                + "attribute vec4 " + com.badlogic.gdx.graphics.glutils.ShaderProgram.COLOR_ATTRIBUTE
+                                + ";\n"
+                                + "attribute vec2 " + com.badlogic.gdx.graphics.glutils.ShaderProgram.TEXCOORD_ATTRIBUTE
+                                + "0;\n"
+                                + "uniform mat4 u_projTrans;\n"
+                                + "varying vec4 v_color;\n"
+                                + "varying vec2 v_texCoords;\n"
+                                + "\n"
+                                + "void main()\n"
+                                + "{\n"
+                                + "   v_color = " + com.badlogic.gdx.graphics.glutils.ShaderProgram.COLOR_ATTRIBUTE
+                                + ";\n"
+                                + "   v_color.a = v_color.a * (255.0/254.0);\n"
+                                + "   v_texCoords = "
+                                + com.badlogic.gdx.graphics.glutils.ShaderProgram.TEXCOORD_ATTRIBUTE
+                                + "0;\n"
+                                + "   gl_Position =  u_projTrans * "
+                                + com.badlogic.gdx.graphics.glutils.ShaderProgram.POSITION_ATTRIBUTE + ";\n"
+                                + "}\n";
+                        String fragmentShader = "#ifdef GL_ES\n"
+                                + "precision mediump float;\n"
+                                + "#endif\n"
+                                + "varying vec4 v_color;\n"
+                                + "varying vec2 v_texCoords;\n"
+                                + "uniform sampler2D u_texture;\n"
+                                + "void main()\n"
+                                + "{\n"
+                                + "  vec4 c = v_color * texture2D(u_texture, v_texCoords);\n"
+                                + "  float gray = dot(c.rgb, vec3(0.299, 0.587, 0.114));\n"
+                                + "  gl_FragColor = vec4(gray, gray, gray, c.a);\n"
+                                + "}";
+                        grayscaleShader = new com.badlogic.gdx.graphics.glutils.ShaderProgram(vertexShader,
+                                fragmentShader);
+                        if (!grayscaleShader.isCompiled()) {
+                            GameLogger.error("GameScreen", "Shader compile failed: " + grayscaleShader.getLog());
+                        }
+                    }
+                    if (grayscaleShader.isCompiled()) {
+                        game.getSpriteBatch().setShader(grayscaleShader);
+                    }
+                }
+
+                // Render enemy centered (scale to fit 16px tile)
+                float drawWidth = 16f;
+                float drawHeight = 16f;
                 float drawX = e.getX() * UNIT_SCALE - (drawWidth - UNIT_SCALE) / 2;
                 float drawY = e.getY() * UNIT_SCALE - (drawHeight - UNIT_SCALE) / 2;
-                game.getSpriteBatch().draw(currentFrame, drawX, drawY, drawWidth, drawHeight);
+
+                // Flip if moving left
+                boolean flipX = e.getVelocityX() < 0;
+
+                if (flipX) {
+                    game.getSpriteBatch().draw(currentFrame, drawX + drawWidth, drawY, -drawWidth, drawHeight);
+                } else {
+                    game.getSpriteBatch().draw(currentFrame, drawX, drawY, drawWidth, drawHeight);
+                }
+
+                if (e.isDead()) {
+                    game.getSpriteBatch().setShader(null);
+                }
             }
             game.getSpriteBatch().setColor(Color.WHITE);
 
@@ -944,6 +1020,8 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
             hud.dispose();
         if (fogRenderer != null)
             fogRenderer.dispose();
+        if (grayscaleShader != null)
+            grayscaleShader.dispose();
     }
 
     @Override

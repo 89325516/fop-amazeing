@@ -101,6 +101,21 @@ public class Enemy extends GameObject {
     private int maxShield = 0;
     private int currentShield = 0;
 
+    // Custom Element Support
+    private String customElementId = null;
+
+    public void setCustomElementId(String id) {
+        this.customElementId = id;
+    }
+
+    public void setEnemyType(EnemyType type) {
+        this.type = type;
+    }
+
+    public String getCustomElementId() {
+        return customElementId;
+    }
+
     public Enemy(float x, float y) {
         super(x, y);
         // 记录出生点

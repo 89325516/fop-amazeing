@@ -4,8 +4,8 @@ package de.tum.cit.fop.maze.custom;
  * Enum defining custom element types with their required properties.
  */
 public enum ElementType {
-    ENEMY("Enemy", new String[] { "health", "defense", "attackDamage", "attackRange", "moveSpeed" },
-            new String[] { "Walk", "Attack", "Death" }),
+    ENEMY("Enemy", new String[] { "health", "defense", "attackDamage", "moveSpeed" },
+            new String[] { "Move", "Death" }),
 
     WEAPON("Weapon", new String[] { "damage", "cooldown", "range", "effect" },
             new String[] { "Idle", "Attack" }),
