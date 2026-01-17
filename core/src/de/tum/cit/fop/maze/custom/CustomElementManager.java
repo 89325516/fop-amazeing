@@ -76,8 +76,9 @@ public class CustomElementManager {
                                 String fileName = action.toLowerCase() + "_" + i + ".png";
                                 FileHandle dest = localImgDir.child(fileName);
                                 source.copyTo(dest);
-                                // Update path to relative local path
-                                element.setSpritePath(action, i, dest.path());
+                                // Update path to relative local path (Force relative)
+                                String relPath = LOCAL_IMAGE_DIR + element.getId() + "/" + fileName;
+                                element.setSpritePath(action, i, relPath);
                             }
                         } catch (Exception e) {
                             GameLogger.error("CustomElementManager", "Failed to localize sprite: " + path);
@@ -274,15 +275,37 @@ public class CustomElementManager {
             if (path == null || path.isEmpty())
                 continue;
             try {
-                // Assume absolute path first
-                FileHandle file = Gdx.files.absolute(path);
+                // AUTO-FIX: If path is absolute (from another PC) but contains "custom_images",
+                // make it relative
+                if (path.contains(LOCAL_IMAGE_DIR) && (path.contains("/") || path.contains("\\"))) {
+                    int idx = path.indexOf(LOCAL_IMAGE_DIR);
+                    if (idx > 0) {
+                        String fixedPath = path.substring(idx);
+                        // GameLogger.info("Fixed path: " + path + " -> " + fixedPath);
+                        path = fixedPath;
+                    }
+                }
+
+                FileHandle file = null;
+
+                // 1. Try Local Storage (Preferred for custom items)
+                if (path.startsWith(LOCAL_IMAGE_DIR)) {
+                    file = Gdx.files.local(path);
+                }
+
+                // 2. Try Absolute
+                if (file == null || !file.exists()) {
+                    file = Gdx.files.absolute(path);
+                }
+
+                // 3. Try Internal
                 if (!file.exists()) {
-                    // Try local/internal if absolute fails
                     file = Gdx.files.internal(path);
                 }
 
+                // 4. Fallback: Try local again if not tried (e.g. if path didn't start with
+                // prefix)
                 if (!file.exists()) {
-                    // Try local storage (custom_images)
                     file = Gdx.files.local(path);
                 }
 
