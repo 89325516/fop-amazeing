@@ -103,11 +103,35 @@ public class MapLoader {
                     } else {
                         GameObject obj = EntityFactory.createEntity(typeId, (float) x, (float) y);
                         if (obj != null) {
-                            // 如果是敌人且护盾启用，设置护盾属性
-                            if (obj instanceof Enemy && config.enemyShieldEnabled) {
+                            // 如果是敌人
+                            if (obj instanceof Enemy) {
                                 Enemy enemy = (Enemy) obj;
-                                enemy.setAttackDamageType(config.damageType);
-                                enemy.setShield(config.damageType, 3); // 默认3点护盾
+
+                                // 1. 根据主题设置敌人类型
+                                switch (config.theme) {
+                                    case "Desert":
+                                        enemy.setType(Enemy.EnemyType.SCORPION);
+                                        break;
+                                    case "Ice":
+                                        enemy.setType(Enemy.EnemyType.YETI);
+                                        break;
+                                    case "Jungle":
+                                        enemy.setType(Enemy.EnemyType.JUNGLE_CREATURE);
+                                        break;
+                                    case "Space":
+                                        enemy.setType(Enemy.EnemyType.SPACE_DRONE);
+                                        break;
+                                    case "Grassland":
+                                    default:
+                                        enemy.setType(Enemy.EnemyType.BOAR);
+                                        break;
+                                }
+
+                                // 2. 如果护盾启用，设置护盾和攻击属性
+                                if (config.enemyShieldEnabled) {
+                                    enemy.setAttackDamageType(config.damageType);
+                                    enemy.setShield(config.damageType, 3); // 默认3点护盾
+                                }
                             }
                             map.addGameObject(obj);
                         } else {

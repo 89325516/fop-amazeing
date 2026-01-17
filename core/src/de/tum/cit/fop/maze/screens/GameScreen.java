@@ -385,7 +385,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
             float vx = e.getVelocityX();
             float vy = e.getVelocityY();
             com.badlogic.gdx.graphics.g2d.Animation<TextureRegion> enemyAnim = textureManager
-                    .getBoarAnimationByVelocity(vx, vy);
+                    .getEnemyAnimation(e.getType(), vx, vy);
 
             TextureRegion currentFrame;
             if (e.isDead()) {
@@ -650,7 +650,6 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         Label title = new Label("PAUSED", game.getSkin(), "title");
         pauseTable.add(title).padBottom(40).row();
 
-        addMenuButton("Resume", this::togglePause);
         addMenuButton("Resume", this::togglePause);
         addMenuButton("Settings", () -> {
             pauseTable.setVisible(false);

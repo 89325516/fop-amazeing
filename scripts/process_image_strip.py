@@ -49,6 +49,9 @@ GUIDE_COLOR_TOLERANCE = 60  # Increased from 30 for better detection
 # Background removal settings - lower = more aggressive
 BG_THRESHOLD = 180  # Was 200, lowered to catch gray backgrounds
 
+# Pixelation defaults
+DEFAULT_PIXEL_SIZE = 4  # Downscale factor for pixelation (higher = blockier)
+
 
 def ensure_dirs():
     """Create necessary directories if they don't exist."""
@@ -527,7 +530,30 @@ def split_strip_equal(img, num_frames):
     return frames
 
 
-def process_image_strip(input_path, num_frames, guide_color, target_size, name, scale_mode='content'):
+def pixelate_frame(frame, factor):
+    """
+    Apply pixel art stylization by downscaling and upscaling with nearest-neighbor.
+    
+    Args:
+        frame: PIL Image (RGBA)
+        factor: How much to pixelate (higher = blockier). E.g., 4 means 64px -> 16px -> 64px.
+    
+    Returns:
+        Pixelated PIL Image
+    """
+    w, h = frame.size
+    small_w = max(1, w // factor)
+    small_h = max(1, h // factor)
+    
+    # Downscale using NEAREST (no averaging)
+    small = frame.resize((small_w, small_h), Image.NEAREST)
+    # Upscale back using NEAREST to get blocky pixels
+    pixelated = small.resize((w, h), Image.NEAREST)
+    
+    return pixelated
+
+
+def process_image_strip(input_path, num_frames, guide_color, target_size, name, scale_mode='content', pixelate_factor=None):
     """
     Process a 4-frame image strip into a game-ready sprite sheet.
     
@@ -538,6 +564,7 @@ def process_image_strip(input_path, num_frames, guide_color, target_size, name, 
         target_size: Target frame size in pixels
         name: Base name for output files
         scale_mode: 'content' or 'canvas'
+        pixelate_factor: If set, apply pixel art stylization with this factor
     
     Returns:
         Output file path
@@ -601,6 +628,11 @@ def process_image_strip(input_path, num_frames, guide_color, target_size, name, 
             coverage = 0
         print(f"    Frame {i+1}: content coverage = {coverage:.1f}%")
     
+    # Optional pixelation pass
+    if pixelate_factor is not None and pixelate_factor > 1:
+        print(f"  Applying pixel art stylization (factor={pixelate_factor})...")
+        processed_frames = [pixelate_frame(f, pixelate_factor) for f in processed_frames]
+    
     # Create output sprite sheet
     strip_width = target_size * num_frames
     strip_height = target_size
@@ -642,6 +674,8 @@ def main():
                         help='Base name for output files')
     parser.add_argument('--no-copy', action='store_true',
                         help='Do not copy to final asset directories')
+    parser.add_argument('--pixelate', '-p', nargs='?', const=DEFAULT_PIXEL_SIZE, type=int, default=None,
+                        help=f'Apply pixel art stylization (optional factor, default: {DEFAULT_PIXEL_SIZE}). Higher = blockier.')
     
     args = parser.parse_args()
     
@@ -729,7 +763,7 @@ def main():
             # Process this row
             output_path, output_name = process_image_strip(
                 temp_path, args.frames, args.guide_color,
-                args.output_size, row_name, args.scale_mode
+                args.output_size, row_name, args.scale_mode, args.pixelate
             )
             generated_files.append((row_suffix, output_path, output_name))
         
@@ -747,7 +781,7 @@ def main():
         # Single row - original behavior
         output_path, output_name = process_image_strip(
             args.input, args.frames, args.guide_color,
-            args.output_size, args.name, args.scale_mode
+            args.output_size, args.name, args.scale_mode, args.pixelate
         )
         
         # Copy to final directory

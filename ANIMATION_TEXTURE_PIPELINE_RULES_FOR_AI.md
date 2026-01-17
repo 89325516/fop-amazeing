@@ -1824,7 +1824,32 @@ public Animation<TextureRegion> getBoarAnimation(int direction);
 
 // 3. 获取野猪动画（按速度方向）
 public Animation<TextureRegion> getBoarAnimationByVelocity(float vx, float vy);
+
+// 4. 通用敌人动画（推荐！按类型和速度）
+public Animation<TextureRegion> getEnemyAnimation(Enemy.EnemyType type, float vx, float vy);
+// EnemyType: SLIME, BOAR, SCORPION, YETI, JUNGLE_CREATURE, SPACE_DRONE
 ```
+
+### 10.2.1 ⚠️ 帧尺寸匹配规则 (Frame Size Matching) ⭐⭐⭐
+
+> [!CAUTION]
+> **Java代码中的 `frameSize` 参数必须与实际PNG文件的帧尺寸完全匹配！**
+>
+> 错误的帧尺寸会导致精灵显示异常（如多个缩小的角色并排）。
+
+**验证步骤**：
+1. 检查输出文件尺寸：
+   ```bash
+   sips -g pixelWidth -g pixelHeight assets/images/mobs/mob_xxx_4f.png
+   ```
+2. 计算帧尺寸：`frameSize = pixelWidth / 4` （4帧条）
+3. 确保Java代码中的 `frameSize` 与计算结果一致。
+
+**常见错误**：
+| 文件尺寸 | 正确 frameSize | 错误示例 | 表现 |
+|----------|----------------|----------|------|
+| 256×64 | **64** | 128 | 两个半截角色并排 |
+| 512×128 | **128** | 64 | 只显示左上1/4 |
 
 ### 10.3 GameScreen 使用示例
 
@@ -1860,6 +1885,36 @@ python3 scripts/process_animation_frames.py --input raw_assets/animations/fire_t
 # 2. 复制到游戏目录
 cp raw_assets/ai_ready_optimized/anim_trap_desert_v1_4f.png assets/images/animations/
 ```
+
+---
+
+### 示例 A.5: 像素风格化处理 (Pixel Art Stylization) 🆕
+
+**用户**: "我生成的图太平滑了，需要复古像素风"
+
+**AI操作**:
+```bash
+# 使用 --pixelate 选项，默认因子为4（64px→16px→64px）
+python3 scripts/process_image_strip.py \
+  --input raw_assets/images/scorpion_walk_down.png \
+  --frames 4 \
+  --name mob_scorpion_walk_down \
+  --pixelate
+
+# 使用自定义因子（更高=更块状）
+python3 scripts/process_image_strip.py \
+  --input raw_assets/images/scorpion_walk_down.png \
+  --frames 4 \
+  --name mob_scorpion_walk_down \
+  --pixelate 8  # 64px→8px→64px，非常块状
+```
+
+**参数说明**：
+| 参数值 | 效果 | 适用场景 |
+|--------|------|----------|
+| 2 | 轻微像素化 | 保留细节但有复古感 |
+| 4 (默认) | 标准像素化 | SNES/GBA风格 |
+| 8 | 重度像素化 | NES风格 |
 
 ---
 

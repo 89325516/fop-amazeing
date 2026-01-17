@@ -26,6 +26,9 @@ public class TextureManager implements Disposable {
         // Boar Animations (4 directions)
         public Animation<TextureRegion> boarWalkDown, boarWalkUp, boarWalkLeft, boarWalkRight;
 
+        // Scorpion Animations
+        public Animation<TextureRegion> scorpionWalkDown;
+
         // Legacy Wall Regions (Fallbacks)
         public TextureRegion wallRegion;
         public TextureRegion wallRegion2x1, wallRegion3x1, wallRegion2x2, wallRegion3x3;
@@ -188,6 +191,8 @@ public class TextureManager implements Disposable {
 
                 // Load Boar Animations from sprite sheets
                 loadBoarAnimations();
+                // Load Scorpion Animations from sprite sheets
+                loadScorpionAnimations();
 
                 // 3. Tiles - from "basictiles" region
                 TextureRegion tileRegion = findRegionSafe("basictiles");
@@ -337,6 +342,13 @@ public class TextureManager implements Disposable {
                 // Log success
                 if (boarWalkDown != null) {
                         System.out.println("TextureManager: Loaded boar animations successfully");
+                }
+        }
+
+        private void loadScorpionAnimations() {
+                scorpionWalkDown = loadSpriteSheetAnimation("images/mobs/mob_scorpion_walk_down_4f.png", 4, 64, 0.15f);
+                if (scorpionWalkDown != null) {
+                        System.out.println("TextureManager: Loaded scorpion animations successfully");
                 }
         }
 
@@ -525,6 +537,19 @@ public class TextureManager implements Disposable {
                 } else {
                         return vy > 0 ? (boarWalkUp != null ? boarWalkUp : enemyWalk)
                                         : (boarWalkDown != null ? boarWalkDown : enemyWalk);
+                }
+        }
+
+        public Animation<TextureRegion> getEnemyAnimation(de.tum.cit.fop.maze.model.Enemy.EnemyType type, float vx,
+                        float vy) {
+                switch (type) {
+                        case SCORPION:
+                                // TODO: Add other directions when available. For now reuse walk_down.
+                                return scorpionWalkDown != null ? scorpionWalkDown : enemyWalk;
+                        case BOAR:
+                                return getBoarAnimationByVelocity(vx, vy);
+                        default:
+                                return enemyWalk;
                 }
         }
 

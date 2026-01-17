@@ -40,6 +40,17 @@ public class Enemy extends GameObject {
         DEAD
     }
 
+    public enum EnemyType {
+        SLIME, // Legacy/Default
+        BOAR, // Grassland
+        SCORPION, // Desert
+        YETI, // Ice (Future)
+        JUNGLE_CREATURE, // Jungle (Future)
+        SPACE_DRONE // Space (Future)
+    }
+
+    private EnemyType type = EnemyType.SLIME; // Default to Slime (will fallback to Boar if resources missing)
+
     private EnemyState state;
     private Random random;
 
@@ -100,6 +111,11 @@ public class Enemy extends GameObject {
         this.random = new Random();
         this.changeDirTimer = 0;
         pickRandomDirection();
+    }
+
+    public Enemy(float x, float y, EnemyType type) {
+        this(x, y);
+        this.type = type;
     }
 
     /**
@@ -658,5 +674,13 @@ public class Enemy extends GameObject {
 
     public static void setDeceleration(float val) {
         DECELERATION = val;
+    }
+
+    public EnemyType getType() {
+        return type;
+    }
+
+    public void setType(EnemyType type) {
+        this.type = type;
     }
 }
