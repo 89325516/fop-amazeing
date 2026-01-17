@@ -124,53 +124,153 @@ def detect_guide_lines(img, guide_rgb):
     return clustered
 
 
-def get_magenta_mask_hsv(img):
+def get_magenta_mask(img_array, strict=False):
     """
-    Get mask of magenta/pink guide lines using HSV color space.
-    Returns boolean mask (True = Guide Line).
+    Create a boolean mask identifying magenta/pink guide line pixels.
+    
+    Args:
+        img_array: RGBA numpy array
+        strict: If True, only detect pure #FF00FF. If False, also detect anti-aliased.
     """
-    img = img.convert("RGBA")
-    img_array = np.array(img)
-    
-    # Convert RGB to HSV (only for non-transparent pixels)
-    rgb = img_array[:, :, :3].astype(np.float32) / 255.0
-    
-    # Calculate HSV manually for better control
+    rgb = img_array[:, :, :3].astype(np.float32)
     r, g, b = rgb[:, :, 0], rgb[:, :, 1], rgb[:, :, 2]
     
-    # --- Aggressive Magenta Definition ---
-    # Core Magenta: R and B are high, G is low
-    # Anti-aliased Magenta: Can be lighter (high G) but R/B still dominate
-    
-    # 1. Basic Dominance check: R and B must be significantly higher than G
-    #    (Anti-aliasing often blends with white, raising G, but R/B stay maxed)
-    rb_avg = (r + b) / 2
-    g_dist = rb_avg - g
-    
-    is_magenta_broad = (
-        (g_dist > 0.05) &           # R/B strictly higher than G (was 0.1)
-        (np.abs(r - b) < 0.25) &    # R and B are balanced (magenta hue)
-        (r > 0.4) & (b > 0.4)       # Not too dark
-    )
-    
-    # 2. Specific check for "Light Pink" blending with white
-    #    (High R, High B, High G, but R/B still > G)
-    is_light_pink = (
-        (r > 0.7) & (b > 0.7) &     # Very bright
-        (g < 0.95) &                # Not pure white
-        (r > g + 0.02) & (b > g + 0.02) # Still slightly purplish
-    )
-    
-    # 3. Specific check for "Dark Purple" blending with edges
-    is_dark_purple = (
-        (r > 0.3) & (b > 0.3) &
-        (g < 0.4) &
-        (np.abs(r - b) < 0.2)
-    )
+    if strict:
+        # Pure magenta only: R=255, G=0, B=255 (with tiny tolerance)
+        is_pure_magenta = (r > 250) & (b > 250) & (g < 5)
+        return is_pure_magenta
+    else:
+        # Detect pure magenta and its anti-aliased halo
+        # Pure magenta: R high, B high, G very low
+        is_pure_magenta = (r > 200) & (b > 200) & (g < 50)
+        
+        # Anti-aliased magenta: R and B still dominate, G slightly higher
+        is_antialiased = (
+            (r > 150) & (b > 150) & (g < 120) &
+            (np.abs(r - b) < 40) &  # R and B similar
+            ((r + b) / 2 > g * 1.5)  # R+B average much higher than G
+        )
+        
+        # Dark magenta remnants
+        is_dark_magenta = (
+            (r > 80) & (b > 80) & (g < 60) &
+            (np.abs(r - b) < 30) &
+            (r > g * 1.3) & (b > g * 1.3)
+        )
+        
+        return is_pure_magenta | is_antialiased | is_dark_magenta
 
-    # Combine masks
-    magenta_mask = is_magenta_broad | is_light_pink | is_dark_purple
-    return magenta_mask
+
+def inpaint_guide_lines_horizontal(img, max_passes=10):
+    """
+    Inpaint magenta guide line pixels using HORIZONTAL neighbor colors.
+    
+    Algorithm:
+    1. Find all magenta pixels
+    2. For each magenta pixel, look LEFT and RIGHT for non-magenta pixels
+    3. If both sides have opaque content: fill with average
+    4. If one side is transparent: fill with the other side's color
+    5. If both sides are transparent: make this pixel transparent
+    
+    This naturally handles:
+    - Interior guide lines: filled with surrounding object colors
+    - Exterior guide lines: become transparent (no neighbors)
+    """
+    img = img.convert("RGBA")
+    
+    total_inpainted = 0
+    total_transparent = 0
+    
+    for pass_num in range(max_passes):
+        img_array = np.array(img)
+        height, width = img_array.shape[:2]
+        
+        # Get magenta mask (including anti-aliased)
+        magenta_mask = get_magenta_mask(img_array, strict=False)
+        alpha = img_array[:, :, 3]
+        
+        # Only process magenta pixels that are still opaque
+        to_process = magenta_mask & (alpha > 0)
+        ys, xs = np.where(to_process)
+        
+        if len(ys) == 0:
+            break  # No more magenta pixels
+        
+        result = img_array.copy()
+        inpainted_this_pass = 0
+        transparent_this_pass = 0
+        
+        for y, x in zip(ys, xs):
+            # Find LEFT neighbor (non-magenta, opaque, NOT magenta-colored)
+            left_color = None
+            for lx in range(x - 1, -1, -1):
+                if alpha[y, lx] == 0:
+                    break  # Hit transparency, stop
+                if not magenta_mask[y, lx]:
+                    # Double-check the color is not magenta-tinted
+                    r, g, b = img_array[y, lx, :3]
+                    if not (r > 150 and b > 150 and g < 100 and abs(int(r) - int(b)) < 50):
+                        left_color = img_array[y, lx, :3].copy()
+                        break
+            
+            # Find RIGHT neighbor (non-magenta, opaque, NOT magenta-colored)
+            right_color = None
+            for rx in range(x + 1, width):
+                if alpha[y, rx] == 0:
+                    break  # Hit transparency, stop
+                if not magenta_mask[y, rx]:
+                    # Double-check the color is not magenta-tinted
+                    r, g, b = img_array[y, rx, :3]
+                    if not (r > 150 and b > 150 and g < 100 and abs(int(r) - int(b)) < 50):
+                        right_color = img_array[y, rx, :3].copy()
+                        break
+            
+            # Decide how to fill
+            if left_color is not None and right_color is not None:
+                # Both sides have content - average
+                avg_color = ((left_color.astype(np.int32) + right_color.astype(np.int32)) // 2).astype(np.uint8)
+                result[y, x, :3] = avg_color
+                result[y, x, 3] = 255
+                inpainted_this_pass += 1
+            elif left_color is not None:
+                # Only left has content
+                result[y, x, :3] = left_color
+                result[y, x, 3] = 255
+                inpainted_this_pass += 1
+            elif right_color is not None:
+                # Only right has content
+                result[y, x, :3] = right_color
+                result[y, x, 3] = 255
+                inpainted_this_pass += 1
+            else:
+                # Neither side has content - make transparent
+                result[y, x, 3] = 0
+                transparent_this_pass += 1
+        
+        total_inpainted += inpainted_this_pass
+        total_transparent += transparent_this_pass
+        img = Image.fromarray(result)
+        
+        if inpainted_this_pass == 0 and transparent_this_pass == 0:
+            break
+    
+    print(f"    Inpainted {total_inpainted} pixels, made {total_transparent} transparent")
+    return img, total_inpainted + total_transparent
+
+
+def inpaint_guide_lines(img, max_passes=5):
+    """
+    Legacy wrapper - now uses horizontal fill algorithm.
+    """
+    return inpaint_guide_lines_horizontal(img, max_passes)
+
+
+def remove_guide_lines_hsv(img):
+    """
+    Legacy function for backward compatibility.
+    Now just wraps inpaint_guide_lines.
+    """
+    return inpaint_guide_lines(img)
 
 
 def remove_background(img):
@@ -190,109 +290,88 @@ def remove_background(img):
     return img
 
 
-def smart_repair_guides(img):
+def clean_artifacts(img, alpha_threshold=10, gray_threshold=50, edge_strip=0):
     """
-    Remove guide lines by extending neighbor colors (Inpainting).
-    Handles 'black edges' by dilating the removal mask.
-    Preserves transparency if neighbor is transparent.
+    Final cleanup pass to remove:
+    1. Edge strip artifacts (top/bottom rows often have junk)
+    2. Near-transparent pixels (alpha < threshold) - causes dark halos
+    3. Gray/dark edge pixels that are isolated
+    
+    Should be called AFTER background removal and guide line inpainting.
     """
-    from PIL import ImageFilter
+    img = img.convert("RGBA")
+    img_array = np.array(img)
+    height, width = img_array.shape[:2]
     
-    # 1. Get Magenta Mask (The Core Guide Line)
-    magenta_mask = get_magenta_mask_hsv(img)
+    # Pass 0: Clean edge strips (top and bottom rows often have artifacts)
+    edge_count = 0
+    for y in range(edge_strip):
+        for x in range(width):
+            if img_array[y, x, 3] > 0:
+                img_array[y, x, 3] = 0
+                edge_count += 1
+    for y in range(height - edge_strip, height):
+        for x in range(width):
+            if img_array[y, x, 3] > 0:
+                img_array[y, x, 3] = 0
+                edge_count += 1
     
-    # 2. Dilate to catch "Dark Edges"
-    # Convert mask to image for filter
-    mask_img = Image.fromarray((magenta_mask * 255).astype(np.uint8))
-    # MaxFilter(3) is 3x3 dilation (radius 1)
-    dilated_img = mask_img.filter(ImageFilter.MaxFilter(3))
-    dilated_mask = np.array(dilated_img) > 0
+    # Pass 1: Remove low-alpha pixels
+    low_alpha_mask = img_array[:, :, 3] < alpha_threshold
+    img_array[low_alpha_mask, 3] = 0
+    low_alpha_count = np.sum(low_alpha_mask)
     
-    # 3. Prepare for Inpainting
-    img_arr = np.array(img)
-    height, width = img_arr.shape[:2]
+    # Pass 2: Remove isolated dark/gray pixels on edges
+    # A pixel is "isolated" if most of its neighbors are transparent
+    alpha = img_array[:, :, 3]
+    gray_count = 0
     
-    # We want to fill pixels that are in 'dilated_mask'
-    # BUT we only care about pixels that are currently Opaque (or were guide lines).
-    # If a pixel is ALREADY Transparent (from background removal), it stays Transparent?
-    # NO. If the guide line was over the background, it is currently Opaque (Magenta).
-    # We want it to become Transparent.
-    # So we trust the "Valid Neighbors". 
-    # If neighbor is Alpha=0, we copy Alpha=0.
-    
-    # 'Target' = pixels to be fixed (The dilated magenta area)
-    # 'Source' = pixels to trust (Everything else)
-    target_mask = dilated_mask.copy()
-    
-    # Iterative Propagation (Simulate Inpainting)
-    # 3 passes is enough for thin lines (1-3px) + edges
-    for _ in range(3):
-        # Shift in 4 directions
-        # For each direction, if I am Target and Neighbor is Valid, copy Neighbor
+    # Multiple passes for edge erosion
+    for cleanup_pass in range(3):
+        result = img_array.copy()
+        pass_count = 0
         
-        # Valid pixels are those NOT in target_mask
-        valid_mask = ~target_mask
-        
-        # We need to construct a 'contribution' from valid neighbors.
-        # Simple approach: Priority to any valid neighbor.
-        
-        # Shifted Arrays (using slicing)
-        # Up neighbor: shift array DOWN (row 0 becomes row 1's neighbor)
-        # Down neighbor: shift array UP
-        
-        fixed_pixels = np.zeros_like(img_arr)
-        fixed_counts = np.zeros((height, width), dtype=int)
-        
-        # Define shifts: (dy, dx)
-        shifts = [(-1, 0), (1, 0), (0, -1), (0, 1)]
-        
-        for dy, dx in shifts:
-            # Shift the image to align neighbor to current pos
-            shifted_img = np.roll(img_arr, (dy, dx), axis=(0, 1))
-            shifted_valid = np.roll(valid_mask, (dy, dx), axis=(0, 1))
-            
-            # Handle boundary wrapping (zero out wrapped parts)
-            if dy == 1: # Shifted down, top row invalid
-                shifted_valid[0, :] = False
-            elif dy == -1: # Shifted up, bottom row invalid
-                shifted_valid[-1, :] = False
-            elif dx == 1: # Shifted right, left col invalid
-                shifted_valid[:, 0] = False
-            elif dx == -1: # Shifted left, right col invalid
-                shifted_valid[:, -1] = False
+        for y in range(height):
+            for x in range(width):
+                if result[y, x, 3] == 0:
+                    continue
                 
-            # Identifying pixels where: Current is Target AND Neighbor is Valid
-            can_fix = target_mask & shifted_valid
-            
-            # Accumulate (for averaging) or just Take First
-            # Averaging is better for smooth edges
-            # But simple copy is faster. Let's do simple overwrite (last wins)
-            # Actually, average is safer for anti-aliasing.
-            
-            # Add to accumulator
-            # We only touch pixels in 'can_fix'
-            # Note: accumulating uint8 might overflow, cast to float
-            # For simplicity in this script, let's just use 'max' (or random one)
-            # Or just update inplace sequentially? No, parallel update is cleaner.
-            
-            # Let's take the First Valid Neighbor found in this pass
-            # Update `img_arr` where `can_fix` is true
-            
-            # Only update pixels that haven't been updated in this pass yet?
-            # Or allow multiple updates.
-            
-            mask_indices = np.where(can_fix)
-            img_arr[mask_indices] = shifted_img[mask_indices]
-            
-            # Mark these as now valid for *next* pass?
-            # No, strictly they become valid next pass.
-            # Update the mask at end of loop.
-            target_mask[mask_indices] = False # It's fixed now!
-            
-        # If we broke target_mask inside the loop, the next shift in same pass sees it as fixed?
-        # That's fine, it accelerates propagation.
+                r, g, b = result[y, x, :3]
+                
+                # Check if pixel is dark/gray
+                brightness = (int(r) + int(g) + int(b)) / 3
+                is_dark = brightness < gray_threshold
+                is_neutral = abs(int(r) - int(g)) < 30 and abs(int(g) - int(b)) < 30
+                
+                if is_dark and is_neutral:
+                    # Count transparent neighbors
+                    transparent_neighbors = 0
+                    total_neighbors = 0
+                    
+                    for dy in [-1, 0, 1]:
+                        for dx in [-1, 0, 1]:
+                            if dy == 0 and dx == 0:
+                                continue
+                            ny, nx = y + dy, x + dx
+                            if 0 <= ny < height and 0 <= nx < width:
+                                total_neighbors += 1
+                                if result[ny, nx, 3] == 0:
+                                    transparent_neighbors += 1
+                    
+                    # If any neighbor is transparent and pixel is dark, remove it
+                    if total_neighbors > 0 and transparent_neighbors >= 1:
+                        result[y, x, 3] = 0
+                        pass_count += 1
         
-    return Image.fromarray(img_arr)
+        gray_count += pass_count
+        img_array = result
+        
+        if pass_count == 0:
+            break
+    
+    print(f"    Cleaned {edge_count} edge, {low_alpha_count} low-alpha, {gray_count} gray pixels")
+    
+    return Image.fromarray(img_array)
 
 
 def crop_to_content(img, padding_pct=0.02):
@@ -311,38 +390,6 @@ def crop_to_content(img, padding_pct=0.02):
     y2 = min(height, y2 + pad)
     
     return img.crop((x1, y1, x2, y2))
-
-
-def generate_mirrored_strip(input_path, output_path, num_frames):
-    """
-    Generate a mirrored version of a sprite strip.
-    Flips each frame horizontally but MAITAINS the frame order (1,2,3,4).
-    """
-    try:
-        img = Image.open(input_path)
-        w, h = img.size
-        frame_width = w // num_frames
-        
-        frames = []
-        for i in range(num_frames):
-            # Extract frame
-            frame = img.crop((i * frame_width, 0, (i + 1) * frame_width, h))
-            # Flip frame
-            flipped = frame.transpose(Image.FLIP_LEFT_RIGHT)
-            frames.append(flipped)
-            
-        # Recombine
-        new_w = frame_width * num_frames
-        result = Image.new("RGBA", (new_w, h))
-        for i, frame in enumerate(frames):
-            result.paste(frame, (i * frame_width, 0))
-            
-        result.save(output_path)
-        print(f"  ✨ Auto-generated mirror: {os.path.basename(output_path)}")
-        return True
-    except Exception as e:
-        print(f"  ⚠️ Mirror generation failed: {e}")
-        return False
 
 
 def standardize_frames_unified(frames, target_size, mode='content'):
@@ -499,28 +546,22 @@ def process_image_strip(input_path, num_frames, guide_color, target_size, name, 
     img = Image.open(input_path).convert("RGBA")
     print(f"  Image size: {img.size}")
     
+    # Detect and remove guide lines using HSV color space
     guide_rgb = None
     guide_lines = []
     
-    # Detect and remove guide lines using HSV color space
     if guide_color:
         try:
             guide_rgb = hex_to_rgb(guide_color)
             print(f"  Guide color: {guide_color} → RGB{guide_rgb}")
             
-            # Detect vertical guide lines (for splitting reference)
+            # Detect vertical guide lines (for splitting reference BEFORE any processing)
             guide_lines = detect_guide_lines(img, guide_rgb)
             print(f"  Detected {len(guide_lines)} vertical guide lines at x={guide_lines}")
-            
-            # NOTE: We DO NOT remove lines here anymore. 
-            # We defer removal to 'smart_repair_guides' after background removal
-            # so we can fix the black edges using neighbor colors.
-            
         except Exception as e:
             print(f"  Warning: Guide detection failed: {e}")
-            pass
     
-    # Split into frames
+    # Split into frames FIRST (before any pixel manipulation)
     if guide_lines:
         frames = split_strip_by_guides(img, guide_lines, num_frames)
     else:
@@ -528,19 +569,26 @@ def process_image_strip(input_path, num_frames, guide_color, target_size, name, 
     
     print(f"  Split into {len(frames)} frames")
     
-    # Process each frame - remove background first
-    bg_removed_frames = []
-    for frame in frames:
+    # Process each frame:
+    # 1. Remove background FIRST (white becomes transparent)
+    # 2. THEN inpaint guide lines (fill with neighbors or make transparent)
+    # 3. FINALLY clean up artifacts (low-alpha, gray edges)
+    processed_frames_step1 = []
+    for i, frame in enumerate(frames):
+        # Step 1: Remove white background
         frame = remove_background(frame)
         
-        # Smart repair guide lines (fill with neighbors)
+        # Step 2: Inpaint guide lines (only if guide_color was specified)
         if guide_color:
-            frame = smart_repair_guides(frame)
-            
-        bg_removed_frames.append(frame)
+            frame, count = inpaint_guide_lines(frame)
+        
+        # Step 3: Clean artifacts (always run)
+        frame = clean_artifacts(frame)
+        
+        processed_frames_step1.append(frame)
     
     # Standardize ALL frames with UNIFIED bounding box or canvas scaling
-    processed_frames = standardize_frames_unified(bg_removed_frames, target_size, scale_mode)
+    processed_frames = standardize_frames_unified(processed_frames_step1, target_size, scale_mode)
     
     # Report content coverage
     for i, frame in enumerate(processed_frames):
@@ -588,8 +636,6 @@ def main():
                         help=f'Hex color of guide lines (default: None, e.g., "#FF00FF")')
     parser.add_argument('--scale-mode', default='content', choices=['content', 'canvas'],
                         help='Scaling strategy: "content" (crop & max fit) or "canvas" (scale entire frame, preserves relative size)')
-    parser.add_argument('--auto-mirror', action='store_true',
-                        help='Automatically generate missing Left/Right view by mirroring the existing one')
     parser.add_argument('--output-size', '-s', type=int, default=DEFAULT_FRAME_SIZE,
                         help=f'Target frame size (default: {DEFAULT_FRAME_SIZE})')
     parser.add_argument('--name', '-n', required=True,
@@ -627,12 +673,39 @@ def main():
     width, height = img.size
     print(f"\nImage size: {width}×{height}")
     
-    generated_files = []
+    # ⚠️ Multi-row detection warning
+    # For single-row 4-frame strips, expected aspect ratio is 512:128 = 4:1
+    # If height > width/3, it's likely a multi-row grid image
+    if args.rows == 1:  # Only warn for single-row mode
+        aspect_ratio = width / height if height > 0 else float('inf')
+        if aspect_ratio < 3.0:
+            print("\n" + "=" * 60)
+            print("⚠️  WARNING: POSSIBLE MULTI-ROW IMAGE DETECTED! ⚠️")
+            print("=" * 60)
+            print(f"  Image aspect ratio: {aspect_ratio:.2f}:1 (expected 4:1 for single row)")
+            print(f"  This looks like a {int(4 / aspect_ratio)}-row grid, not a single row!")
+            print()
+            print("  COMMON CAUSE: External AI generated 8 frames (2 rows × 4 columns)")
+            print("                instead of 4 frames (1 row × 4 columns).")
+            print()
+            print("  SOLUTIONS:")
+            print("    1. Use --rows 2 to process as multi-row grid")
+            print("    2. Regenerate image with stricter Prompt:")
+            print("       '512×128 pixels, SINGLE ROW ONLY, 4 frames only'")
+            print("    3. Manually crop to keep only one row")
+            print("=" * 60 + "\n")
+            
+            # Ask for confirmation only in interactive mode (if not --no-copy)
+            if not args.no_copy:
+                print("  Proceeding anyway... (output may be incorrect)")
+                print()
     
     # Handle multi-row grid
     if args.rows > 1:
         row_height = height // args.rows
         print(f"Splitting into {args.rows} rows, each {row_height}px tall")
+        
+        generated_files = []
         
         for row_idx in range(args.rows):
             # Extract this row
@@ -658,65 +731,38 @@ def main():
                 temp_path, args.frames, args.guide_color,
                 args.output_size, row_name, args.scale_mode
             )
-            # Store full path for copying
             generated_files.append((row_suffix, output_path, output_name))
+        
+        # Copy all to final directory
+        if not args.no_copy:
+            import shutil
+            is_mob = any(x in args.name.lower() for x in ['mob_', 'enemy_', 'walk_', 'attack_'])
+            target_dir = FINAL_MOB_DIR if is_mob else FINAL_ANIM_DIR
+            
+            for row_suffix, output_path, output_name in generated_files:
+                dst = os.path.join(target_dir, output_name)
+                shutil.copy(output_path, dst)
+                print(f"✅ {row_suffix}: {dst}")
     else:
-        print(f"\n--- Processing Single Row ---")
         # Single row - original behavior
         output_path, output_name = process_image_strip(
             args.input, args.frames, args.guide_color,
             args.output_size, args.name, args.scale_mode
         )
-        # Infer suffix
-        row_suffix = "single"
-        if "_left" in output_name: row_suffix = "left"
-        elif "_right" in output_name: row_suffix = "right"
         
-        generated_files.append((row_suffix, output_path, output_name))
-    
-    # --- AUTO MIRRORING LOGIC ---
-    if args.auto_mirror:
-        print(f"\n--- Auto-Mirroring Checks ---")
-        extra_files = []
-        
-        for suffix, src_path, src_name in generated_files:
-            # Check for Left -> Right
-            if "left" in src_name.lower() and "right" not in src_name.lower():
-                target_name = src_name.replace("left", "right").replace("Left", "Right")
-                target_path = src_path.replace("left", "right").replace("Left", "Right")
-                
-                # Only if not already generated
-                if not any(f[2] == target_name for f in generated_files) and not any(f[2] == target_name for f in extra_files):
-                    if generate_mirrored_strip(src_path, target_path, args.frames):
-                        extra_files.append(("mirror", target_path, target_name))
+        # Copy to final directory
+        if not args.no_copy:
+            import shutil
+            is_mob = any(x in args.name.lower() for x in ['mob_', 'enemy_', 'walk_', 'attack_'])
+            target_dir = FINAL_MOB_DIR if is_mob else FINAL_ANIM_DIR
             
-            # Check for Right -> Left
-            elif "right" in src_name.lower() and "left" not in src_name.lower():
-                target_name = src_name.replace("right", "left").replace("Right", "Left")
-                target_path = src_path.replace("right", "left").replace("Right", "Left")
-                
-                if not any(f[2] == target_name for f in generated_files) and not any(f[2] == target_name for f in extra_files):
-                    if generate_mirrored_strip(src_path, target_path, args.frames):
-                        extra_files.append(("mirror", target_path, target_name))
-
-        # Add mirrors to list for copying
-        generated_files.extend(extra_files)
-
-    # Copy to final directory
-    if not args.no_copy:
-        print("\n--- Copying to Assets ---")
-        import shutil
-        is_mob = any(x in args.name.lower() for x in ['mob_', 'enemy_', 'walk_', 'attack_'])
-        target_dir = FINAL_MOB_DIR if is_mob else FINAL_ANIM_DIR
-        
-        for suffix, src, name in generated_files:
-            dst = os.path.join(target_dir, name)
-            shutil.copy(src, dst)
-            print(f"✅ {suffix}: {dst}")
-
-    print("\n" + "="*60)
+            dst = os.path.join(target_dir, output_name)
+            shutil.copy(output_path, dst)
+            print(f"\n✅ Copied to: {dst}")
+    
+    print("\n" + "=" * 60)
     print("Processing complete!")
-    print("="*60)
+    print("=" * 60)
     
     return 0
 
