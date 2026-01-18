@@ -15,6 +15,7 @@ import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
+import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener.ChangeEvent;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
@@ -26,10 +27,13 @@ import de.tum.cit.fop.maze.model.*;
 import de.tum.cit.fop.maze.model.items.Potion;
 import de.tum.cit.fop.maze.model.weapons.Weapon;
 import de.tum.cit.fop.maze.ui.EndlessHUD;
+import de.tum.cit.fop.maze.ui.ChestInteractUI;
 import de.tum.cit.fop.maze.utils.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 /**
@@ -69,6 +73,12 @@ public class EndlessGameScreen implements Screen {
     private List<Trap> traps;
     private List<FloatingText> floatingTexts;
     private List<Potion> potions; // 掉落的药水
+
+    // === 宝箱系统 ===
+    private Map<String, List<TreasureChest>> chunkChests; // chunkId -> chests
+    private ChestInteractUI chestUI;
+    private TreasureChest activeChest; // 当前交互的宝箱
+    private boolean isChestUIActive = false;
 
     // === HUD ===
     private EndlessHUD hud;
@@ -149,6 +159,9 @@ public class EndlessGameScreen implements Screen {
         floatingTexts = new ArrayList<>();
         potions = new ArrayList<>();
         spawnRandom = new Random();
+
+        // 宝箱系统
+        chunkChests = new HashMap<>();
 
         // 设置系统监听器
         setupSystemListeners();
@@ -359,6 +372,9 @@ public class EndlessGameScreen implements Screen {
 
         // 更新药水拾取
         updatePotions(delta);
+
+        // 更新宝箱交互
+        updateChests(delta);
 
         // 更新HUD数据
         hud.setTotalKills(totalKills);
@@ -872,6 +888,32 @@ public class EndlessGameScreen implements Screen {
                 }
             }
         }
+
+        // 渲染宝箱 (底部对齐)
+        String chunkId = chunk.getId();
+        if (!chunkChests.containsKey(chunkId)) {
+            // 按需创建该区块的宝箱对象
+            List<TreasureChest> chests = new ArrayList<>();
+            for (Vector2 pos : chunk.getChestPositions()) {
+                TreasureChest chest = TreasureChest.createRandom(
+                        pos.x, pos.y, spawnRandom,
+                        de.tum.cit.fop.maze.config.GameConfig.CHEST_PUZZLE_PROBABILITY);
+                chests.add(chest);
+            }
+            chunkChests.put(chunkId, chests);
+        }
+
+        for (TreasureChest chest : chunkChests.getOrDefault(chunkId, java.util.Collections.emptyList())) {
+            TextureRegion chestTex = textureManager.getChestFrame(chest.getState());
+            if (chestTex != null) {
+                // 底部对齐渲染：宝箱底边与格子底边对齐
+                float renderHeight = textureManager.getChestRenderHeight(chest.getState(), UNIT_SCALE);
+                float drawX = chest.getX() * UNIT_SCALE;
+                float drawY = chest.getY() * UNIT_SCALE; // 底边对齐
+                game.getSpriteBatch().draw(chestTex, drawX, drawY,
+                        UNIT_SCALE, UNIT_SCALE * renderHeight);
+            }
+        }
     }
 
     private TextureRegion getFloorTextureForTheme(String theme) {
@@ -1170,6 +1212,69 @@ public class EndlessGameScreen implements Screen {
                                 player.getX(), player.getY() + 0.5f,
                                 "-1", Color.RED));
                     }
+                }
+            }
+        }
+    }
+
+    // === 宝箱更新 ===
+
+    /**
+     * 更新宝箱交互检测
+     * 
+     * 当玩家靠近未打开的宝箱时，自动触发交互：
+     * - 普通宝箱：直接打开并领取奖励
+     * - 谜题宝箱：暂停游戏并显示谜题UI（待实现）
+     */
+    private void updateChests(float delta) {
+        if (isChestUIActive)
+            return; // 正在与宝箱交互中，不处理新碰撞
+
+        // 遍历已加载区块的宝箱
+        for (MapChunk chunk : chunkManager.getLoadedChunks()) {
+            String chunkId = chunk.getId();
+            List<TreasureChest> chests = chunkChests.get(chunkId);
+            if (chests == null)
+                continue;
+
+            for (TreasureChest chest : chests) {
+                if (chest.isInteracted())
+                    continue; // 已交互过
+
+                // 检查玩家是否靠近宝箱
+                float dx = player.getX() - chest.getX();
+                float dy = player.getY() - chest.getY();
+                float dist = (float) Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < 1.2f) { // 交互半径
+                    // 玩家接触到宝箱
+                    if (chest.getType() == TreasureChest.ChestType.NORMAL) {
+                        // 普通宝箱：直接打开
+                        chest.startOpening();
+                        chest.update(0.5f); // 快速完成开启动画
+
+                        // 领取奖励（claimReward 内部会应用到玩家）
+                        boolean success = chest.claimReward(player);
+                        if (success && chest.getReward() != null) {
+                            floatingTexts.add(new FloatingText(
+                                    chest.getX(), chest.getY() + 0.5f,
+                                    chest.getReward().getDisplayName(), Color.YELLOW));
+                            AudioManager.getInstance().playSound("pickup");
+                        }
+                    } else {
+                        // 谜题宝箱：设置标记（简化实现：直接打开）
+                        chest.startOpening();
+                        chest.update(0.5f);
+
+                        boolean success = chest.claimReward(player);
+                        if (success && chest.getReward() != null) {
+                            floatingTexts.add(new FloatingText(
+                                    chest.getX(), chest.getY() + 0.5f,
+                                    "Puzzle: " + chest.getReward().getDisplayName(), Color.CYAN));
+                            AudioManager.getInstance().playSound("pickup");
+                        }
+                    }
+                    return; // 一次只处理一个宝箱
                 }
             }
         }

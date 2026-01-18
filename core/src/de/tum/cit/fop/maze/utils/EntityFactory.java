@@ -36,6 +36,12 @@ public class EntityFactory {
         register(GameConfig.OBJECT_ID_WALL_3X3, (x, y) -> new Wall(x, y, 3, 3));
         register(GameConfig.OBJECT_ID_WALL_4X4, (x, y) -> new Wall(x, y, 4, 4));
 
+        // 注册宝箱 (Treasure Chest)
+        register(GameConfig.OBJECT_ID_CHEST, (x, y) -> {
+            java.util.Random random = new java.util.Random();
+            return TreasureChest.createRandom(x, y, random, GameConfig.CHEST_PUZZLE_PROBABILITY);
+        });
+
         // 注意：ID 1 (Entry) 通常不生成实体对象，而是设置玩家起始位置，
         // 所以这里不注册它，或者注册一个空操作（视 MapLoader 逻辑而定）。
         // MapLoader 目前特殊处理了 ID 1。

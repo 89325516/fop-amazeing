@@ -80,6 +80,9 @@ public class EndlessMapGenerator {
         // 生成陷阱位置
         generateTraps(chunk, chunkRandom);
 
+        // 生成宝箱位置 (密度约为陷阱的 1/20)
+        generateChests(chunk, chunkRandom);
+
         // 生成敌人刷新点
         generateSpawnPoints(chunk, chunkRandom);
 
@@ -319,6 +322,70 @@ public class EndlessMapGenerator {
                 occupiedCells.add(cellKey);
                 trapsPlaced++;
             }
+        }
+    }
+
+    /**
+     * 生成宝箱位置
+     * 
+     * 密度约为陷阱数量的 1/20，确保每个区块有 0-1 个宝箱概率。
+     * 宝箱不与墙体或陷阱重叠。
+     */
+    private void generateChests(MapChunk chunk, Random rand) {
+        int chunkSize = chunk.getSize();
+        int worldStartX = chunk.getWorldStartX();
+        int worldStartY = chunk.getWorldStartY();
+
+        // 根据陷阱数量计算宝箱数量（约 1/20，至少0个）
+        int trapCount = chunk.getTrapPositions().size();
+        int expectedChests = Math.max(0, (int) (trapCount * GameConfig.CHEST_DENSITY_RATIO));
+
+        // 每个区块最多 1-2 个宝箱，避免过于密集
+        expectedChests = Math.min(expectedChests, 2);
+
+        // 收集已占用的格子（墙体 + 陷阱）
+        java.util.Set<String> occupiedCells = new java.util.HashSet<>();
+        for (WallEntity wall : chunk.getWalls()) {
+            for (int wx = wall.getOriginX(); wx < wall.getOriginX() + wall.getGridWidth(); wx++) {
+                for (int wy = wall.getOriginY(); wy < wall.getOriginY() + wall.getGridHeight(); wy++) {
+                    occupiedCells.add(wx + "," + wy);
+                }
+            }
+        }
+        for (Vector2 trap : chunk.getTrapPositions()) {
+            occupiedCells.add((int) trap.x + "," + (int) trap.y);
+        }
+
+        int attempts = 0;
+        int maxAttempts = expectedChests * 5;
+        int chestsPlaced = 0;
+
+        while (chestsPlaced < expectedChests && attempts < maxAttempts) {
+            attempts++;
+
+            // 使用整数坐标，确保宝箱对齐到格子
+            int localX = rand.nextInt(chunkSize - 4) + 2;
+            int localY = rand.nextInt(chunkSize - 4) + 2;
+
+            int worldX = worldStartX + localX;
+            int worldY = worldStartY + localY;
+
+            String cellKey = worldX + "," + worldY;
+
+            // 检查是否已占用
+            if (occupiedCells.contains(cellKey)) {
+                continue;
+            }
+
+            // 检查是否在玩家出生安全区域内
+            if (isInSpawnSafeZone(worldX, worldY, 1, 1)) {
+                continue;
+            }
+
+            // 放置宝箱
+            chunk.addChest(worldX, worldY);
+            occupiedCells.add(cellKey);
+            chestsPlaced++;
         }
     }
 

@@ -59,4 +59,18 @@ public class GameConfig {
 
     public static final float PROJECTILE_SPEED = 8.0f;
     public static final float PROJECTILE_LIFETIME = 3.0f;
+
+    // ==================== Treasure Chest Settings ====================
+
+    /** 宝箱 Object ID */
+    public static final int OBJECT_ID_CHEST = 20;
+
+    /** 谜题宝箱概率 (30%) */
+    public static final float CHEST_PUZZLE_PROBABILITY = 0.3f;
+
+    /** 宝箱密度：约陷阱数量的 1/20 */
+    public static final float CHEST_DENSITY_RATIO = 0.05f;
+
+    /** 每张地图最少宝箱数 */
+    public static final int CHEST_MIN_COUNT = 3;
 }

@@ -28,6 +28,7 @@ import de.tum.cit.fop.maze.model.*;
 import de.tum.cit.fop.maze.model.items.Potion;
 import de.tum.cit.fop.maze.model.weapons.Weapon;
 import de.tum.cit.fop.maze.ui.GameHUD;
+import de.tum.cit.fop.maze.ui.ChestInteractUI;
 import de.tum.cit.fop.maze.utils.AchievementManager;
 import de.tum.cit.fop.maze.utils.AchievementUnlockInfo;
 import de.tum.cit.fop.maze.utils.MapLoader;
@@ -77,6 +78,10 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
 
     private Color biomeColor = Color.WHITE;
     private com.badlogic.gdx.graphics.glutils.ShaderProgram grayscaleShader;
+
+    // 宝箱交互UI
+    private ChestInteractUI chestInteractUI;
+    private TreasureChest activeChest;
 
     public GameScreen(MazeRunnerGame game, String saveFilePath) {
         this.game = game;
@@ -266,6 +271,51 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         GameLogger.info("GameScreen", "Victory achieved! Level: " + currentLevelPath);
     }
 
+    @Override
+    public void onPuzzleChestInteract(TreasureChest chest) {
+        // 暂停游戏
+        isPaused = true;
+        activeChest = chest;
+
+        // 创建并显示宝箱交互UI
+        chestInteractUI = new ChestInteractUI(chest, game.getSkin(), new ChestInteractUI.ChestUIListener() {
+            @Override
+            public void onChestOpened(ChestReward reward) {
+                // 领取奖励
+                if (reward != null) {
+                    reward.applyToPlayer(gameWorld.getPlayer());
+                    gameWorld.getFloatingTexts().add(new FloatingText(
+                            chest.getX(), chest.getY() + 0.5f,
+                            reward.getDisplayName(), Color.CYAN));
+                    de.tum.cit.fop.maze.utils.AudioManager.getInstance().playSound("collect");
+                }
+                chest.startOpening();
+                chest.update(0.5f);
+            }
+
+            @Override
+            public void onChestFailed() {
+                // 谜题失败，给安慰奖
+                gameWorld.getPlayer().addCoins(1);
+                chest.setInteracted(true); // 标记为已交互
+            }
+
+            @Override
+            public void onUIClose() {
+                // 关闭UI，恢复游戏
+                if (chestInteractUI != null) {
+                    chestInteractUI.remove();
+                    chestInteractUI = null;
+                }
+                activeChest = null;
+                isPaused = false;
+            }
+        });
+
+        uiStage.addActor(chestInteractUI);
+        GameLogger.info("GameScreen", "Puzzle chest interaction started");
+    }
+
     // --- Main Loop ---
 
     @Override
@@ -397,6 +447,19 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
             }
             if (obj instanceof Weapon)
                 game.getSpriteBatch().setColor(Color.WHITE);
+        }
+
+        // 2.5 Render Treasure Chests (底部对齐)
+        for (TreasureChest chest : gameMap.getTreasureChests()) {
+            TextureRegion chestTex = textureManager.getChestFrame(chest.getState());
+            if (chestTex != null) {
+                // 底部对齐渲染：宝箱底边与格子底边对齐
+                float renderHeight = textureManager.getChestRenderHeight(chest.getState(), UNIT_SCALE);
+                float drawX = chest.getX() * UNIT_SCALE;
+                float drawY = chest.getY() * UNIT_SCALE; // 底边对齐
+                game.getSpriteBatch().draw(chestTex, drawX, drawY,
+                        UNIT_SCALE, UNIT_SCALE * renderHeight);
+            }
         }
 
         // 3. Render Enemies with Health Bars

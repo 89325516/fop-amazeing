@@ -31,6 +31,9 @@ public class MapChunk {
     /** 区块内的陷阱位置 */
     private List<Vector2> trapPositions;
 
+    /** 区块内的宝箱位置 */
+    private List<Vector2> chestPositions;
+
     /** 区块内的敌人刷新点 */
     private List<Vector2> spawnPoints;
 
@@ -56,6 +59,7 @@ public class MapChunk {
         this.size = size;
         this.walls = new ArrayList<>();
         this.trapPositions = new ArrayList<>();
+        this.chestPositions = new ArrayList<>();
         this.spawnPoints = new ArrayList<>();
         this.isGenerated = false;
         this.isLoaded = false;
@@ -115,6 +119,13 @@ public class MapChunk {
     }
 
     /**
+     * 添加宝箱位置
+     */
+    public void addChest(float x, float y) {
+        chestPositions.add(new Vector2(x, y));
+    }
+
+    /**
      * 添加敌人刷新点
      */
     public void addSpawnPoint(float x, float y) {
@@ -163,6 +174,7 @@ public class MapChunk {
     public void clear() {
         walls.clear();
         trapPositions.clear();
+        chestPositions.clear();
         spawnPoints.clear();
         isGenerated = false;
         isLoaded = false;
@@ -207,6 +219,13 @@ public class MapChunk {
 
     public List<Vector2> getSpawnPoints() {
         return spawnPoints;
+    }
+
+    /**
+     * 获取宝箱位置列表
+     */
+    public List<Vector2> getChestPositions() {
+        return chestPositions;
     }
 
     public boolean isGenerated() {

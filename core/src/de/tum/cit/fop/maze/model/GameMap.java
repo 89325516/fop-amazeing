@@ -42,6 +42,9 @@ public class GameMap {
     // 动态对象（敌人、陷阱、钥匙等）
     private List<GameObject> dynamicObjects;
 
+    // 宝箱列表
+    private List<TreasureChest> treasureChests;
+
     // 玩家出生点（相对于总地图，含边界偏移）
     private float playerStartX = BORDER_WIDTH;
     private float playerStartY = BORDER_WIDTH;
@@ -58,6 +61,7 @@ public class GameMap {
         this.occupiedCells = new HashSet<>();
         this.wallLookup = new IntMap<>();
         this.dynamicObjects = new ArrayList<>();
+        this.treasureChests = new ArrayList<>();
     }
 
     /**
@@ -120,6 +124,11 @@ public class GameMap {
             if (obj instanceof Exit) {
                 this.exitX = (int) obj.getX();
                 this.exitY = (int) obj.getY();
+            }
+
+            // 缓存宝箱
+            if (obj instanceof TreasureChest) {
+                treasureChests.add((TreasureChest) obj);
             }
 
             // 动态更新地图尺寸
@@ -267,5 +276,22 @@ public class GameMap {
 
     public void setTheme(String theme) {
         this.theme = theme;
+    }
+
+    // ========== Treasure Chest Methods ==========
+
+    /**
+     * 添加宝箱
+     */
+    public void addTreasureChest(TreasureChest chest) {
+        treasureChests.add(chest);
+        dynamicObjects.add(chest);
+    }
+
+    /**
+     * 获取所有宝箱
+     */
+    public List<TreasureChest> getTreasureChests() {
+        return treasureChests;
     }
 }

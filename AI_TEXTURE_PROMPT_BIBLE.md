@@ -213,3 +213,23 @@ Objects with large **white or very pale colored areas** get incorrectly cropped 
 ---
 
 *This document serves as the single source of truth for all AI generation tasks. Adhere to these prompts to maintain World-Class quality.*
+
+### 🔒 Type E: Treasure Chests (宝箱)
+**Design Goal**: High contrast state difference (Closed vs Open). Premium look.
+**Meta-Prompt Template**:
+```
+Game Sprite of a Treasure Chest, [State], [Theme] style.
+View: Top-down orthographic 45-degree angle.
+Style: Hand-painted stylized art, vibrant colors, magical glow.
+Composition: On Solid White Background, Centered, Wide margin, Entire object within frame.
+Details: [State Specific Details].
+--no cut off, multiple items, complex background, white colored object
+```
+**State Specific Details**:
+- **Closed**: "Heavy metal lock, reinforced corners, glowing runes on lid."
+- **Half-Open**: "Lid slightly raised, bright golden light leaking from inside, floating dust particles."
+- **Open**: "Lid thrown back completely, empty dark interior or glowing bottom, mechanism visible."
+
+**Example (Golden Chest)**:
+> "Golden Royal Treasure Chest with jewels, half-open state. Top-down game sprite. Hand-painted stylized art. Lid raised 45 degrees, blinding golden light leaking out. Shiny gold metal, rich wood texture. Solid White Background. --no cut off, multiple items, complex background"
+

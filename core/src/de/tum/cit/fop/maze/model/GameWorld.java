@@ -61,6 +61,11 @@ public class GameWorld {
         void onGameOver(int killCount);
 
         void onVictory(String currentMapPath);
+
+        /** 当玩家接触谜题宝箱时调用，需要暂停游戏并显示谜题UI */
+        default void onPuzzleChestInteract(TreasureChest chest) {
+            // 默认实现：直接打开（向后兼容）
+        }
     }
 
     private WorldListener listener;
@@ -82,8 +87,17 @@ public class GameWorld {
         // Populate lists from map
         for (GameObject obj : gameMap.getDynamicObjects()) {
             if (obj instanceof Enemy) {
-                // enemies.add((Enemy) obj); // Disabled: Unified Management handles spawning
-                // via CustomElementManager
+                Enemy enemy = (Enemy) obj;
+                // Assign type based on map theme
+                String theme = gameMap.getTheme();
+                if (theme != null) {
+                    if ("Grassland".equalsIgnoreCase(theme)) {
+                        enemy.setEnemyType(Enemy.EnemyType.BOAR);
+                    } else if ("Desert".equalsIgnoreCase(theme)) {
+                        enemy.setEnemyType(Enemy.EnemyType.SCORPION);
+                    }
+                }
+                enemies.add(enemy);
             } else if (obj instanceof MobileTrap)
                 mobileTraps.add((MobileTrap) obj);
         }
@@ -255,6 +269,7 @@ public class GameWorld {
         updateProjectiles(delta); // NEW: Update projectiles
         updateDroppedItems(); // NEW: Handle item pickup
         updateDynamicObjects();
+        updateChests(delta); // NEW: Handle treasure chest interaction
         updateFloatingTexts(delta);
 
         // 4. Update player's equipped weapon (for reload timer)
@@ -637,6 +652,49 @@ public class GameWorld {
                         iter.remove();
                         AudioManager.getInstance().playSound("collect");
                     }
+                }
+            }
+        }
+    }
+
+    /**
+     * 更新宝箱交互检测
+     * 
+     * 当玩家靠近未打开的宝箱时，触发交互：
+     * - 普通宝箱：直接打开并领取奖励
+     * - 谜题宝箱：通知监听器显示谜题UI（暂停游戏）
+     */
+    private void updateChests(float delta) {
+        for (TreasureChest chest : gameMap.getTreasureChests()) {
+            if (chest.isInteracted())
+                continue; // 已交互过
+
+            // 检查玩家是否靠近宝箱
+            float dx = player.getX() - chest.getX();
+            float dy = player.getY() - chest.getY();
+            float dist = (float) Math.sqrt(dx * dx + dy * dy);
+
+            if (dist < 1.2f) { // 交互半径
+                if (chest.getType() == TreasureChest.ChestType.PUZZLE) {
+                    // 谜题宝箱：通知监听器显示UI
+                    if (listener != null) {
+                        listener.onPuzzleChestInteract(chest);
+                    }
+                    return; // 让 Screen 处理暂停和 UI
+                } else {
+                    // 普通宝箱：直接打开
+                    chest.startOpening();
+                    chest.update(0.5f); // 快速完成开启动画
+
+                    // 领取奖励
+                    boolean success = chest.claimReward(player);
+                    if (success && chest.getReward() != null) {
+                        floatingTexts.add(new FloatingText(
+                                chest.getX(), chest.getY() + 0.5f,
+                                chest.getReward().getDisplayName(), Color.YELLOW));
+                        AudioManager.getInstance().playSound("collect");
+                    }
+                    return;
                 }
             }
         }

@@ -53,6 +53,12 @@ public class TextureManager implements Disposable {
         public Animation<TextureRegion> heartBreak;
         public TextureRegion arrowRegion;
 
+        // Treasure Chest Textures
+        public TextureRegion chestClosedRegion;
+        public TextureRegion chestHalfRegion;
+        public TextureRegion chestOpenRegion;
+        public Animation<TextureRegion> chestAnimation;
+
         // White pixel for drawing solid color rectangles (health bars, etc.)
         public TextureRegion whitePixel;
 
@@ -289,6 +295,49 @@ public class TextureManager implements Disposable {
                 trapSpace = loadTextureSafe("images/traps/trap_space_v1.png");
                 trapSpaceAnim = loadSpriteSheetAnimation("images/animations/anim_trap_space_shock_4f.png", 4, 64,
                                 0.15f);
+
+                // 9. Load Treasure Chest Textures
+                loadChestAssets();
+        }
+
+        /**
+         * Loads treasure chest textures and animation.
+         * Expected files: images/items/chest_closed.png, chest_half.png, chest_open.png
+         * Or: images/items/chest_3f.png (3-frame sprite sheet)
+         */
+        private void loadChestAssets() {
+                // Try loading individual frames first
+                chestClosedRegion = loadTextureSafe("images/items/chest_closed.png");
+                chestHalfRegion = loadTextureSafe("images/items/chest_half.png");
+                chestOpenRegion = loadTextureSafe("images/items/chest_open.png");
+
+                // If individual frames not found, try sprite sheet
+                if (chestClosedRegion == fallbackRegion) {
+                        Animation<TextureRegion> sheetAnim = loadSpriteSheetAnimation(
+                                        "images/items/chest_3f.png", 3, 32, 0.2f);
+                        if (sheetAnim != null) {
+                                TextureRegion[] frames = sheetAnim.getKeyFrames();
+                                if (frames.length >= 3) {
+                                        chestClosedRegion = frames[0];
+                                        chestHalfRegion = frames[1];
+                                        chestOpenRegion = frames[2];
+                                }
+                        }
+                }
+
+                // Create animation from frames
+                if (chestClosedRegion != fallbackRegion && chestHalfRegion != fallbackRegion
+                                && chestOpenRegion != fallbackRegion) {
+                        chestAnimation = new Animation<>(0.2f, chestClosedRegion, chestHalfRegion, chestOpenRegion);
+                        chestAnimation.setPlayMode(Animation.PlayMode.NORMAL);
+                        System.out.println("TextureManager: Loaded chest textures successfully");
+                } else {
+                        // Use trap region as fallback
+                        chestClosedRegion = trapRegion;
+                        chestHalfRegion = trapRegion;
+                        chestOpenRegion = trapRegion;
+                        System.out.println("TextureManager: Using fallback for chest textures");
+                }
         }
 
         private void loadAttackAnimations() {
@@ -617,6 +666,86 @@ public class TextureManager implements Disposable {
                         default:
                                 return enemyWalk;
                 }
+        }
+
+        /**
+         * Returns the treasure chest texture frame based on chest state.
+         * 
+         * @param state The chest state from TreasureChest.ChestState
+         * @return The corresponding texture region
+         */
+        public TextureRegion getChestFrame(de.tum.cit.fop.maze.model.TreasureChest.ChestState state) {
+                if (state == null) {
+                        return chestClosedRegion;
+                }
+                switch (state) {
+                        case CLOSED:
+                                return chestClosedRegion;
+                        case OPENING:
+                                return chestHalfRegion;
+                        case OPEN:
+                                return chestOpenRegion;
+                        default:
+                                return chestClosedRegion;
+                }
+        }
+
+        /**
+         * Returns the treasure chest texture frame based on frame index.
+         * 
+         * @param frameIndex 0=closed, 1=half, 2=open
+         * @return The corresponding texture region
+         */
+        public TextureRegion getChestFrame(int frameIndex) {
+                switch (frameIndex) {
+                        case 0:
+                                return chestClosedRegion;
+                        case 1:
+                                return chestHalfRegion;
+                        case 2:
+                                return chestOpenRegion;
+                        default:
+                                return chestClosedRegion;
+                }
+        }
+
+        /**
+         * Returns the treasure chest animation.
+         */
+        public Animation<TextureRegion> getChestAnimation() {
+                return chestAnimation;
+        }
+
+        /**
+         * 获取宝箱纹理的渲染高度（用于底部对齐）
+         * 
+         * 宝箱纹理尺寸：closed (30x31), half (30x34), open (30x51)
+         * 需要根据状态返回正确的高度以实现底部对齐。
+         * 
+         * @param state    宝箱状态
+         * @param tileSize 格子大小（像素）
+         * @return 渲染高度（格子单位）
+         */
+        public float getChestRenderHeight(de.tum.cit.fop.maze.model.TreasureChest.ChestState state, float tileSize) {
+                TextureRegion region = getChestFrame(state);
+                if (region == null) {
+                        return 1f;
+                }
+                // 基准高度：closed 的高度（31px）对应 1 格
+                float baseHeight = 31f;
+                float actualHeight = region.getRegionHeight();
+                return actualHeight / baseHeight;
+        }
+
+        /**
+         * 获取宝箱纹理的宽高比
+         */
+        public float getChestAspectRatio(de.tum.cit.fop.maze.model.TreasureChest.ChestState state) {
+                TextureRegion region = getChestFrame(state);
+                if (region == null || region.getRegionHeight() == 0) {
+                        return 1f;
+                }
+                return (float) region.getRegionWidth() / region.getRegionHeight();
         }
 
         private TextureRegion loadTextureSafe(String path) {

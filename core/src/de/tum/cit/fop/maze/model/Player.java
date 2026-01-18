@@ -872,4 +872,143 @@ public class Player extends GameObject {
     private static float clamp(float value, float min, float max) {
         return Math.max(min, Math.min(max, value));
     }
+
+    // ==================== Buff System (for Treasure Chest rewards)
+    // ====================
+
+    // Buff 状态
+    private float speedBuffTimer = 0f; // 速度Buff剩余时间
+    private float speedBuffMultiplier = 0f; // 速度Buff倍率 (0.5 = +50%)
+    private float rageBuffTimer = 0f; // 狂暴Buff剩余时间
+    private boolean hasShieldBuff = false; // 是否有护盾（抵挡一次伤害）
+
+    /**
+     * 应用速度Buff
+     * 
+     * @param durationSeconds Buff持续时间（秒）
+     */
+    public void applySpeedBuff(float durationSeconds) {
+        this.speedBuffTimer = durationSeconds;
+        this.speedBuffMultiplier = 0.5f; // +50% 移速
+        GameLogger.info("Player", "Speed buff applied for " + durationSeconds + "s");
+    }
+
+    /**
+     * 应用狂暴Buff（攻击冷却减半）
+     * 
+     * @param durationSeconds Buff持续时间（秒）
+     */
+    public void applyRageBuff(float durationSeconds) {
+        this.rageBuffTimer = durationSeconds;
+        GameLogger.info("Player", "Rage buff applied for " + durationSeconds + "s");
+    }
+
+    /**
+     * 应用护盾（抵挡下一次伤害）
+     */
+    public void applyShield() {
+        this.hasShieldBuff = true;
+        GameLogger.info("Player", "Shield buff applied");
+    }
+
+    /**
+     * 设置无敌状态（用于宝箱奖励）
+     * 
+     * @param invincible 是否无敌
+     */
+    public void setInvincible(boolean invincible) {
+        if (invincible) {
+            // 设置一个较长的无敌时间，实际时间由 setInvincibilityTimer 控制
+            this.invincibilityTimer = 999f;
+        } else {
+            this.invincibilityTimer = 0f;
+        }
+    }
+
+    /**
+     * 设置无敌计时器（秒）
+     * 
+     * @param seconds 无敌持续时间
+     */
+    public void setInvincibilityTimer(float seconds) {
+        this.invincibilityTimer = seconds;
+        GameLogger.info("Player", "Invincibility set for " + seconds + "s");
+    }
+
+    /**
+     * 更新Buff状态（每帧调用）
+     * 应在 updateTimers 中调用
+     */
+    public void updateBuffs(float delta) {
+        if (speedBuffTimer > 0) {
+            speedBuffTimer -= delta;
+            if (speedBuffTimer <= 0) {
+                speedBuffTimer = 0;
+                speedBuffMultiplier = 0;
+                GameLogger.info("Player", "Speed buff expired");
+            }
+        }
+        if (rageBuffTimer > 0) {
+            rageBuffTimer -= delta;
+            if (rageBuffTimer <= 0) {
+                rageBuffTimer = 0;
+                GameLogger.info("Player", "Rage buff expired");
+            }
+        }
+    }
+
+    /**
+     * 尝试消耗护盾抵挡伤害
+     * 
+     * @return true 如果护盾成功抵挡
+     */
+    public boolean consumeShieldBuff() {
+        if (hasShieldBuff) {
+            hasShieldBuff = false;
+            GameLogger.info("Player", "Shield buff consumed - damage blocked");
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 获取带Buff的速度（覆盖原 getSpeed 逻辑）
+     */
+    public float getSpeedWithBuff() {
+        float baseSpeed = getSpeed();
+        if (speedBuffTimer > 0) {
+            return baseSpeed * (1f + speedBuffMultiplier);
+        }
+        return baseSpeed;
+    }
+
+    /**
+     * 获取带狂暴Buff的攻击冷却倍率
+     * 
+     * @return 冷却倍率（正常=1.0，狂暴=0.5）
+     */
+    public float getRageCooldownMultiplier() {
+        return rageBuffTimer > 0 ? 0.5f : 1.0f;
+    }
+
+    // Buff 状态查询
+    public boolean hasSpeedBuff() {
+        return speedBuffTimer > 0;
+    }
+
+    public boolean hasRageBuff() {
+        return rageBuffTimer > 0;
+    }
+
+    public boolean hasShield() {
+        return hasShieldBuff;
+    }
+
+    public float getSpeedBuffTimer() {
+        return speedBuffTimer;
+    }
+
+    public float getRageBuffTimer() {
+        return rageBuffTimer;
+    }
 }
