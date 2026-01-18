@@ -101,6 +101,18 @@ public class CustomElementManager {
     }
 
     /**
+     * Find an element definition by name (case-insensitive)
+     */
+    public CustomElementDefinition getElementByName(String name) {
+        for (CustomElementDefinition def : elements.values()) {
+            if (def.getName().equalsIgnoreCase(name)) {
+                return def;
+            }
+        }
+        return null;
+    }
+
+    /**
      * Delete an element
      */
     public void deleteElement(String id) {
@@ -250,8 +262,50 @@ public class CustomElementManager {
     }
 
     /**
-     * Clear all elements (for testing)
+     * Creates a TextureRegion that pads non-square textures to square with
+     * transparency.
+     * Preserves all original content without cropping.
      */
+    private TextureRegion createCroppedRegion(Texture tex) {
+        int w = tex.getWidth();
+        int h = tex.getHeight();
+
+        if (w == h) {
+            return new TextureRegion(tex); // Already square
+        }
+
+        // Pad to square (use larger dimension)
+        int size = Math.max(w, h);
+
+        // Read original texture data
+        if (!tex.getTextureData().isPrepared()) {
+            tex.getTextureData().prepare();
+        }
+        com.badlogic.gdx.graphics.Pixmap original = tex.getTextureData().consumePixmap();
+
+        // Create new square pixmap with transparency
+        com.badlogic.gdx.graphics.Pixmap padded = new com.badlogic.gdx.graphics.Pixmap(
+                size, size, com.badlogic.gdx.graphics.Pixmap.Format.RGBA8888);
+        padded.setColor(0, 0, 0, 0); // Transparent
+        padded.fill();
+
+        // Center the original image
+        int offsetX = (size - w) / 2;
+        int offsetY = (size - h) / 2;
+        padded.drawPixmap(original, offsetX, offsetY);
+
+        // Create new texture from padded pixmap
+        Texture paddedTex = new Texture(padded);
+
+        // Cleanup
+        original.dispose();
+        padded.dispose();
+
+        GameLogger.info("CustomElementManager",
+                "Auto-padding texture from " + w + "x" + h + " to " + size + "x" + size);
+        return new TextureRegion(paddedTex);
+    }
+
     /**
      * Get animation for a custom element action.
      * Loads textures on demand and caches them.
@@ -311,7 +365,7 @@ public class CustomElementManager {
 
                 if (file.exists()) {
                     Texture tex = new Texture(file);
-                    frames.add(new TextureRegion(tex));
+                    frames.add(createCroppedRegion(tex));
                 }
             } catch (Exception e) {
                 GameLogger.error("CustomElementManager", "Failed to load texture for " + elementId + ": " + path);

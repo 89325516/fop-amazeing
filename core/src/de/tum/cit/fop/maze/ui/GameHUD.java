@@ -72,6 +72,7 @@ public class GameHUD implements Disposable {
     private Label coinLabel; // Coin display
     private Table weaponSlotsTable; // Weapon inventory bar
     private ProgressBar reloadBar; // Reload progress for ranged weapons
+    private ProgressBar energyBar; // Energy bar for weapon attacks
     private Label armorLabel; // Armor status display
     private Skin skin; // Keep reference for dynamic updates
     private int lastWeaponIndex = -1; // Track selected weapon for highlighting
@@ -190,6 +191,25 @@ public class GameHUD implements Disposable {
         reloadBar.setVisible(false);
         rootTable.row();
         rootTable.add(reloadBar).width(200).height(15).bottom().padBottom(5);
+
+        // === Energy Bar (NEW) ===
+        ProgressBar.ProgressBarStyle energyStyle = new ProgressBar.ProgressBarStyle();
+
+        // Create scaled drawables to ensure minimum height
+        com.badlogic.gdx.scenes.scene2d.utils.Drawable bg = skin.newDrawable("white", new Color(0f, 0f, 0f, 0.6f));
+        bg.setMinHeight(35);
+        energyStyle.background = bg;
+
+        com.badlogic.gdx.scenes.scene2d.utils.Drawable knob = skin.newDrawable("white", new Color(0f, 1f, 1f, 1f));
+        knob.setMinHeight(35);
+        energyStyle.knobBefore = knob;
+
+        energyBar = new ProgressBar(0f, 1f, 0.01f, false, energyStyle);
+        energyBar.setValue(1f); // Start full
+
+        rootTable.row();
+        // Use fill() to ensure it stretches to the height
+        rootTable.add(energyBar).width(350).height(35).fill().bottom().padBottom(20);
 
         // === Achievement Popup (NEW) ===
         achievementPopup = new AchievementPopup(stage, skin);
@@ -377,6 +397,9 @@ public class GameHUD implements Disposable {
         } else {
             reloadBar.setVisible(false);
         }
+
+        // === 9. Update Energy Bar (NEW) ===
+        energyBar.setValue(player.getEnergyPercentage());
 
         stage.act(delta);
     }

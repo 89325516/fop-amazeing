@@ -37,6 +37,7 @@ public class Enemy extends GameObject {
     public enum EnemyState {
         PATROL,
         CHASE,
+        IDLE,
         DEAD
     }
 
@@ -404,17 +405,21 @@ public class Enemy extends GameObject {
             }
         }
         // 1. 状态判断
-        // Check distance to ENEMY itself, not Home (Chase on Sight vs Territorial)
-        // Also removed !isPlayerSafe check so enemies chase even if on optimal path.
-        float distToSelf = distanceToPoint(this.getX(), this.getY(), player.getX(), player.getY());
-
-        // Use a larger range if needed, or stick to settings.
-        // Assuming settings range is "Visual Range".
-        if (distToSelf < GameSettings.enemyDetectRange) {
-            state = EnemyState.CHASE;
+        if (player.isDead()) {
+            state = EnemyState.IDLE;
         } else {
-            // Stop chasing if far away
-            state = EnemyState.PATROL;
+            // Check distance to ENEMY itself, not Home (Chase on Sight vs Territorial)
+            // Also removed !isPlayerSafe check so enemies chase even if on optimal path.
+            float distToSelf = distanceToPoint(this.getX(), this.getY(), player.getX(), player.getY());
+
+            // Use a larger range if needed, or stick to settings.
+            // Assuming settings range is "Visual Range".
+            if (distToSelf < GameSettings.enemyDetectRange) {
+                state = EnemyState.CHASE;
+            } else {
+                // Stop chasing if far away
+                state = EnemyState.PATROL;
+            }
         }
 
         // 2. Calculate target velocity based on AI state (Inertia System)
@@ -455,6 +460,7 @@ public class Enemy extends GameObject {
                     }
                 }
                 break;
+            case IDLE:
             case DEAD:
                 targetVx = 0;
                 targetVy = 0;

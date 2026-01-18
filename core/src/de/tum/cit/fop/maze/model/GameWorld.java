@@ -11,7 +11,7 @@ import de.tum.cit.fop.maze.effects.FloatingText;
 import de.tum.cit.fop.maze.model.items.Armor;
 import de.tum.cit.fop.maze.model.items.DroppedItem;
 import de.tum.cit.fop.maze.model.items.Potion;
-import de.tum.cit.fop.maze.model.weapons.Sword;
+
 import de.tum.cit.fop.maze.model.weapons.Weapon;
 import de.tum.cit.fop.maze.utils.AchievementManager;
 import de.tum.cit.fop.maze.utils.AudioManager;
@@ -45,6 +45,7 @@ public class GameWorld {
     private int killCount = 0;
     private int coinsCollected = 0; // Track coins collected this session
     private int playerDirection = 0; // 0=Down, 1=Up, 2=Left, 3=Right
+    private Vector2 aimDirection = new Vector2(0, -1); // Default Down to match playerDirection
 
     // === Achievement Tracking ===
     private boolean playerTookDamage = false; // For flawless victory
@@ -78,6 +79,32 @@ public class GameWorld {
         // Initialize Core Components
         this.collisionManager = new CollisionManager(gameMap);
         this.player = new Player(gameMap.getPlayerStartX(), gameMap.getPlayerStartY());
+
+        // Auto-equip purchased weapons
+        java.util.List<String> purchasedItems = de.tum.cit.fop.maze.shop.ShopManager.getPurchasedItemIds();
+        for (String itemId : purchasedItems) {
+            switch (itemId) {
+                case "weapon_sword":
+                    // Default sword is already equipped by Player constructor
+                    break;
+                case "weapon_bow":
+                    this.player.addWeapon(
+                            new de.tum.cit.fop.maze.model.weapons.Bow(this.player.getX(), this.player.getY()));
+                    break;
+                case "weapon_staff":
+                    this.player.addWeapon(
+                            new de.tum.cit.fop.maze.model.weapons.MagicStaff(this.player.getX(), this.player.getY()));
+                    break;
+                case "weapon_crossbow":
+                    this.player.addWeapon(
+                            new de.tum.cit.fop.maze.model.weapons.Crossbow(this.player.getX(), this.player.getY()));
+                    break;
+                case "weapon_wand":
+                    this.player.addWeapon(
+                            new de.tum.cit.fop.maze.model.weapons.Wand(this.player.getX(), this.player.getY()));
+                    break;
+            }
+        }
         this.enemies = new ArrayList<>();
         this.mobileTraps = new ArrayList<>();
         this.floatingTexts = new ArrayList<>();
@@ -257,11 +284,12 @@ public class GameWorld {
                 if (listener != null)
                     listener.onGameOver(killCount);
             }
-            return; // Stop logic if dead
         }
 
         // 2. Input Handling (Movement & Actions)
-        handleInput(delta);
+        if (!player.isDead()) {
+            handleInput(delta);
+        }
 
         // 3. Entity Updates
         updateEnemies(delta);
@@ -314,6 +342,11 @@ public class GameWorld {
             float length = (float) Math.sqrt(inputX * inputX + inputY * inputY);
             inputX /= length;
             inputY /= length;
+        }
+
+        // Update aim direction if there is input
+        if (inputX != 0 || inputY != 0) {
+            aimDirection.set(inputX, inputY).nor();
         }
 
         // Step 3: Handle running state
@@ -494,15 +527,56 @@ public class GameWorld {
 
     private void handleAttack() {
         if (player.canAttack()) {
+            // === Energy Check ===
+            float energyCost = 10f; // Default cost
+            Weapon currentWeapon = player.getCurrentWeapon();
+            if (currentWeapon != null) {
+                // Try to get custom weapon's energy cost (inline lookup)
+                String customId = null;
+                for (de.tum.cit.fop.maze.custom.CustomElementDefinition def : de.tum.cit.fop.maze.custom.CustomElementManager
+                        .getInstance().getAllElements()) {
+                    if (def.getType() == de.tum.cit.fop.maze.custom.ElementType.WEAPON &&
+                            def.getName().equalsIgnoreCase(currentWeapon.getName())) {
+                        customId = def.getId();
+                        break;
+                    }
+                }
+                if (customId != null) {
+                    de.tum.cit.fop.maze.custom.CustomElementDefinition def = de.tum.cit.fop.maze.custom.CustomElementManager
+                            .getInstance().getElement(customId);
+                    if (def != null) {
+                        energyCost = def.getFloatProperty("energyCost");
+                    }
+                }
+            }
+
+            if (!player.hasEnergy(energyCost)) {
+                return; // Not enough energy to attack
+            }
+
+            player.consumeEnergy(energyCost);
             player.attack();
-            // Logic moved from GameScreen
+
+            // Ranged Attack
+            if (currentWeapon.isRanged()) {
+                currentWeapon.onFire();
+                spawnProjectile(currentWeapon, player);
+                // Record effect for ranged weapon too
+                if (currentWeapon.getEffect() != null &&
+                        currentWeapon.getEffect() != de.tum.cit.fop.maze.model.weapons.WeaponEffect.NONE) {
+                    newAchievements.addAll(AchievementManager.recordEffectApplied(
+                            currentWeapon.getEffect().name()));
+                }
+                return; // Ranged attack complete
+            }
+
+            // Logic moved from GameScreen (Melee)
             Iterator<Enemy> iter = enemies.iterator();
             while (iter.hasNext()) {
                 Enemy e = iter.next();
                 if (e.isDead())
                     continue;
 
-                Weapon currentWeapon = player.getCurrentWeapon();
                 float attackRange = currentWeapon.getRange();
                 float dist = Vector2.dst(player.getX(), player.getY(), e.getX(), e.getY());
 
@@ -1137,5 +1211,49 @@ public class GameWorld {
         }
         GameLogger.info("GameWorld", "Killed " + count + " nearby enemies via console");
         return count;
+    }
+
+    private void spawnProjectile(Weapon weapon, Player player) {
+        float speed = weapon.getProjectileSpeed();
+        float vx = 0, vy = 0;
+
+        // Use precise aim direction (8-way support)
+        vx = aimDirection.x * speed;
+        vy = aimDirection.y * speed;
+
+        GameLogger.info("Projectile", String.format("Spawning: Speed=%.1f, Dir=%d, V=(%.1f, %.1f) at (%.1f, %.1f)",
+                speed, playerDirection, vx, vy, player.getX(), player.getY()));
+
+        // Spawn slightly in front
+        float startX = player.getX() + (vx != 0 ? Math.signum(vx) * 0.5f : 0) + 0.25f; // Center offset adjusted
+        float startY = player.getY() + (vy != 0 ? Math.signum(vy) * 0.5f : 0) + 0.25f;
+
+        // Use weapon name (or ID) as texture key so GameScreen can look it up
+        String textureKey = weapon.getName();
+        // Check if customizable and get ID if exists
+        de.tum.cit.fop.maze.custom.CustomElementDefinition def = de.tum.cit.fop.maze.custom.CustomElementManager
+                .getInstance().getElementByName(textureKey);
+        if (def != null) {
+            textureKey = def.getId();
+        }
+
+        Projectile p = new Projectile(startX, startY, vx, vy,
+                weapon.getDamage() + player.getDamageBonus(),
+                weapon.getDamageType(),
+                weapon.getEffect(),
+                true,
+                textureKey);
+
+        projectiles.add(p);
+        AudioManager.getInstance().playSound("spell_shoot");
+    }
+
+    private boolean customElementExists(String name) {
+        for (de.tum.cit.fop.maze.custom.CustomElementDefinition def : de.tum.cit.fop.maze.custom.CustomElementManager
+                .getInstance().getAllElements()) {
+            if (def.getName().equalsIgnoreCase(name))
+                return true;
+        }
+        return false;
     }
 }

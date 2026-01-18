@@ -100,6 +100,11 @@ public class Player extends GameObject {
     // === Economy System ===
     private int coins = 0;
 
+    // === Energy System (for weapon attacks) ===
+    private float energy = 100f;
+    private float maxEnergy = 100f;
+    private float energyRegenRate = 5f; // Per second
+
     // === Cheat Flags (for Developer Console) ===
     private boolean godMode = false;
     private boolean noClip = false;
@@ -195,6 +200,9 @@ public class Player extends GameObject {
                 isAttacking = false;
             }
         }
+
+        // Energy Regeneration
+        regenEnergy(delta);
 
         // Final death check (catches deaths from traps, etc that happen after this
         // update)
@@ -498,6 +506,14 @@ public class Player extends GameObject {
 
     // ==================== Weapon System ====================
 
+    /**
+     * Directly add weapon to inventory (bypassing size limit).
+     * Used for initial auto-equip of purchased items.
+     */
+    public void addWeapon(Weapon weapon) {
+        inventory.add(weapon);
+    }
+
     public boolean pickupWeapon(Weapon weapon) {
         if (inventory.size() < 4) { // Increased to 4 slots
             inventory.add(weapon);
@@ -691,6 +707,38 @@ public class Player extends GameObject {
 
     public void setCoins(int coins) {
         this.coins = coins;
+    }
+
+    // ==================== Energy System ====================
+
+    public float getEnergy() {
+        return energy;
+    }
+
+    public float getMaxEnergy() {
+        return maxEnergy;
+    }
+
+    public float getEnergyPercentage() {
+        return energy / maxEnergy;
+    }
+
+    public boolean hasEnergy(float amount) {
+        return energy >= amount;
+    }
+
+    public void consumeEnergy(float amount) {
+        energy = Math.max(0, energy - amount);
+    }
+
+    public void restoreEnergy(float amount) {
+        energy = Math.min(maxEnergy, energy + amount);
+    }
+
+    public void regenEnergy(float delta) {
+        if (energy < maxEnergy) {
+            energy = Math.min(maxEnergy, energy + energyRegenRate * delta);
+        }
     }
 
     // ==================== Cheat System ====================

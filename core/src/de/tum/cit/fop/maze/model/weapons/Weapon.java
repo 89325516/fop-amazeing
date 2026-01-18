@@ -24,6 +24,7 @@ public abstract class Weapon extends GameObject {
     // === New: Ranged Weapon System ===
     protected boolean isRanged = false;
     protected float reloadTime = 0f; // Total time to reload (seconds)
+    protected float projectileSpeed = 10f; // Speed for projectiles
     protected float currentReloadTimer = 0f; // Current reload progress
     protected boolean isReloading = false;
 
@@ -58,10 +59,11 @@ public abstract class Weapon extends GameObject {
      * Full constructor for ranged weapons.
      */
     public Weapon(float x, float y, String name, int damage, float range, float cooldown,
-            WeaponEffect effect, DamageType damageType, boolean isRanged, float reloadTime) {
+            WeaponEffect effect, DamageType damageType, boolean isRanged, float reloadTime, float projectileSpeed) {
         this(x, y, name, damage, range, cooldown, effect, damageType);
         this.isRanged = isRanged;
         this.reloadTime = reloadTime;
+        this.projectileSpeed = projectileSpeed;
     }
 
     // === Update method for reload mechanics ===
@@ -146,6 +148,10 @@ public abstract class Weapon extends GameObject {
 
     public boolean isRanged() {
         return isRanged;
+    }
+
+    public float getProjectileSpeed() {
+        return projectileSpeed;
     }
 
     public float getReloadTime() {

@@ -40,8 +40,8 @@ public class FileChooserHelper {
      * Show a file chooser dialog for selecting image files.
      */
     public static void chooseImageFile(FileChosenCallback callback) {
-        // Run file chooser in a new thread to avoid blocking
-        Thread chooserThread = new Thread(() -> {
+        // Run file chooser on Swing EDT to avoid macOS blocking issues
+        SwingUtilities.invokeLater(() -> {
             try {
                 // Set look and feel
                 try {
@@ -51,7 +51,7 @@ public class FileChooserHelper {
 
                 // Create and configure file chooser
                 JFileChooser chooser = new JFileChooser();
-                chooser.setDialogTitle("Select Sprite Image");
+                chooser.setDialogTitle("Select Player Skin Sprite");
                 chooser.setFileFilter(new FileNameExtensionFilter(
                         "Image Files (*.png, *.jpg, *.jpeg, *.gif)",
                         "png", "jpg", "jpeg", "gif"));
@@ -62,15 +62,8 @@ public class FileChooserHelper {
                     chooser.setCurrentDirectory(lastDirectory);
                 }
 
-                // Show dialog with helper frame as parent
-                JFrame frame = getHelperFrame();
-                frame.setVisible(true);
-                frame.toFront();
-                frame.requestFocus();
-
-                int result = chooser.showOpenDialog(frame);
-
-                frame.setVisible(false);
+                // Show dialog without helper frame (null parent works better on macOS)
+                int result = chooser.showOpenDialog(null);
 
                 if (result == JFileChooser.APPROVE_OPTION) {
                     File selectedFile = chooser.getSelectedFile();
@@ -84,10 +77,7 @@ public class FileChooserHelper {
                 GameLogger.error("FileChooserHelper", "Failed to open file dialog: " + e.getMessage());
                 Gdx.app.postRunnable(() -> callback.onCancelled());
             }
-        }, "FileChooser-Thread");
-
-        chooserThread.setDaemon(true);
-        chooserThread.start();
+        });
     }
 
     /**

@@ -191,20 +191,28 @@ public class ElementCreatorScreen implements Screen {
     // ==================== Step 1: Type Selection ====================
 
     private void buildTypeSelectionStep() {
-        contentTable.add(new Label("Select the type of element you want to create:", skin)).padBottom(30).row();
+        contentTable.add(new Label("Select element type:", skin)).padBottom(15).row();
 
         Table typeGrid = new Table();
+        int col = 0;
         for (ElementType type : ElementType.values()) {
             Table typeCard = createTypeCard(type);
-            typeGrid.add(typeCard).size(350, 200).pad(15);
-            if (type.ordinal() % 2 == 1) {
+            typeGrid.add(typeCard).size(220, 120).pad(8); // Smaller cards
+            col++;
+            if (col >= 3) { // 3 columns for better fit
                 typeGrid.row();
+                col = 0;
             }
         }
-        contentTable.add(typeGrid).row();
+
+        // Wrap in ScrollPane for overflow
+        ScrollPane scrollPane = new ScrollPane(typeGrid, skin);
+        scrollPane.setFadeScrollBars(false);
+        scrollPane.setScrollingDisabled(true, false); // Only vertical scroll
+        contentTable.add(scrollPane).maxHeight(320).fillX().row();
 
         // Name input
-        contentTable.add(new Label("Element Name:", skin)).padTop(30).left().row();
+        contentTable.add(new Label("Element Name:", skin)).padTop(15).left().row();
 
         String defaultName = "My Custom Element";
         if (currentElement != null) {
@@ -213,13 +221,13 @@ public class ElementCreatorScreen implements Screen {
 
         TextField nameField = new TextField(defaultName, skin);
         nameField.setName("nameField");
-        contentTable.add(nameField).width(400).padTop(10);
+        contentTable.add(nameField).width(400).padTop(8);
     }
 
     private Table createTypeCard(ElementType type) {
         Table card = new Table();
         card.setBackground(skin.newDrawable("white", new Color(0.18f, 0.18f, 0.25f, 1f)));
-        card.pad(15);
+        card.pad(8); // Smaller padding
 
         // Pre-select logic
         if (currentElement != null && currentElement.getType() == type) {
@@ -230,15 +238,18 @@ public class ElementCreatorScreen implements Screen {
         }
 
         Label nameLabel = new Label(type.getDisplayName(), skin);
-        nameLabel.setFontScale(1.3f);
+        nameLabel.setFontScale(1.1f); // Smaller font
         nameLabel.setColor(Color.GOLD);
-        card.add(nameLabel).padBottom(10).row();
+        card.add(nameLabel).padBottom(5).row();
 
-        Label descLabel = new Label(getTypeDescription(type), skin);
+        // Simpler description for compact layout
+        String shortDesc = getShortTypeDescription(type);
+        Label descLabel = new Label(shortDesc, skin);
         descLabel.setWrap(true);
         descLabel.setAlignment(Align.center);
         descLabel.setColor(Color.LIGHT_GRAY);
-        card.add(descLabel).width(300).row();
+        descLabel.setFontScale(0.85f); // Smaller description font
+        card.add(descLabel).width(190).row();
 
         TextButton selectBtn = new TextButton("Select", skin);
         selectBtn.addListener(new ChangeListener() {
@@ -263,10 +274,27 @@ public class ElementCreatorScreen implements Screen {
                 card.setUserObject("SELECTED:" + type.name());
             }
         });
-        card.add(selectBtn).padTop(15).width(120).height(40);
+        card.add(selectBtn).padTop(8).width(90).height(28); // Smaller button
 
         // Store type name in card for retrieval (not marked as selected yet)
         return card;
+    }
+
+    private String getShortTypeDescription(ElementType type) {
+        switch (type) {
+            case PLAYER:
+                return "Custom skin";
+            case ENEMY:
+                return "Custom mob";
+            case WEAPON:
+                return "Custom weapon";
+            case OBSTACLE:
+                return "Trap/obstacle";
+            case ITEM:
+                return "Pickup item";
+            default:
+                return "";
+        }
     }
 
     /**
@@ -276,18 +304,23 @@ public class ElementCreatorScreen implements Screen {
         if (currentStep == 1) {
             // Find selected type
             ElementType selectedType = null;
-            // Iterate over typeGrid children (which is inside contentTable)
-            // Need reference to typeGrid? No, stored in contentTable?
-            // contentTable children: label, table(typeGrid), label, textfield
 
-            // Simplified: We can traverse the stage or contentTable to find the selected
-            // card
-            // Or better: store selection in a field. But UI state is source of truth.
-
+            // Search in contentTable children - typeGrid is now inside a ScrollPane
             for (Actor child : contentTable.getChildren()) {
-                if (child instanceof Table) {
-                    Table grid = (Table) child;
-                    for (Actor card : grid.getChildren()) {
+                Table gridToSearch = null;
+
+                if (child instanceof ScrollPane) {
+                    // ScrollPane wraps the typeGrid
+                    Actor widget = ((ScrollPane) child).getActor();
+                    if (widget instanceof Table) {
+                        gridToSearch = (Table) widget;
+                    }
+                } else if (child instanceof Table) {
+                    gridToSearch = (Table) child;
+                }
+
+                if (gridToSearch != null) {
+                    for (Actor card : gridToSearch.getChildren()) {
                         if (card.getUserObject() instanceof String) {
                             String marker = (String) card.getUserObject();
                             if (marker.startsWith("SELECTED:")) {
@@ -769,6 +802,9 @@ public class ElementCreatorScreen implements Screen {
             row.add(label).width(200).left().padRight(20);
 
             Object defaultVal = currentElement.getProperties().get(prop);
+            if (defaultVal == null) {
+                defaultVal = currentElement.getType().getDefaultValue(prop);
+            }
             if (defaultVal instanceof Boolean) {
                 CheckBox cb = new CheckBox("", skin);
                 cb.setChecked((Boolean) defaultVal);

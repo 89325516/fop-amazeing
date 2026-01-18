@@ -157,6 +157,8 @@ public class MenuScreen implements Screen {
             }
         });
 
+        // Player skins are now managed through Element Manager with PLAYER type
+
         // "Settings" Button
         TextButton settingsButton = new TextButton("Settings", game.getSkin());
         table.add(settingsButton).width(300).height(60).padBottom(20).row();

@@ -85,7 +85,12 @@ public class CustomElementDefinition {
     }
 
     public void setSpritePath(String action, int frameIndex, String path) {
-        if (spritePaths.containsKey(action) && frameIndex < spritePaths.get(action).length) {
+        // Initialize array for this action if missing (e.g. new action added to type)
+        if (!spritePaths.containsKey(action)) {
+            spritePaths.put(action, new String[frameCount]);
+        }
+
+        if (frameIndex < spritePaths.get(action).length) {
             spritePaths.get(action)[frameIndex] = path;
         }
     }
@@ -117,6 +122,12 @@ public class CustomElementDefinition {
         Object value = properties.get(key);
         if (value instanceof Number) {
             return ((Number) value).intValue();
+        } else if (value instanceof String) {
+            try {
+                return Integer.parseInt((String) value);
+            } catch (NumberFormatException e) {
+                // Ignore
+            }
         }
         return 0;
     }
@@ -125,6 +136,12 @@ public class CustomElementDefinition {
         Object value = properties.get(key);
         if (value instanceof Number) {
             return ((Number) value).floatValue();
+        } else if (value instanceof String) {
+            try {
+                return Float.parseFloat((String) value);
+            } catch (NumberFormatException e) {
+                // Ignore
+            }
         }
         return 0f;
     }
@@ -133,6 +150,8 @@ public class CustomElementDefinition {
         Object value = properties.get(key);
         if (value instanceof Boolean) {
             return (Boolean) value;
+        } else if (value instanceof String) {
+            return Boolean.parseBoolean((String) value);
         }
         return false;
     }

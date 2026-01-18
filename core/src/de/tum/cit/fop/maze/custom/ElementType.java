@@ -4,11 +4,15 @@ package de.tum.cit.fop.maze.custom;
  * Enum defining custom element types with their required properties.
  */
 public enum ElementType {
-    ENEMY("Enemy", new String[] { "health", "defense", "attackDamage", "moveSpeed" },
-            new String[] { "Move", "Death" }),
+    PLAYER("Player", new String[] {},
+            new String[] { "Idle", "Move", "Death" }), // Idle, Walk, Death animations
 
-    WEAPON("Weapon", new String[] { "damage", "cooldown", "range", "effect" },
-            new String[] { "Idle", "Attack" }),
+    ENEMY("Enemy", new String[] { "health", "defense", "attackDamage", "moveSpeed" },
+            new String[] { "Idle", "Move", "Death" }),
+
+    WEAPON("Weapon",
+            new String[] { "damage", "cooldown", "range", "effect", "energyCost", "isRanged", "projectileSpeed" },
+            new String[] { "Idle", "Attack", "Projectile" }),
 
     OBSTACLE("Obstacle", new String[] { "collisionDamage", "isDestructible", "health" },
             new String[] { "Idle", "Destroyed" }),
@@ -71,6 +75,12 @@ public enum ElementType {
                 return "HEAL";
             case "effectDuration":
                 return 0f;
+            case "energyCost":
+                return 10f;
+            case "isRanged":
+                return false;
+            case "projectileSpeed":
+                return 10.0f;
             default:
                 return 0;
         }
@@ -109,6 +119,12 @@ public enum ElementType {
                 return "Effect Type";
             case "effectDuration":
                 return "Effect Duration";
+            case "energyCost":
+                return "Energy Cost";
+            case "isRanged":
+                return "Ranged Weapon?";
+            case "projectileSpeed":
+                return "Projectile Speed";
             default:
                 return property;
         }
