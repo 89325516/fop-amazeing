@@ -209,14 +209,8 @@ public class HelpScreen implements Screen {
         });
         footerTable.add(prevBtn).width(120).height(40).padRight(30);
 
-        // Progress dots
-        Table dots = new Table();
-        for (int i = 0; i < NAV_ITEMS.length; i++) {
-            Label dot = new Label(i == currentSection ? " [X] " : " [ ] ", skin);
-            dot.setColor(i == currentSection ? UIConstants.HELP_BORDER_CYAN : Color.GRAY);
-            dots.add(dot);
-        }
-        footerTable.add(dots).expandX().center();
+        // Progress dots removed as requested
+        footerTable.add().expandX();
 
         TextButton nextBtn = new TextButton("Next >", skin);
         nextBtn.addListener(new ChangeListener() {
