@@ -97,4 +97,44 @@ public final class UIConstants {
 
     /** 帮助标题颜色 (金色) */
     public static final Color HELP_TITLE_GOLD = new Color(1f, 0.85f, 0.2f, 1f);
+
+    // ==================== Victory Screen 颜色 ====================
+
+    /** Victory 主标题金色 (温暖柔和) */
+    public static final Color VICTORY_GOLD = new Color(1f, 0.82f, 0.3f, 1f);
+
+    /** Victory 边框渐变起始色 (暖金) */
+    public static final Color VICTORY_BORDER_START = new Color(0.85f, 0.65f, 0.2f, 1f);
+
+    /** Victory 边框渐变结束色 (科技蓝) */
+    public static final Color VICTORY_BORDER_END = new Color(0f, 0.75f, 0.9f, 1f);
+
+    /** Victory 卡片背景 (玻璃质感) */
+    public static final Color VICTORY_CARD_BG = new Color(0.06f, 0.08f, 0.12f, 0.92f);
+
+    /** Victory 次要文字颜色 */
+    public static final Color VICTORY_TEXT_DIM = new Color(0.75f, 0.78f, 0.82f, 1f);
+
+    /** Victory 分割线颜色 */
+    public static final Color VICTORY_DIVIDER = new Color(0.4f, 0.5f, 0.6f, 0.3f);
+
+    // Rank 发光颜色
+    /** S级 - 璀璨金 */
+    public static final Color RANK_S_GLOW = new Color(1f, 0.85f, 0.1f, 1f);
+    /** A级 - 科技蓝 */
+    public static final Color RANK_A_GLOW = new Color(0.2f, 0.85f, 1f, 1f);
+    /** B级 - 翡翠绿 */
+    public static final Color RANK_B_GLOW = new Color(0.3f, 0.9f, 0.5f, 1f);
+    /** C级 - 柠檬黄 */
+    public static final Color RANK_C_GLOW = new Color(1f, 0.95f, 0.3f, 1f);
+    /** D级 - 暖橙 */
+    public static final Color RANK_D_GLOW = new Color(1f, 0.6f, 0.2f, 1f);
+
+    /** 主要按钮背景渐变起始 */
+    public static final Color BTN_PRIMARY_START = new Color(0.9f, 0.7f, 0.15f, 1f);
+    /** 主要按钮背景渐变结束 */
+    public static final Color BTN_PRIMARY_END = new Color(0.75f, 0.55f, 0.1f, 1f);
+
+    /** 次要按钮边框颜色 */
+    public static final Color BTN_SECONDARY_BORDER = new Color(0.5f, 0.55f, 0.6f, 0.8f);
 }

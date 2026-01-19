@@ -132,13 +132,13 @@ public class LevelSummaryData {
         if (level >= 1 && level <= 4)
             return "Grassland";
         if (level >= 5 && level <= 8)
-            return "Desert";
-        if (level >= 9 && level <= 12)
-            return "Ice";
-        if (level >= 13 && level <= 16)
             return "Jungle";
+        if (level >= 9 && level <= 12)
+            return "Desert";
+        if (level >= 13 && level <= 16)
+            return "Icefield";
         if (level >= 17 && level <= 20)
-            return "Space";
+            return "Spaceship";
         return "Unknown";
     }
 

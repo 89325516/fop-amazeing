@@ -52,6 +52,7 @@ public class DialogueData {
     private static final String BG_DESERT = "images/backgrounds/desert_scene.jpg";
     private static final String BG_ICEFIELD = "images/backgrounds/icefield_scene.jpg";
     private static final String BG_SPACESHIP = "images/backgrounds/spaceship_scene.jpg";
+    private static final String BG_ENDING = "images/backgrounds/ending_scene.jpg";
 
     // ============ 開場對話（New Game 時顯示）============
     public static final LevelDialogue INTRO_DIALOGUE = new LevelDialogue(
@@ -219,7 +220,7 @@ public class DialogueData {
 
     // ============ 結局對話（最終戰鬥後）============
     public static final LevelDialogue ENDING_DIALOGUE = new LevelDialogue(
-            BG_SPACESHIP,
+            BG_ENDING,
             new DialogueLine(Speaker.DOCTOR,
                     "You saw the order the system gave."),
             new DialogueLine(Speaker.DOCTOR,
