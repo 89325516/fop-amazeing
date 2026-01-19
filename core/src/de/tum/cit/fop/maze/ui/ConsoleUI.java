@@ -36,6 +36,7 @@ public class ConsoleUI {
 
     private DeveloperConsole console;
     private boolean visible = false;
+    private Runnable closeCallback;
 
     /** 控制台高度占屏幕比例 - 100%全屏 */
     private static final float CONSOLE_HEIGHT_RATIO = 1.0f;
@@ -137,8 +138,12 @@ public class ConsoleUI {
                     }
                     return true;
                 } else if (keycode == GameSettings.KEY_CONSOLE) {
-                    // 只用 Key Console 键在 InputListener 中关闭，ESC 在 GameScreen 中处理
-                    hide();
+                    // 使用回调通知 GameScreen 关闭，以保持状态同步
+                    if (closeCallback != null) {
+                        closeCallback.run();
+                    } else {
+                        hide();
+                    }
                     return true;
                 }
                 return false;
@@ -160,6 +165,10 @@ public class ConsoleUI {
 
     public void setConsole(DeveloperConsole console) {
         this.console = console;
+    }
+
+    public void setCloseCallback(Runnable callback) {
+        this.closeCallback = callback;
     }
 
     private void executeCurrentCommand() {

@@ -208,28 +208,36 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
     }
 
     private void setInputProcessors() {
+        // Gameplay Mode Input Chain
         InputMultiplexer multiplexer = new InputMultiplexer();
 
-        // 1. UI Stage (highest priority)
+        // 1. Global Keys (Console Toggle) - HIGHEST PRIORITY
+        multiplexer.addProcessor(getConsoleKeyProcessor());
+
+        // 2. UI Stage (Popups, Menus)
         multiplexer.addProcessor(uiStage);
 
-        // 2. Custom Processor for Console Toggle (Char based for Windows support)
-        multiplexer.addProcessor(new com.badlogic.gdx.InputAdapter() {
-            @Override
-            public boolean keyTyped(char character) {
-                // Allow opening console with ` or ~ regardless of layout
-                if (character == '`' || character == '~') {
-                    toggleConsole();
-                    return true;
-                }
-                return false;
-            }
-        });
-
-        // 3. HUD Stage
+        // 3. HUD Stage (On-screen controls)
         multiplexer.addProcessor(hud.getStage());
 
         Gdx.input.setInputProcessor(multiplexer);
+    }
+
+    /**
+     * Shared InputProcessor for toggling the console.
+     * Uses keyDown (Physical Key) instead of keyTyped (Character) for reliability.
+     */
+    private com.badlogic.gdx.InputProcessor getConsoleKeyProcessor() {
+        return new com.badlogic.gdx.InputAdapter() {
+            @Override
+            public boolean keyDown(int keycode) {
+                if (keycode == GameSettings.KEY_CONSOLE || keycode == GameSettings.KEY_CONSOLE_ALT) {
+                    toggleConsole();
+                    return true; // Consume event
+                }
+                return false;
+            }
+        };
     }
 
     /**
@@ -351,8 +359,11 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
     public void render(float delta) {
         // Developer Console Toggle - handled in InputProcessor for '~'/'`', keeping
         // F3/GRAVE here as backup/alternative
-        if (Gdx.input.isKeyJustPressed(GameSettings.KEY_CONSOLE)
-                || Gdx.input.isKeyJustPressed(GameSettings.KEY_CONSOLE_ALT)) {
+        // Developer Console Toggle - handled in InputProcessor for '~'/'`'
+        // (GameSettings.KEY_CONSOLE)
+        // F3/GRAVE here as backup/alternative -> Only enabling ALT (F3) in loop to
+        // avoid double-toggle with keyTyped
+        if (Gdx.input.isKeyJustPressed(GameSettings.KEY_CONSOLE_ALT)) {
             toggleConsole();
         }
 
@@ -1028,6 +1039,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
     private void setupDeveloperConsole() {
         developerConsole = new de.tum.cit.fop.maze.utils.DeveloperConsole();
         consoleUI = new de.tum.cit.fop.maze.ui.ConsoleUI(uiStage, game.getSkin());
+        consoleUI.setCloseCallback(this::toggleConsole);
         consoleUI.setConsole(developerConsole);
         developerConsole.setGameWorld(gameWorld);
 
@@ -1087,12 +1099,21 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
             consoleUI.show();
             // Update game world reference in case it changed
             developerConsole.setGameWorld(gameWorld);
-            Gdx.input.setInputProcessor(uiStage);
+
+            // Console Input Mode:
+            // 1. Global Keys (to Close Console)
+            // 2. UI Stage (to Type commands)
+            // Note: HUD and Player Control are excluded
+            InputMultiplexer consoleMultiplexer = new InputMultiplexer();
+            consoleMultiplexer.addProcessor(getConsoleKeyProcessor());
+            consoleMultiplexer.addProcessor(uiStage);
+
+            Gdx.input.setInputProcessor(consoleMultiplexer);
         } else {
             consoleUI.hide();
             // 设置帧保护标志，防止同帧ESC被再次检测并触发暂停菜单
             consoleJustClosed = true;
-            setInputProcessors();
+            setInputProcessors(); // Restore Gameplay Chain
         }
     }
 
