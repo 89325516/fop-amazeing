@@ -71,6 +71,8 @@ public class GameSettings {
 
     public static int KEY_ATTACK;
     public static int KEY_SWITCH_WEAPON;
+    public static int KEY_CONSOLE;
+    public static int KEY_CONSOLE_ALT;
 
     // ==================== 保存/加载用户默认值 ====================
 
@@ -102,6 +104,9 @@ public class GameSettings {
 
         KEY_ATTACK = prefs.getInteger("key_attack", com.badlogic.gdx.Input.Keys.SPACE);
         KEY_SWITCH_WEAPON = prefs.getInteger("key_switch_weapon", com.badlogic.gdx.Input.Keys.TAB);
+
+        KEY_CONSOLE = prefs.getInteger("key_console", com.badlogic.gdx.Input.Keys.GRAVE);
+        KEY_CONSOLE_ALT = prefs.getInteger("key_console_alt", com.badlogic.gdx.Input.Keys.F3);
 
         // 同时设置当前值
         resetToUserDefaults();
@@ -152,6 +157,8 @@ public class GameSettings {
 
         prefs.putInteger("key_attack", KEY_ATTACK);
         prefs.putInteger("key_switch_weapon", KEY_SWITCH_WEAPON);
+        prefs.putInteger("key_console", KEY_CONSOLE);
+        prefs.putInteger("key_console_alt", KEY_CONSOLE_ALT);
         prefs.flush();
     }
 

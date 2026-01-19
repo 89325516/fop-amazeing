@@ -14,6 +14,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Align;
 import de.tum.cit.fop.maze.utils.DeveloperConsole;
+import de.tum.cit.fop.maze.config.GameSettings;
 
 import java.util.List;
 
@@ -135,8 +136,8 @@ public class ConsoleUI {
                         inputField.setCursorPosition(inputField.getText().length());
                     }
                     return true;
-                } else if (keycode == Input.Keys.GRAVE) {
-                    // 只用 ~ 键在 InputListener 中关闭，ESC 在 GameScreen 中处理
+                } else if (keycode == GameSettings.KEY_CONSOLE) {
+                    // 只用 Key Console 键在 InputListener 中关闭，ESC 在 GameScreen 中处理
                     hide();
                     return true;
                 }

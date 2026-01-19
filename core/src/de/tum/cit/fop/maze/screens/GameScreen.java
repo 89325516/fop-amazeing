@@ -207,6 +207,31 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         setInputProcessors();
     }
 
+    private void setInputProcessors() {
+        InputMultiplexer multiplexer = new InputMultiplexer();
+
+        // 1. UI Stage (highest priority)
+        multiplexer.addProcessor(uiStage);
+
+        // 2. Custom Processor for Console Toggle (Char based for Windows support)
+        multiplexer.addProcessor(new com.badlogic.gdx.InputAdapter() {
+            @Override
+            public boolean keyTyped(char character) {
+                // Allow opening console with ` or ~ regardless of layout
+                if (character == '`' || character == '~') {
+                    toggleConsole();
+                    return true;
+                }
+                return false;
+            }
+        });
+
+        // 3. HUD Stage
+        multiplexer.addProcessor(hud.getStage());
+
+        Gdx.input.setInputProcessor(multiplexer);
+    }
+
     /**
      * Extract level number from map path.
      * e.g., "maps/level-5.properties" -> 5
@@ -324,8 +349,10 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
 
     @Override
     public void render(float delta) {
-        // Developer Console Toggle - 用 ~ 或 F3 打开/关闭
-        if (Gdx.input.isKeyJustPressed(Input.Keys.GRAVE) || Gdx.input.isKeyJustPressed(Input.Keys.F3)) {
+        // Developer Console Toggle - handled in InputProcessor for '~'/'`', keeping
+        // F3/GRAVE here as backup/alternative
+        if (Gdx.input.isKeyJustPressed(GameSettings.KEY_CONSOLE)
+                || Gdx.input.isKeyJustPressed(GameSettings.KEY_CONSOLE_ALT)) {
             toggleConsole();
         }
 
@@ -1238,17 +1265,6 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         isPaused = !isPaused;
         pauseTable.setVisible(isPaused);
         setInputProcessors();
-    }
-
-    private void setInputProcessors() {
-        InputMultiplexer multiplexer = new InputMultiplexer();
-        if (isPaused) {
-            multiplexer.addProcessor(uiStage);
-        } else {
-            if (hud != null)
-                multiplexer.addProcessor(hud.getStage());
-        }
-        Gdx.input.setInputProcessor(multiplexer);
     }
 
     @Override
