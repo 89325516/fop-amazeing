@@ -488,7 +488,16 @@ public class LevelSummaryScreen implements Screen {
             // 使用 MapGenerator 默认配置生成地图
             new MapGenerator().generateAndSave(nextMapPath);
         }
-        game.setScreen(new ArmorSelectScreen(game, nextMapPath));
+
+        // 檢查是否有對話需要顯示 (Check if dialogue exists for next level)
+        DialogueData.LevelDialogue dialogue = DialogueData.getDialogueForLevel(nextLevel);
+        if (dialogue != null) {
+            // 顯示對話畫面，對話結束後進入 ArmorSelectScreen
+            game.setScreen(new LevelStoryScreen(game, nextMapPath, dialogue));
+        } else {
+            // 沒有對話，直接進入裝備選擇畫面
+            game.setScreen(new ArmorSelectScreen(game, nextMapPath));
+        }
     }
 
     /**

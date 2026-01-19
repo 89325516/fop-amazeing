@@ -1,10 +1,8 @@
 {
-"playerX": 6.2168555,
-"playerY": 46.635944,
-"currentLevel": "maps/level-2.properties",
+"playerX": 16,
+"playerY": 41,
+"currentLevel": "maps/level-1.properties",
 "lives": 3,
-"hasKey": true,
-"skillPoints": 30,
 "inventoryWeaponTypes": [
 	"Sword"
 ]
