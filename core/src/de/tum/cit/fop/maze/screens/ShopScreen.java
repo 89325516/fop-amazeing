@@ -157,14 +157,32 @@ public class ShopScreen implements Screen {
         row.pad(10);
         row.setBackground(skin.newDrawable("white", new Color(0.2f, 0.2f, 0.3f, 0.8f)));
 
-        // Item icon placeholder (colored square based on category)
-        Table iconContainer = new Table();
-        Color iconColor = item.getCategory() == ShopItem.ItemCategory.WEAPON ? new Color(0.8f, 0.3f, 0.3f, 1f)
-                : new Color(0.3f, 0.5f, 0.8f, 1f);
-        iconContainer.setBackground(skin.newDrawable("white", iconColor));
-        Label iconLabel = new Label(item.getCategory() == ShopItem.ItemCategory.WEAPON ? "⚔" : "🛡", skin);
-        iconContainer.add(iconLabel).size(40, 40).center();
-        row.add(iconContainer).size(50, 50).padRight(15);
+        // Item icon with solid black background using Stack layout
+        Stack iconStack = new Stack();
+        iconStack.setSize(50, 50);
+        
+        // 黑色背景層
+        Image bgImage = new Image(skin.newDrawable("white", Color.BLACK));
+        iconStack.add(bgImage);
+        
+        // 加载物品图标贴图
+        String iconPath = "images/items/shop/" + item.getTextureKey() + ".png";
+        try {
+            Texture iconTexture = new Texture(Gdx.files.internal(iconPath));
+            iconTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+            Image iconImage = new Image(iconTexture);
+            // 將圖標居中放置
+            Table iconWrapper = new Table();
+            iconWrapper.add(iconImage).size(46, 46).center();
+            iconStack.add(iconWrapper);
+        } catch (Exception e) {
+            // 如果图标不存在，显示文字占位符
+            Label iconLabel = new Label(item.getCategory() == ShopItem.ItemCategory.WEAPON ? "⚔" : "🛡", skin);
+            Table iconWrapper = new Table();
+            iconWrapper.add(iconLabel).size(40, 40).center();
+            iconStack.add(iconWrapper);
+        }
+        row.add(iconStack).size(50, 50).padRight(15);
 
         // Item info
         Table infoTable = new Table();

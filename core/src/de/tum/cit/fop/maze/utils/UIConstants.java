@@ -137,4 +137,27 @@ public final class UIConstants {
 
     /** 次要按钮边框颜色 */
     public static final Color BTN_SECONDARY_BORDER = new Color(0.5f, 0.55f, 0.6f, 0.8f);
+
+    // ==================== Armor Select Screen 颜色 ====================
+
+    /** 物理护甲主色 (钢铁蓝) */
+    public static final Color ARMOR_PHYSICAL_COLOR = new Color(0.29f, 0.49f, 0.72f, 1f); // #4A7CB8
+
+    /** 魔法护甲主色 (神秘紫) */
+    public static final Color ARMOR_MAGICAL_COLOR = new Color(0.61f, 0.37f, 0.9f, 1f); // #9B5DE5
+
+    /** 推荐护甲发光色 (璀璨金) */
+    public static final Color ARMOR_RECOMMENDED_GLOW = new Color(1f, 0.85f, 0.24f, 1f); // #FFD93D
+
+    /** 护甲卡片背景 (玻璃黑) */
+    public static final Color ARMOR_CARD_BG = new Color(0.04f, 0.06f, 0.1f, 0.88f);
+
+    /** 护甲卡片边框 */
+    public static final Color ARMOR_CARD_BORDER = new Color(0.3f, 0.35f, 0.45f, 0.7f);
+
+    /** 危险警告色 (物理威胁) */
+    public static final Color DANGER_PHYSICAL = new Color(0.4f, 0.6f, 0.9f, 1f);
+
+    /** 危险警告色 (魔法威胁) */
+    public static final Color DANGER_MAGICAL = new Color(0.75f, 0.4f, 0.95f, 1f);
 }

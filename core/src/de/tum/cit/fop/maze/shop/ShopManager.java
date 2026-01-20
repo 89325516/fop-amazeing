@@ -36,7 +36,7 @@ public class ShopManager {
                 "Steel Sword",
                 "A reliable melee weapon. Balanced damage and speed.",
                 50,
-                "sword",
+                "steel_sword",
                 ShopItem.ItemCategory.WEAPON));
 
         allItems.add(new ShopItem(
@@ -44,7 +44,7 @@ public class ShopManager {
                 "Ice Bow",
                 "Freezes enemies on hit. Medium range.",
                 100,
-                "bow",
+                "ice_bow",
                 ShopItem.ItemCategory.WEAPON));
 
         allItems.add(new ShopItem(
@@ -52,7 +52,7 @@ public class ShopManager {
                 "Fire Staff",
                 "Burns enemies over time. High damage.",
                 120,
-                "magic_staff",
+                "fire_staff",
                 ShopItem.ItemCategory.WEAPON));
 
         allItems.add(new ShopItem(
@@ -68,7 +68,7 @@ public class ShopManager {
                 "Magic Wand",
                 "Fast magical attacks with burn effect.",
                 130,
-                "wand",
+                "magic_wand",
                 ShopItem.ItemCategory.WEAPON));
 
         // === 护甲 ===
@@ -77,7 +77,7 @@ public class ShopManager {
                 "Iron Shield",
                 "Blocks physical attacks. 5 shield points.",
                 80,
-                "physical_armor",
+                "iron_shield",
                 ShopItem.ItemCategory.ARMOR));
 
         allItems.add(new ShopItem(
@@ -85,7 +85,7 @@ public class ShopManager {
                 "Arcane Robe",
                 "Absorbs magical attacks. 4 shield points.",
                 80,
-                "magical_armor",
+                "arcane_robe",
                 ShopItem.ItemCategory.ARMOR));
 
         allItems.add(new ShopItem(
@@ -93,7 +93,7 @@ public class ShopManager {
                 "Knight's Plate",
                 "Heavy physical armor. 8 shield points.",
                 150,
-                "physical_armor",
+                "knights_plate",
                 ShopItem.ItemCategory.ARMOR));
 
         allItems.add(new ShopItem(
@@ -101,7 +101,7 @@ public class ShopManager {
                 "Wizard's Cloak",
                 "Powerful magical protection. 7 shield points.",
                 150,
-                "magical_armor",
+                "wizards_cloak",
                 ShopItem.ItemCategory.ARMOR));
 
         GameLogger.info("ShopManager", "Initialized " + allItems.size() + " shop items.");
