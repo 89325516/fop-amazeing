@@ -131,7 +131,8 @@ public class VictoryScreen implements Screen {
                     // 使用 MapGenerator 默认配置生成地图
                     new de.tum.cit.fop.maze.utils.MapGenerator().generateAndSave(nextMapPath);
                 }
-                game.setScreen(new GameScreen(game, nextMapPath, true));
+                // 使用LoadingScreen预加载资源后再进入游戏
+                game.setScreen(new LoadingScreen(game, nextMapPath));
             }
         });
         table.add(nextBtn).width(300).height(60).padBottom(15).row();

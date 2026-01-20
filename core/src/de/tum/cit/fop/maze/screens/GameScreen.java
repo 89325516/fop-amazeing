@@ -749,64 +749,123 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
     }
 
     private void renderPlayer(Player player) {
-        TextureRegion playerFrame;
+        TextureRegion playerFrame = null;
         int dir = gameWorld.getPlayerDirection();
+        boolean flipX = false; // 用于水平翻转精灵
 
-        boolean isRunning = player.isRunning(); // Visually relevant? current code doesn't change sprite for run.
         boolean isMoving = Gdx.input.isKeyPressed(GameSettings.KEY_UP) || Gdx.input.isKeyPressed(GameSettings.KEY_DOWN)
                 ||
                 Gdx.input.isKeyPressed(GameSettings.KEY_LEFT) || Gdx.input.isKeyPressed(GameSettings.KEY_RIGHT);
 
-        if (player.isAttacking()) {
-            float total = player.getAttackAnimTotalDuration();
-            if (total <= 0)
-                total = 0.2f;
-            float elapsed = total - player.getAttackAnimTimer();
-            float progress = (elapsed / total) * 0.2f;
+        // === 尝试使用自定义玩家皮肤 ===
+        String playerSkinId = getActivePlayerSkinId();
+        boolean useCustomSkin = playerSkinId != null;
 
-            switch (dir) {
-                case 1:
-                    playerFrame = textureManager.playerAttackUp.getKeyFrame(progress, false);
-                    break;
-                case 2:
-                    playerFrame = textureManager.playerAttackLeft.getKeyFrame(progress, false);
-                    break;
-                case 3:
-                    playerFrame = textureManager.playerAttackRight.getKeyFrame(progress, false);
-                    break;
-                default:
-                    playerFrame = textureManager.playerAttackDown.getKeyFrame(progress, false);
-                    break;
+        if (useCustomSkin) {
+            de.tum.cit.fop.maze.custom.CustomElementManager manager = de.tum.cit.fop.maze.custom.CustomElementManager
+                    .getInstance();
+
+            // === 优先检查死亡状态 ===
+            if (player.isDead()) {
+                Animation<TextureRegion> deathAnim = manager.getAnimation(playerSkinId, "Death");
+                if (deathAnim != null) {
+                    playerFrame = deathAnim.getKeyFrame(player.getDeathProgress() * 0.5f, false);
+                }
+            } else if (player.isAttacking()) {
+                float total = player.getAttackAnimTotalDuration();
+                if (total <= 0)
+                    total = 0.2f;
+                float elapsed = total - player.getAttackAnimTimer();
+                float progress = (elapsed / total) * 0.2f;
+
+                // 尝试方向性攻击动画，回退到通用Attack
+                String attackAction = getDirectionalAction("Attack", dir);
+                Animation<TextureRegion> attackAnim = manager.getAnimation(playerSkinId, attackAction);
+                if (attackAnim == null && !attackAction.equals("Attack")) {
+                    attackAnim = manager.getAnimation(playerSkinId, "Attack");
+                }
+                if (attackAnim != null) {
+                    playerFrame = attackAnim.getKeyFrame(progress, false);
+                    flipX = (dir == 2); // 朝左时翻转
+                }
+            } else if (isMoving) {
+                // 尝试方向性移动动画，回退到通用Move
+                String moveAction = getDirectionalAction("Move", dir);
+                Animation<TextureRegion> moveAnim = manager.getAnimation(playerSkinId, moveAction);
+                if (moveAnim == null && !moveAction.equals("Move")) {
+                    moveAnim = manager.getAnimation(playerSkinId, "Move");
+                }
+                if (moveAnim != null) {
+                    playerFrame = moveAnim.getKeyFrame(stateTime, true);
+                    flipX = (dir == 2); // 朝左时翻转
+                }
+            } else {
+                // 尝试方向性待机动画，回退到通用Idle
+                String idleAction = getDirectionalAction("Idle", dir);
+                Animation<TextureRegion> idleAnim = manager.getAnimation(playerSkinId, idleAction);
+                if (idleAnim == null && !idleAction.equals("Idle")) {
+                    idleAnim = manager.getAnimation(playerSkinId, "Idle");
+                }
+                if (idleAnim != null) {
+                    playerFrame = idleAnim.getKeyFrame(stateTime, true);
+                    flipX = (dir == 2); // 朝左时翻转
+                }
             }
-        } else if (isMoving) {
-            switch (dir) {
-                case 1:
-                    playerFrame = textureManager.playerUp.getKeyFrame(stateTime, true);
-                    break;
-                case 2:
-                    playerFrame = textureManager.playerLeft.getKeyFrame(stateTime, true);
-                    break;
-                case 3:
-                    playerFrame = textureManager.playerRight.getKeyFrame(stateTime, true);
-                    break;
-                default:
-                    playerFrame = textureManager.playerDown.getKeyFrame(stateTime, true);
-                    break;
-            }
-        } else {
-            switch (dir) {
-                case 1:
-                    playerFrame = textureManager.playerUpStand;
-                    break;
-                case 2:
-                    playerFrame = textureManager.playerLeftStand;
-                    break;
-                case 3:
-                    playerFrame = textureManager.playerRightStand;
-                    break;
-                default:
-                    playerFrame = textureManager.playerDownStand;
-                    break;
+        }
+
+        // === 回退到默认动画 ===
+        if (playerFrame == null) {
+            if (player.isAttacking()) {
+                float total = player.getAttackAnimTotalDuration();
+                if (total <= 0)
+                    total = 0.2f;
+                float elapsed = total - player.getAttackAnimTimer();
+                float progress = (elapsed / total) * 0.2f;
+
+                switch (dir) {
+                    case 1:
+                        playerFrame = textureManager.playerAttackUp.getKeyFrame(progress, false);
+                        break;
+                    case 2:
+                        playerFrame = textureManager.playerAttackLeft.getKeyFrame(progress, false);
+                        break;
+                    case 3:
+                        playerFrame = textureManager.playerAttackRight.getKeyFrame(progress, false);
+                        break;
+                    default:
+                        playerFrame = textureManager.playerAttackDown.getKeyFrame(progress, false);
+                        break;
+                }
+            } else if (isMoving) {
+                switch (dir) {
+                    case 1:
+                        playerFrame = textureManager.playerUp.getKeyFrame(stateTime, true);
+                        break;
+                    case 2:
+                        playerFrame = textureManager.playerLeft.getKeyFrame(stateTime, true);
+                        break;
+                    case 3:
+                        playerFrame = textureManager.playerRight.getKeyFrame(stateTime, true);
+                        break;
+                    default:
+                        playerFrame = textureManager.playerDown.getKeyFrame(stateTime, true);
+                        break;
+                }
+            } else {
+                switch (dir) {
+                    case 1:
+                        playerFrame = textureManager.playerUpStand;
+                        break;
+                    case 2:
+                        playerFrame = textureManager.playerLeftStand;
+                        break;
+                    case 3:
+                        playerFrame = textureManager.playerRightStand;
+                        break;
+                    default:
+                        playerFrame = textureManager.playerDownStand;
+                        break;
+                }
             }
         }
 
@@ -818,7 +877,14 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
 
         float drawX = player.getX() * UNIT_SCALE;
         float drawY = player.getY() * UNIT_SCALE;
-        if (playerFrame.getRegionWidth() > 16) {
+        float drawWidth = playerFrame.getRegionWidth();
+        float drawHeight = playerFrame.getRegionHeight();
+
+        // 自定义皮肤统一缩放到16像素
+        if (useCustomSkin && playerFrame != null) {
+            drawWidth = UNIT_SCALE;
+            drawHeight = UNIT_SCALE;
+        } else if (playerFrame.getRegionWidth() > 16) {
             drawX -= (playerFrame.getRegionWidth() - 16) / 2f;
         }
 
@@ -828,13 +894,13 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         }
 
         if (player.isDead()) {
-            float rotation = player.getDeathProgress() * 90f;
-            game.getSpriteBatch().draw(playerFrame, drawX, drawY,
-                    playerFrame.getRegionWidth() / 2f, playerFrame.getRegionHeight() / 2f,
-                    playerFrame.getRegionWidth(), playerFrame.getRegionHeight(),
-                    1f, 1f, rotation, false);
+            // 直接播放死亡动画，不旋转
+            game.getSpriteBatch().draw(playerFrame, drawX, drawY, drawWidth, drawHeight);
+        } else if (flipX) {
+            // 水平翻转绘制
+            game.getSpriteBatch().draw(playerFrame, drawX + drawWidth, drawY, -drawWidth, drawHeight);
         } else {
-            game.getSpriteBatch().draw(playerFrame, drawX, drawY);
+            game.getSpriteBatch().draw(playerFrame, drawX, drawY, drawWidth, drawHeight);
         }
         game.getSpriteBatch().setColor(oldC);
 
@@ -842,6 +908,39 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         // 朝上时武器在玩家后面，其他方向武器在玩家前面
         if (!player.isDead() && dir != 1) {
             renderEquippedWeapon(player, dir);
+        }
+    }
+
+    /**
+     * 获取当前激活的玩家皮肤元素ID
+     * 
+     * @return 第一个PLAYER类型的自定义元素ID，如果没有则返回null
+     */
+    private String getActivePlayerSkinId() {
+        for (de.tum.cit.fop.maze.custom.CustomElementDefinition def : de.tum.cit.fop.maze.custom.CustomElementManager
+                .getInstance().getAllElements()) {
+            if (def.getType() == de.tum.cit.fop.maze.custom.ElementType.PLAYER) {
+                return def.getId();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 根据方向获取对应的动作名称
+     * 
+     * @param baseAction 基础动作名称 (Move, Idle, Attack)
+     * @param dir        方向 (0=下, 1=上, 2=左, 3=右)
+     * @return 方向性动作名称
+     */
+    private String getDirectionalAction(String baseAction, int dir) {
+        switch (dir) {
+            case 1: // 上
+                return baseAction + "Up";
+            case 0: // 下
+                return baseAction + "Down";
+            default: // 左右使用基础动作+翻转
+                return baseAction;
         }
     }
 
@@ -860,27 +959,35 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         if (weaponId == null)
             return;
 
-        // 根据玩家朝向选择对应的武器动作
-        String baseAction = player.isAttacking() ? "Attack" : "Idle";
-        String directionSuffix = "";
-        if (dir == 1) {
-            directionSuffix = "Up";
-        } else if (dir == 0) {
-            directionSuffix = "Down";
-        }
+        com.badlogic.gdx.graphics.g2d.Animation<TextureRegion> weaponAnim = null;
+        boolean useRotation = false;
 
-        // 尝试加载方向特定的动画，如果没有则回退到默认动画
-        String action = baseAction + directionSuffix;
-        com.badlogic.gdx.graphics.g2d.Animation<TextureRegion> weaponAnim = de.tum.cit.fop.maze.custom.CustomElementManager
-                .getInstance()
-                .getAnimation(weaponId, action);
-
-        // 如果没有方向特定的动画，使用默认动画
-        if (weaponAnim == null && !directionSuffix.isEmpty()) {
-            action = baseAction;
+        if (player.isAttacking()) {
+            // 攻击时只使用Attack动画，通过旋转处理方向
             weaponAnim = de.tum.cit.fop.maze.custom.CustomElementManager
                     .getInstance()
-                    .getAnimation(weaponId, action);
+                    .getAnimation(weaponId, "Attack");
+            useRotation = true;
+        } else {
+            // 待机时尝试使用方向性动画
+            String directionSuffix = "";
+            if (dir == 1) {
+                directionSuffix = "Up";
+            } else if (dir == 0) {
+                directionSuffix = "Down";
+            }
+
+            if (!directionSuffix.isEmpty()) {
+                weaponAnim = de.tum.cit.fop.maze.custom.CustomElementManager
+                        .getInstance()
+                        .getAnimation(weaponId, "Idle" + directionSuffix);
+            }
+            // 回退到默认Idle
+            if (weaponAnim == null) {
+                weaponAnim = de.tum.cit.fop.maze.custom.CustomElementManager
+                        .getInstance()
+                        .getAnimation(weaponId, "Idle");
+            }
         }
 
         if (weaponAnim == null)
@@ -899,39 +1006,52 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         float weaponSize = UNIT_SCALE * 1.2f;
         float offsetX;
         float offsetY;
-        boolean flipX;
+        float rotation = 0f;
+        boolean flipX = false;
 
-        // 根据玩家朝向调整武器位置和镜像
+        // 根据玩家朝向调整武器位置
         switch (dir) {
-            case 1: // 朝上 - 向右上偏移并镜像
+            case 1: // 朝上
                 offsetX = UNIT_SCALE * 0.5f;
-                offsetY = UNIT_SCALE * 0.6f;
-                flipX = true;
+                offsetY = UNIT_SCALE * 0.1f;
+                if (useRotation)
+                    rotation = 90f;
+                else
+                    flipX = true;
                 break;
-            case 0: // 朝下 - 向左偏移
+            case 0: // 朝下
                 offsetX = -UNIT_SCALE * 0.4f;
-                offsetY = UNIT_SCALE * 0.35f;
-                flipX = false;
+                offsetY = UNIT_SCALE * 0.1f;
+                if (useRotation)
+                    rotation = -90f;
                 break;
             case 2: // 朝左
                 offsetX = -UNIT_SCALE * 0.25f;
-                offsetY = UNIT_SCALE * 0.3f;
+                offsetY = UNIT_SCALE * 0.05f;
                 flipX = true;
                 break;
             case 3: // 朝右
             default:
                 offsetX = UNIT_SCALE * 0.25f;
-                offsetY = UNIT_SCALE * 0.3f;
-                flipX = false;
+                offsetY = UNIT_SCALE * 0.05f;
                 break;
         }
 
         float weaponX = playerCenterX + offsetX - weaponSize / 2;
         float weaponY = playerCenterY + offsetY - weaponSize / 2;
 
-        if (flipX) {
+        if (rotation != 0f) {
+            // 带旋转绘制（攻击时）
+            game.getSpriteBatch().draw(weaponFrame,
+                    weaponX, weaponY,
+                    weaponSize / 2f, weaponSize / 2f,
+                    weaponSize, weaponSize,
+                    1f, 1f, rotation);
+        } else if (flipX) {
+            // 水平翻转绘制
             game.getSpriteBatch().draw(weaponFrame, weaponX + weaponSize, weaponY, -weaponSize, weaponSize);
         } else {
+            // 正常绘制
             game.getSpriteBatch().draw(weaponFrame, weaponX, weaponY, weaponSize, weaponSize);
         }
     }

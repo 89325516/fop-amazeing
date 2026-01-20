@@ -5,14 +5,15 @@ package de.tum.cit.fop.maze.custom;
  */
 public enum ElementType {
     PLAYER("Player", new String[] {},
-            new String[] { "Idle", "Move", "Death" }), // Idle, Walk, Death animations
+            new String[] { "Idle", "IdleUp", "IdleDown", "Move", "MoveUp", "MoveDown", "Attack", "AttackUp",
+                    "AttackDown", "Death" }),
 
     ENEMY("Enemy", new String[] { "health", "defense", "attackDamage", "moveSpeed" },
             new String[] { "Idle", "Move", "Death" }),
 
     WEAPON("Weapon",
             new String[] { "damage", "cooldown", "range", "effect", "energyCost", "isRanged", "projectileSpeed" },
-            new String[] { "Idle", "IdleUp", "IdleDown", "Attack", "AttackUp", "AttackDown", "Projectile" }),
+            new String[] { "Idle", "IdleUp", "IdleDown", "Attack", "Projectile" }),
 
     OBSTACLE("Obstacle", new String[] { "collisionDamage", "isDestructible", "health" },
             new String[] { "Idle", "Destroyed" }),

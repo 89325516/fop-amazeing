@@ -385,6 +385,53 @@ public class CustomElementManager {
         return null;
     }
 
+    /**
+     * 获取预加载任务列表
+     * 
+     * @return 需要预加载的 (elementId, action) 对列表
+     */
+    public List<String[]> getPreloadTasks() {
+        List<String[]> tasks = new ArrayList<>();
+        for (CustomElementDefinition def : elements.values()) {
+            String elementId = def.getId();
+            Map<String, String[]> spritePaths = def.getSpritePaths();
+            for (String action : spritePaths.keySet()) {
+                String[] paths = spritePaths.get(action);
+                // 只添加有效的动画任务
+                if (paths != null && paths.length > 0 && paths[0] != null && !paths[0].startsWith("internal:")) {
+                    tasks.add(new String[] { elementId, action });
+                }
+            }
+        }
+        return tasks;
+    }
+
+    /**
+     * 预加载单个动画（调用 getAnimation 触发缓存）
+     * 
+     * @param elementId 元素ID
+     * @param action    动作名称
+     * @return 是否加载成功
+     */
+    public boolean preloadAnimation(String elementId, String action) {
+        Animation<TextureRegion> anim = getAnimation(elementId, action);
+        return anim != null;
+    }
+
+    /**
+     * 检查动画缓存是否已完成预加载
+     */
+    public boolean isPreloaded() {
+        List<String[]> tasks = getPreloadTasks();
+        for (String[] task : tasks) {
+            String key = task[0] + ":" + task[1];
+            if (!animationCache.containsKey(key)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public void clearAll() {
         elements.clear();
         animationCache.clear();

@@ -56,12 +56,13 @@ public class MazeRunnerGame extends Game {
     }
 
     /**
-     * 【修改点】现在接收一个文件名路径
+     * 进入游戏，先通过加载画面预加载资源
      * 
      * @param saveFilePath 存档文件路径。如果是 null，代表开始新游戏。
      */
     public void goToGame(String saveFilePath) {
-        this.setScreen(new GameScreen(this, saveFilePath));
+        // 先进入加载画面预加载资源，完成后自动跳转到GameScreen
+        this.setScreen(new de.tum.cit.fop.maze.screens.LoadingScreen(this, saveFilePath));
         if (menuScreen != null) {
             menuScreen.dispose();
             menuScreen = null;
