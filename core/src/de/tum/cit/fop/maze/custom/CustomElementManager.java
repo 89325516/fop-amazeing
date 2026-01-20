@@ -186,16 +186,22 @@ public class CustomElementManager {
     @SuppressWarnings("unchecked")
     private void loadElements() {
         try {
+            String fullPath = SAVE_DIR + ELEMENTS_FILE;
+            GameLogger.info("CustomElementManager", "Attempting to load elements from: " + fullPath);
+
             // 优先尝试从 internal (assets目录) 加载
-            FileHandle file = Gdx.files.internal(SAVE_DIR + ELEMENTS_FILE);
+            FileHandle file = Gdx.files.internal(fullPath);
+            GameLogger.info("CustomElementManager", "Internal path: " + file.path() + ", exists: " + file.exists());
 
             // 如果 internal 不存在，尝试 local
             if (!file.exists()) {
-                file = Gdx.files.local(SAVE_DIR + ELEMENTS_FILE);
+                file = Gdx.files.local(fullPath);
+                GameLogger.info("CustomElementManager", "Local path: " + file.path() + ", exists: " + file.exists());
             }
 
             if (file.exists()) {
                 String jsonStr = file.readString();
+                GameLogger.info("CustomElementManager", "JSON content length: " + jsonStr.length());
                 CustomElementDefinition[] loaded = json.fromJson(CustomElementDefinition[].class, jsonStr);
                 if (loaded != null) {
                     for (CustomElementDefinition element : loaded) {
@@ -206,10 +212,11 @@ public class CustomElementManager {
                 }
                 GameLogger.info("CustomElementManager", "Total loaded: " + elements.size() + " from: " + file.path());
             } else {
-                GameLogger.info("CustomElementManager", "No custom elements file found");
+                GameLogger.warn("CustomElementManager", "No custom elements file found at internal or local paths!");
             }
         } catch (Exception e) {
             GameLogger.error("CustomElementManager", "Failed to load elements: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
