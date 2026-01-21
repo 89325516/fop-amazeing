@@ -84,7 +84,7 @@ public class EndingStoryScreen implements Screen {
         int boxHeight = 50;
         Pixmap gradientPixmap = new Pixmap(1, boxHeight, Pixmap.Format.RGBA8888);
         for (int y = 0; y < boxHeight; y++) {
-            float alpha = 0.92f - (y / (float) boxHeight) * 0.12f;
+            float alpha = 0.75f - (y / (float) boxHeight) * 0.10f;
             gradientPixmap.setColor(0.01f, 0.03f, 0.08f, alpha);
             gradientPixmap.drawPixel(0, y);
         }
@@ -105,27 +105,6 @@ public class EndingStoryScreen implements Screen {
         Table root = new Table();
         root.setFillParent(true);
         stage.addActor(root);
-
-        // 頂部標題 - "AFTER FINAL BATTLE"
-        Table topSection = new Table();
-        topSection.top().padTop(60);
-
-        BitmapFont titleFont = game.getSkin().getFont("title");
-        Label.LabelStyle titleStyle = new Label.LabelStyle(titleFont, new Color(0.95f, 0.82f, 0.35f, 1f));
-        titleLabel = new Label("AFTER THE FINAL BATTLE", titleStyle);
-        titleLabel.setFontScale(1.0f);
-        titleLabel.setAlignment(Align.center);
-
-        topSection.add(titleLabel).center().padBottom(20).row();
-
-        // 添加副標題
-        BitmapFont normalFont = game.getSkin().getFont("font");
-        Label.LabelStyle subtitleStyle = new Label.LabelStyle(normalFont, new Color(0.7f, 0.7f, 0.75f, 0.9f));
-        Label subtitleLabel = new Label("The Journey Concludes...", subtitleStyle);
-        subtitleLabel.setFontScale(0.9f);
-        topSection.add(subtitleLabel).center();
-
-        root.add(topSection).top().expandX().row();
 
         // 中間留白區域（讓背景圖片可見）
         root.add().expand().row();
@@ -186,7 +165,7 @@ public class EndingStoryScreen implements Screen {
                 onContinueClicked();
             }
         });
-        bottomRow.add(continueBtn).width(220).height(55).right();
+        bottomRow.add(continueBtn).width(280).height(55).right();
 
         dialogBox.add(bottomRow).fillX();
 

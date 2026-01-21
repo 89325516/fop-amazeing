@@ -1,6 +1,5 @@
 package de.tum.cit.fop.maze.ui;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -13,10 +12,11 @@ import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import de.tum.cit.fop.maze.MazeRunnerGame;
 import de.tum.cit.fop.maze.config.GameSettings;
 import de.tum.cit.fop.maze.utils.AudioManager;
-import de.tum.cit.fop.maze.utils.UIUtils;
+import de.tum.cit.fop.maze.utils.UIConstants;
 
 /**
- * Shared Settings UI Logic used by both Main Menu and In-Game Overlay.
+ * Settings UI - Clean layout with NO overlapping.
+ * Label width is generous to prevent text being covered by controls.
  */
 public class SettingsUI {
 
@@ -28,258 +28,287 @@ public class SettingsUI {
     private Table contentTable;
     private Label statusLabel;
 
-    // Key remap controls
+    // Key remap buttons
     private TextButton btnUp, btnDown, btnLeft, btnRight, btnAttack, btnSwitchWeapon;
     private String remappingKeyName = null;
+
+    // 关键！标签列宽度要足够大，避免被控件覆盖
+    private static final float LABEL_WIDTH = 160f;
+    private static final float SLIDER_WIDTH = 160f;
+    private static final float VALUE_WIDTH = 50f;
+    private static final float BTN_WIDTH = 100f;
+    private static final float KEY_LABEL_WIDTH = 90f;
+    private static final float KEY_BTN_WIDTH = 110f;
 
     public SettingsUI(MazeRunnerGame game, Stage stage, Runnable onBackAction) {
         this.game = game;
         this.stage = stage;
         this.skin = game.getSkin();
         this.onBackAction = onBackAction;
-
         setupInputProcessor();
     }
 
     public Table build() {
-        // Create the main table with a semi-transparent background to ensure
-        // readability over any bg
         contentTable = new Table();
-        contentTable.setBackground(game.getSkin().newDrawable("white", 0, 0, 0, 0.8f)); // Dark semi-transparent
-        contentTable.pad(40);
+        // 无背景！让 SettingsScreen 的 glClearColor 统一背景色
+        contentTable.pad(50, 40, 20, 40); // 上50 左右40 下20
 
-        // Title
-        contentTable.add(new Label("Settings", skin, "title")).colspan(2).padBottom(30).row();
+        // ===== Title =====
+        Label title = new Label("Settings", skin, "title");
+        title.setFontScale(1.2f);
+        contentTable.add(title).colspan(3).padBottom(25).row();
 
-        // 1. Audio Section
-        createSectionHeader("Audio");
-        createAudioControls();
+        // ===== Audio Section =====
+        addSectionHeader("Audio");
+        addVolumeRow();
+        addMusicRow();
 
-        // 2. Gameplay Section
-        createSectionHeader("Gameplay");
-        createGameplayControls();
+        // ===== Gameplay Section =====
+        addSectionHeader("Gameplay");
+        addWalkSpeedRow();
+        addRunSpeedRow();
+        addCameraRow();
+        addFogRow();
+        addHint();
 
-        // 3. Controls Section
-        createSectionHeader("Controls");
-        createKeyBindControls();
+        // ===== Controls Section =====
+        addSectionHeader("Controls");
+        addControlsSection();
 
-        // 4. Footer / Navigation
-        createFooter();
+        // ===== Back Button =====
+        addBackButton();
 
         return contentTable;
     }
 
-    private void createSectionHeader(String title) {
-        contentTable.add(new Label(title, skin)).colspan(2).padBottom(10).padTop(10).row();
-        // Optional: Add separator line?
+    private void addSectionHeader(String text) {
+        Table header = new Table();
+        
+        Image leftLine = new Image(skin.newDrawable("white", 0.5f, 0.45f, 0.3f, 0.6f));
+        header.add(leftLine).width(100).height(2).padRight(20);
+        
+        Label label = new Label(text, skin);
+        label.setColor(UIConstants.SETTINGS_SECTION_TITLE);
+        label.setFontScale(1.1f);
+        header.add(label);
+        
+        Image rightLine = new Image(skin.newDrawable("white", 0.5f, 0.45f, 0.3f, 0.6f));
+        header.add(rightLine).width(100).height(2).padLeft(20);
+        
+        contentTable.add(header).colspan(3).padTop(20).padBottom(15).row();
     }
 
-    private void createAudioControls() {
-        Table audioTable = new Table();
+    // ==================== Audio Section ====================
 
-        // Volume
-        audioTable.add(new Label("Vol:", skin)).right().padRight(10);
-        final Slider volumeSlider = new Slider(0, 1, 0.1f, false, skin);
-        volumeSlider.setValue(AudioManager.getInstance().getVolume()); // Assuming getter exists or we track public
-                                                                       // field?
-        // Note: AudioManager might not expose getVolume directly if not added in
-        // previous tasks.
-        // Checking task breakdown... we might need to assume it does or use stored
-        // prefs.
-        // Actually, previous SettingsScreen used volumeSlider.getValue() to set it, and
-        // initialized seamlessly.
-        // Let's assume we can get it or init at 0.5f if unknown.
-        // Better: Use GameSettings or just init to default.
-        // Re-checking SettingsScreen: volumeSlider.setValue(0.5f); // comment says
-        // "Should get from AudioManager"
-        // We will stick to 0.5f reset for now or try to match current.
-        volumeSlider.setValue(0.5f);
+    private void addVolumeRow() {
+        Label label = new Label("Volume:", skin);
+        label.setFontScale(1.0f);
+        contentTable.add(label).width(LABEL_WIDTH).right().padRight(30);
 
-        volumeSlider.addListener(new ChangeListener() {
+        final Slider slider = new Slider(0, 1, 0.1f, false, skin);
+        slider.setValue(0.5f);
+        slider.addListener(new ChangeListener() {
             @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                AudioManager.getInstance().setVolume(volumeSlider.getValue());
+            public void changed(ChangeEvent e, Actor a) {
+                AudioManager.getInstance().setVolume(slider.getValue());
             }
         });
-        audioTable.add(volumeSlider).width(200).padRight(20);
-
-        // Mute Toggle
-        boolean isEnabled = AudioManager.getInstance().isMusicEnabled();
-        final TextButton muteBtn = new TextButton("Music: " + (isEnabled ? "ON" : "OFF"), skin);
-        muteBtn.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                boolean newState = !AudioManager.getInstance().isMusicEnabled();
-                AudioManager.getInstance().setMusicEnabled(newState);
-                muteBtn.setText("Music: " + (newState ? "ON" : "OFF"));
-            }
-        });
-        audioTable.add(muteBtn).width(120);
-
-        contentTable.add(audioTable).colspan(2).padBottom(10).row();
+        contentTable.add(slider).width(SLIDER_WIDTH).height(18).colspan(2).left();
+        contentTable.row().padBottom(10);
     }
 
-    private void createGameplayControls() {
-        Table gameplayTable = new Table();
+    private void addMusicRow() {
+        Label label = new Label("Music:", skin);
+        label.setFontScale(1.0f);
+        contentTable.add(label).width(LABEL_WIDTH).right().padRight(30);
 
-        // Walk Speed
-        gameplayTable.add(new Label("Walk Spd:", skin)).right().padRight(10);
-        final Label walkLabel = new Label(String.format("%.1f", GameSettings.playerWalkSpeed), skin);
-        Slider walkSlider = new Slider(1f, 15f, 0.5f, false, skin);
-        walkSlider.setValue(GameSettings.playerWalkSpeed);
-        walkSlider.addListener(new ChangeListener() {
+        boolean musicOn = AudioManager.getInstance().isMusicEnabled();
+        final TextButton btn = new TextButton(musicOn ? "ON" : "OFF", skin);
+        btn.getLabel().setFontScale(0.9f);
+        btn.addListener(new ChangeListener() {
             @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                GameSettings.playerWalkSpeed = ((Slider) actor).getValue();
-                walkLabel.setText(String.format("%.1f", GameSettings.playerWalkSpeed));
+            public void changed(ChangeEvent e, Actor a) {
+                boolean on = !AudioManager.getInstance().isMusicEnabled();
+                AudioManager.getInstance().setMusicEnabled(on);
+                btn.setText(on ? "ON" : "OFF");
             }
         });
-        gameplayTable.add(walkSlider).width(150);
-        gameplayTable.add(walkLabel).width(40).padLeft(5).padRight(20);
-
-        // Run Speed
-        gameplayTable.add(new Label("Run Spd:", skin)).right().padRight(10);
-        final Label runLabel = new Label(String.format("%.1f", GameSettings.playerRunSpeed), skin);
-        Slider runSlider = new Slider(5f, 20f, 0.5f, false, skin);
-        runSlider.setValue(GameSettings.playerRunSpeed);
-        runSlider.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                GameSettings.playerRunSpeed = ((Slider) actor).getValue();
-                runLabel.setText(String.format("%.1f", GameSettings.playerRunSpeed));
-            }
-        });
-        gameplayTable.add(runSlider).width(150);
-        gameplayTable.add(runLabel).width(40).padLeft(5);
-        gameplayTable.row();
-
-        // Fog of War
-        gameplayTable.add(new Label("Fog of War:", skin)).right().padRight(10);
-        final TextButton fogBtn = new TextButton(GameSettings.isFogEnabled() ? "ON" : "OFF", skin);
-        fogBtn.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                boolean newState = !GameSettings.isFogEnabled();
-                GameSettings.setFogEnabled(newState);
-                fogBtn.setText(newState ? "ON" : "OFF");
-            }
-        });
-        gameplayTable.add(fogBtn).width(100).left();
-        gameplayTable.row();
-
-        // Camera Zoom
-        gameplayTable.add(new Label("Camera:", skin)).right().padRight(10);
-        final Label zoomLabel = new Label(String.format("%.1fx", 1.0f / GameSettings.cameraZoom), skin);
-        Slider zoomSlider = new Slider(0.3f, 1.5f, 0.05f, false, skin);
-        zoomSlider.setValue(GameSettings.cameraZoom);
-        zoomSlider.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                GameSettings.cameraZoom = ((Slider) actor).getValue();
-                zoomLabel.setText(String.format("%.1fx", 1.0f / GameSettings.cameraZoom));
-            }
-        });
-        gameplayTable.add(zoomSlider).width(150);
-        gameplayTable.add(zoomLabel).width(50).padLeft(5);
-        gameplayTable.row();
-
-        // Fog Hint
-        Label fogHintLabel = new Label("* Fog mode: vision range is fixed", skin);
-        fogHintLabel.setColor(0.7f, 0.7f, 0.7f, 1f);
-        fogHintLabel.setFontScale(0.8f);
-        gameplayTable.add(fogHintLabel).colspan(6).left().padTop(5);
-
-        contentTable.add(gameplayTable).colspan(2).padBottom(10).row();
+        contentTable.add(btn).width(BTN_WIDTH).height(32).colspan(2).left();
+        contentTable.row().padBottom(8);
     }
 
-    private void createKeyBindControls() {
-        statusLabel = new Label("Click button -> Press key", skin);
+    // ==================== Gameplay Section ====================
+
+    private void addWalkSpeedRow() {
+        Label label = new Label("Walk Speed:", skin);
+        label.setFontScale(1.0f);
+        contentTable.add(label).width(LABEL_WIDTH).right().padRight(30);
+
+        final Label valueLabel = new Label(String.format("%.1f", GameSettings.playerWalkSpeed), skin);
+        valueLabel.setFontScale(0.95f);
+
+        Slider slider = new Slider(1f, 15f, 0.5f, false, skin);
+        slider.setValue(GameSettings.playerWalkSpeed);
+        slider.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent e, Actor a) {
+                float v = ((Slider) a).getValue();
+                GameSettings.playerWalkSpeed = v;
+                valueLabel.setText(String.format("%.1f", v));
+            }
+        });
+        contentTable.add(slider).width(SLIDER_WIDTH).height(18);
+        contentTable.add(valueLabel).width(VALUE_WIDTH).padLeft(10);
+        contentTable.row().padBottom(10);
+    }
+
+    private void addRunSpeedRow() {
+        Label label = new Label("Run Speed:", skin);
+        label.setFontScale(1.0f);
+        contentTable.add(label).width(LABEL_WIDTH).right().padRight(30);
+
+        final Label valueLabel = new Label(String.format("%.1f", GameSettings.playerRunSpeed), skin);
+        valueLabel.setFontScale(0.95f);
+
+        Slider slider = new Slider(5f, 20f, 0.5f, false, skin);
+        slider.setValue(GameSettings.playerRunSpeed);
+        slider.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent e, Actor a) {
+                float v = ((Slider) a).getValue();
+                GameSettings.playerRunSpeed = v;
+                valueLabel.setText(String.format("%.1f", v));
+            }
+        });
+        contentTable.add(slider).width(SLIDER_WIDTH).height(18);
+        contentTable.add(valueLabel).width(VALUE_WIDTH).padLeft(10);
+        contentTable.row().padBottom(10);
+    }
+
+    private void addCameraRow() {
+        Label label = new Label("Camera Zoom:", skin);
+        label.setFontScale(1.0f);
+        contentTable.add(label).width(LABEL_WIDTH).right().padRight(30);
+
+        final Label valueLabel = new Label(String.format("%.2f", GameSettings.cameraZoom), skin);
+        valueLabel.setFontScale(0.95f);
+
+        Slider slider = new Slider(0.3f, 1.5f, 0.05f, false, skin);
+        slider.setValue(GameSettings.cameraZoom);
+        slider.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent e, Actor a) {
+                float v = ((Slider) a).getValue();
+                GameSettings.cameraZoom = v;
+                valueLabel.setText(String.format("%.2f", v));
+            }
+        });
+        contentTable.add(slider).width(SLIDER_WIDTH).height(18);
+        contentTable.add(valueLabel).width(VALUE_WIDTH).padLeft(10);
+        contentTable.row().padBottom(10);
+    }
+
+    private void addFogRow() {
+        Label label = new Label("Fog of War:", skin);
+        label.setFontScale(1.0f);
+        contentTable.add(label).width(LABEL_WIDTH).right().padRight(30);
+
+        final TextButton btn = new TextButton(GameSettings.isFogEnabled() ? "ON" : "OFF", skin);
+        btn.getLabel().setFontScale(0.9f);
+        btn.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent e, Actor a) {
+                boolean on = !GameSettings.isFogEnabled();
+                GameSettings.setFogEnabled(on);
+                btn.setText(on ? "ON" : "OFF");
+            }
+        });
+        contentTable.add(btn).width(BTN_WIDTH).height(32).colspan(2).left();
+        contentTable.row().padBottom(6);
+    }
+
+    private void addHint() {
+        Label hint = new Label("* Fog mode: vision range is fixed", skin);
+        hint.setColor(0.6f, 0.6f, 0.6f, 1f);
+        hint.setFontScale(0.8f);
+        contentTable.add(hint).colspan(3).padBottom(8).row();
+    }
+
+    // ==================== Controls Section ====================
+
+    private void addControlsSection() {
+        // Status label
+        statusLabel = new Label("Click button → Press new key", skin);
         statusLabel.setColor(Color.YELLOW);
-        contentTable.add(statusLabel).colspan(2).padBottom(10).row();
+        statusLabel.setFontScale(0.9f);
+        contentTable.add(statusLabel).colspan(3).padBottom(15).row();
 
-        btnUp = createKeyButton("Up", "UP");
-        btnDown = createKeyButton("Down", "DOWN");
-        btnLeft = createKeyButton("Left", "LEFT");
-        btnRight = createKeyButton("Right", "RIGHT");
-        btnAttack = createKeyButton("Attack", "ATTACK");
-        btnSwitchWeapon = createKeyButton("Switch", "SWITCH_WEAPON");
+        // Create key buttons
+        btnUp = makeKeyButton("UP");
+        btnDown = makeKeyButton("DOWN");
+        btnLeft = makeKeyButton("LEFT");
+        btnRight = makeKeyButton("RIGHT");
+        btnAttack = makeKeyButton("ATTACK");
+        btnSwitchWeapon = makeKeyButton("SWITCH_WEAPON");
 
-        Table keyTable = new Table();
-        addToKeyTable(keyTable, "Up:", btnUp);
-        addToKeyTable(keyTable, "Down:", btnDown);
-        addToKeyTable(keyTable, "Left:", btnLeft);
-        keyTable.row();
-        addToKeyTable(keyTable, "Right:", btnRight);
-        addToKeyTable(keyTable, "Atk:", btnAttack);
-        addToKeyTable(keyTable, "Switch:", btnSwitchWeapon);
+        // Row 1: Up, Down, Left
+        Table keyRow1 = new Table();
+        addKeyBinding(keyRow1, "Up:", btnUp);
+        addKeyBinding(keyRow1, "Down:", btnDown);
+        addKeyBinding(keyRow1, "Left:", btnLeft);
+        contentTable.add(keyRow1).colspan(3).padBottom(12).row();
 
-        contentTable.add(keyTable).colspan(2).padBottom(10).row();
+        // Row 2: Right, Attack, Switch
+        Table keyRow2 = new Table();
+        addKeyBinding(keyRow2, "Right:", btnRight);
+        addKeyBinding(keyRow2, "Attack:", btnAttack);
+        addKeyBinding(keyRow2, "Switch:", btnSwitchWeapon);
+        contentTable.add(keyRow2).colspan(3).padBottom(10).row();
     }
 
-    private TextButton createKeyButton(String label, String keyName) {
+    private TextButton makeKeyButton(final String keyName) {
         final TextButton btn = new TextButton(getKeyName(keyName), skin);
+        btn.getLabel().setFontScale(0.85f);
         btn.addListener(new ClickListener() {
             @Override
-            public void clicked(InputEvent event, float x, float y) {
+            public void clicked(InputEvent e, float x, float y) {
                 startRemap(keyName, btn);
             }
         });
         return btn;
     }
 
-    private void addToKeyTable(Table table, String label, Actor actor) {
-        table.add(new Label(label, skin)).right().padRight(5);
-        table.add(actor).left().width(100).height(35).padRight(20);
+    private void addKeyBinding(Table table, String labelText, Actor btn) {
+        Label label = new Label(labelText, skin);
+        label.setFontScale(0.85f);
+        table.add(label).width(KEY_LABEL_WIDTH).right().padRight(15);
+        table.add(btn).width(KEY_BTN_WIDTH).height(34).padRight(30);
     }
 
-    private void createFooter() {
+    private void addBackButton() {
         TextButton backBtn = new TextButton("Back / Save", skin);
+        backBtn.getLabel().setFontScale(0.9f);
         backBtn.addListener(new ChangeListener() {
             @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                // Save persistent settings
+            public void changed(ChangeEvent e, Actor a) {
                 GameSettings.saveKeyBindingsOnly();
-                // If it's pure main menu settings, we might want to save everything.
-                // But generally, saving KeyBindings is the critical part.
-                // The implementation plan says "Only save settings when accessed from Main Menu
-                // (not in-game)" for generic prefs,
-                // But actually game settings like WalkSpeed are usually session focused unless
-                // explicitly saved.
-                // Let's stick to Safe Defaults + explicit Save.
-                // If onBackAction is run, we just leave.
-
-                // Trigger callback
-                if (onBackAction != null) {
-                    onBackAction.run();
-                }
+                if (onBackAction != null) onBackAction.run();
             }
         });
-        contentTable.add(backBtn).colspan(2).width(200).height(50).padTop(10);
+        contentTable.add(backBtn).colspan(3).width(220).height(45).padTop(20);
     }
 
-    // --- Remapping Logic ---
+    // ===== Key Remapping Logic =====
 
     private String getKeyName(String keyName) {
         int code = -1;
         switch (keyName) {
-            case "UP":
-                code = GameSettings.KEY_UP;
-                break;
-            case "DOWN":
-                code = GameSettings.KEY_DOWN;
-                break;
-            case "LEFT":
-                code = GameSettings.KEY_LEFT;
-                break;
-            case "RIGHT":
-                code = GameSettings.KEY_RIGHT;
-                break;
-            case "ATTACK":
-                code = GameSettings.KEY_ATTACK;
-                break;
-            case "SWITCH_WEAPON":
-                code = GameSettings.KEY_SWITCH_WEAPON;
-                break;
+            case "UP": code = GameSettings.KEY_UP; break;
+            case "DOWN": code = GameSettings.KEY_DOWN; break;
+            case "LEFT": code = GameSettings.KEY_LEFT; break;
+            case "RIGHT": code = GameSettings.KEY_RIGHT; break;
+            case "ATTACK": code = GameSettings.KEY_ATTACK; break;
+            case "SWITCH_WEAPON": code = GameSettings.KEY_SWITCH_WEAPON; break;
         }
         return Input.Keys.toString(code);
     }
@@ -299,9 +328,6 @@ public class SettingsUI {
         btnSwitchWeapon.setText(getKeyName("SWITCH_WEAPON"));
     }
 
-    /**
-     * Call this from the InputProcessor associated with the Stage
-     */
     public boolean handleKeyDown(int keycode) {
         if (remappingKeyName != null) {
             if (keycode == Input.Keys.ESCAPE) {
@@ -311,24 +337,12 @@ public class SettingsUI {
                 return true;
             }
             switch (remappingKeyName) {
-                case "UP":
-                    GameSettings.KEY_UP = keycode;
-                    break;
-                case "DOWN":
-                    GameSettings.KEY_DOWN = keycode;
-                    break;
-                case "LEFT":
-                    GameSettings.KEY_LEFT = keycode;
-                    break;
-                case "RIGHT":
-                    GameSettings.KEY_RIGHT = keycode;
-                    break;
-                case "ATTACK":
-                    GameSettings.KEY_ATTACK = keycode;
-                    break;
-                case "SWITCH_WEAPON":
-                    GameSettings.KEY_SWITCH_WEAPON = keycode;
-                    break;
+                case "UP": GameSettings.KEY_UP = keycode; break;
+                case "DOWN": GameSettings.KEY_DOWN = keycode; break;
+                case "LEFT": GameSettings.KEY_LEFT = keycode; break;
+                case "RIGHT": GameSettings.KEY_RIGHT = keycode; break;
+                case "ATTACK": GameSettings.KEY_ATTACK = keycode; break;
+                case "SWITCH_WEAPON": GameSettings.KEY_SWITCH_WEAPON = keycode; break;
             }
             remappingKeyName = null;
             updateButtons();
@@ -339,7 +353,6 @@ public class SettingsUI {
     }
 
     private void setupInputProcessor() {
-        // We attach a listener to the stage that forwards to our handler
         stage.addListener(new InputListener() {
             @Override
             public boolean keyDown(InputEvent event, int keycode) {

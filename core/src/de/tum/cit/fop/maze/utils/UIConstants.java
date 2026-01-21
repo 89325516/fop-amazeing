@@ -160,4 +160,67 @@ public final class UIConstants {
 
     /** 危险警告色 (魔法威胁) */
     public static final Color DANGER_MAGICAL = new Color(0.75f, 0.4f, 0.95f, 1f);
+
+    // ==================== Settings Screen 常量 ====================
+
+    /** 设置面板最大宽度 (避免过宽) */
+    public static final float SETTINGS_PANEL_MAX_WIDTH = 720f;
+
+    /** 区块内容左右内边距 */
+    public static final float SETTINGS_SECTION_PAD_H = 24f;
+
+    /** 标题下方间距 */
+    public static final float SETTINGS_TITLE_BOTTOM_PAD = 36f;
+
+    /** 设置界面区块标题颜色 (金色) */
+    public static final Color SETTINGS_SECTION_TITLE = new Color(1f, 0.85f, 0.35f, 1f);
+
+    /** 设置界面分割线颜色 */
+    public static final Color SETTINGS_DIVIDER = new Color(0.5f, 0.45f, 0.3f, 0.6f);
+
+    /** 设置界面提示文字颜色 */
+    public static final Color SETTINGS_HINT = new Color(0.6f, 0.6f, 0.6f, 1f);
+
+    /** 设置界面滑块统一宽度 */
+    public static final float SETTINGS_SLIDER_WIDTH = 140f;
+
+    /** 设置界面音量滑块宽度 */
+    public static final float SETTINGS_VOLUME_SLIDER_WIDTH = 160f;
+
+    /** 设置界面按键按钮宽度 */
+    public static final float SETTINGS_KEY_BTN_WIDTH = 70f;
+
+    /** 设置界面按键按钮高度 */
+    public static final float SETTINGS_KEY_BTN_HEIGHT = 34f;
+
+    /** 设置界面标签固定宽度 */
+    public static final float SETTINGS_LABEL_WIDTH = 90f;
+
+    /** 设置界面数值标签宽度 */
+    public static final float SETTINGS_VALUE_LABEL_WIDTH = 45f;
+
+    /** 设置界面行间距 (增大以改善可读性) */
+    public static final float SETTINGS_ROW_SPACING = 18f;
+
+    /** 设置界面区块间距 (增大留白) */
+    public static final float SETTINGS_SECTION_SPACING = 28f;
+
+    /** 设置界面内边距 */
+    public static final float SETTINGS_PADDING = 45f;
+
+    /** 设置界面 Music 按钮宽度 */
+    public static final float SETTINGS_MUSIC_BTN_WIDTH = 95f;
+
+    /** 设置界面 Fog 按钮宽度 */
+    public static final float SETTINGS_FOG_BTN_WIDTH = 60f;
+
+    /** 设置界面 Back 按钮尺寸 */
+    public static final float SETTINGS_BACK_BTN_WIDTH = 170f;
+    public static final float SETTINGS_BACK_BTN_HEIGHT = 48f;
+
+    /** 滑块统一高度 */
+    public static final float SETTINGS_SLIDER_HEIGHT = 28f;
+
+    /** 音频行组件高度 */
+    public static final float SETTINGS_AUDIO_ROW_HEIGHT = 36f;
 }
