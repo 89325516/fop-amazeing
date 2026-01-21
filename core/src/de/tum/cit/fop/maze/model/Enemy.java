@@ -318,6 +318,69 @@ public class Enemy extends GameObject {
     }
 
     /**
+     * Lightweight timer update for Endless Mode.
+     * Updates knockback physics, hurt timer, death timer, and status effects
+     * WITHOUT triggering AI state machine logic.
+     * 
+     * @param delta Frame delta time
+     */
+    public void updateTimers(float delta) {
+        // Knockback physics (allows "flying corpses")
+        if (Math.abs(knockbackVx) > 0.1f || Math.abs(knockbackVy) > 0.1f) {
+            float moveX = knockbackVx * delta;
+            float moveY = knockbackVy * delta;
+
+            // Simple position update (no collision for simplicity in Endless Mode)
+            this.x += moveX;
+            this.y += moveY;
+
+            // Friction
+            knockbackVx -= knockbackVx * KNOCKBACK_FRICTION * delta;
+            knockbackVy -= knockbackVy * KNOCKBACK_FRICTION * delta;
+
+            if (Math.abs(knockbackVx) < 0.5f)
+                knockbackVx = 0;
+            if (Math.abs(knockbackVy) < 0.5f)
+                knockbackVy = 0;
+        }
+
+        // Death timer
+        if (state == EnemyState.DEAD) {
+            deathTimer -= delta;
+            return;
+        }
+
+        // Stun timer
+        if (stunTimer > 0) {
+            stunTimer -= delta;
+        }
+
+        // Hurt timer (for red flash)
+        if (hurtTimer > 0) {
+            hurtTimer -= delta;
+        }
+
+        // Status effects (DOT, Freeze, etc.)
+        if (currentEffect != WeaponEffect.NONE) {
+            effectTimer -= delta;
+
+            if (currentEffect == WeaponEffect.BURN || currentEffect == WeaponEffect.POISON) {
+                dotTimer += delta;
+                if (dotTimer >= 1.0f) {
+                    takeDamage(1);
+                    dotTimer = 0f;
+                    GameLogger.debug("Enemy", "Enemy takes DOT from " + currentEffect);
+                }
+            }
+
+            if (effectTimer <= 0) {
+                currentEffect = WeaponEffect.NONE;
+                dotTimer = 0f;
+            }
+        }
+    }
+
+    /**
      * 更新敌人：基于状态的连续移动
      * 
      * @param safeGrid 安全路径网格 [x][y]

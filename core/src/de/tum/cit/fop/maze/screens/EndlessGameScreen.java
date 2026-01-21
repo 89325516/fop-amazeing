@@ -510,7 +510,19 @@ public class EndlessGameScreen implements Screen {
 
             float dist = Vector2.dst(player.getX(), player.getY(), enemy.getX(), enemy.getY());
             if (dist <= attackRange) {
-                boolean killed = enemy.takeDamage((int) attackDamage, weapon.getDamageType());
+                int damage = (int) attackDamage;
+                boolean killed = enemy.takeDamage(damage, weapon.getDamageType());
+
+                // === Hit Feedback: Damage Number (伤害数值显示) ===
+                floatingTexts.add(new FloatingText(enemy.getX(), enemy.getY(), "-" + damage, Color.RED));
+                AudioManager.getInstance().playSound("hit");
+
+                // === Hit Feedback: Knockback ===
+                if (!killed) {
+                    enemy.knockback(player.getX(), player.getY(), 2.0f, null);
+                }
+                // === Hit Feedback: Weapon Effect ===
+                enemy.applyEffect(weapon.getEffect());
 
                 if (killed) {
                     onEnemyKilled(enemy);
@@ -639,9 +651,15 @@ public class EndlessGameScreen implements Screen {
                 if (dist < 1.5f) {
                     int baseDamage = 1;
                     int damage = (int) (baseDamage * rageSystem.getEnemyDamageMultiplier());
-                    player.damage(damage, enemy.getAttackDamageType());
+                    if (player.damage(damage, enemy.getAttackDamageType())) {
+                        // === Hit Feedback: Player Knockback + Sound ===
+                        player.knockback(enemy.getX(), enemy.getY(), 1.5f);
+                        AudioManager.getInstance().playSound("hit");
+                    }
                 }
             }
+            // === Update enemy timers (knockback physics, status effects, hurt flash) ===
+            enemy.updateTimers(delta);
         }
     }
 
@@ -1106,7 +1124,13 @@ public class EndlessGameScreen implements Screen {
             de.tum.cit.fop.maze.custom.CustomElementManager manager = de.tum.cit.fop.maze.custom.CustomElementManager
                     .getInstance();
 
-            if (player.isAttacking()) {
+            // === 优先检查死亡状态 (Death Animation) ===
+            if (player.isDead()) {
+                Animation<TextureRegion> deathAnim = manager.getAnimation(playerSkinId, "Death");
+                if (deathAnim != null) {
+                    playerFrame = deathAnim.getKeyFrame(player.getDeathProgress() * 0.5f, false);
+                }
+            } else if (player.isAttacking()) {
                 float total = player.getAttackAnimTotalDuration();
                 if (total <= 0)
                     total = 0.2f;
@@ -1200,11 +1224,11 @@ public class EndlessGameScreen implements Screen {
             }
         }
 
-        if (player.isDead()) {
+        Color oldC = game.getSpriteBatch().getColor().cpy();
+        if (player.isDead())
             game.getSpriteBatch().setColor(0.5f, 0.5f, 0.5f, 1f);
-        } else if (player.isHurt()) {
+        else if (player.isHurt())
             game.getSpriteBatch().setColor(1f, 0f, 0f, 1f);
-        }
 
         float drawX = player.getX() * UNIT_SCALE;
         float drawY = player.getY() * UNIT_SCALE;
@@ -1212,10 +1236,11 @@ public class EndlessGameScreen implements Screen {
         float drawHeight = playerFrame.getRegionHeight();
 
         // 自定义皮肤统一缩放到16像素
-        // 自定义皮肤统一缩放到16像素
         if (useCustomSkin && playerFrame != null) {
             drawWidth = UNIT_SCALE;
             drawHeight = UNIT_SCALE;
+        } else if (playerFrame.getRegionWidth() > 16) {
+            drawX -= (playerFrame.getRegionWidth() - 16) / 2f;
         }
 
         // 朝上或朝左时先渲染武器（在玩家身后）
@@ -1223,13 +1248,16 @@ public class EndlessGameScreen implements Screen {
             renderEquippedWeapon(player, dir);
         }
 
-        if (flipX) {
+        if (player.isDead()) {
+            // 直接播放死亡动画，不旋转
+            game.getSpriteBatch().draw(playerFrame, drawX, drawY, drawWidth, drawHeight);
+        } else if (flipX) {
             // 水平翻转绘制
             game.getSpriteBatch().draw(playerFrame, drawX + drawWidth, drawY, -drawWidth, drawHeight);
         } else {
             game.getSpriteBatch().draw(playerFrame, drawX, drawY, drawWidth, drawHeight);
         }
-        game.getSpriteBatch().setColor(Color.WHITE);
+        game.getSpriteBatch().setColor(oldC);
 
         // === 渲染装备的武器 (队友功能) ===
         if (!player.isDead() && dir != 1 && dir != 2) {
