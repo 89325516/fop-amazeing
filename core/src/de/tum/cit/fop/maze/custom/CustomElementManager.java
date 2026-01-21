@@ -332,13 +332,15 @@ public class CustomElementManager {
             if (path == null || path.isEmpty())
                 continue;
             try {
+                // Windows path fix: replace backslashes with forward slashes
+                path = path.replace('\\', '/');
+
                 // AUTO-FIX: If path is absolute (from another PC) but contains "custom_images",
                 // make it relative
-                if (path.contains(LOCAL_IMAGE_DIR) && (path.contains("/") || path.contains("\\"))) {
+                if (path.contains(LOCAL_IMAGE_DIR)) {
                     int idx = path.indexOf(LOCAL_IMAGE_DIR);
                     if (idx > 0) {
                         String fixedPath = path.substring(idx);
-                        // GameLogger.info("Fixed path: " + path + " -> " + fixedPath);
                         path = fixedPath;
                     }
                 }
@@ -368,9 +370,12 @@ public class CustomElementManager {
                 if (file.exists()) {
                     Texture tex = new Texture(file);
                     frames.add(createCroppedRegion(tex));
+                } else {
+                    GameLogger.error("CustomElementManager", "Texture not found: " + path);
                 }
             } catch (Exception e) {
-                GameLogger.error("CustomElementManager", "Failed to load texture: " + path);
+                GameLogger.error("CustomElementManager",
+                        "Failed to load texture: " + path + " Error: " + e.getMessage());
             }
         }
 
