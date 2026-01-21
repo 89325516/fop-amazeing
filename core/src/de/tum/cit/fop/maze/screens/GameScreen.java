@@ -309,47 +309,9 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
 
     @Override
     public void onPuzzleChestInteract(TreasureChest chest) {
-        // 暂停游戏
-        isPaused = true;
-        activeChest = chest;
-
-        // 创建并显示宝箱交互UI
-        chestInteractUI = new ChestInteractUI(chest, game.getSkin(), new ChestInteractUI.ChestUIListener() {
-            @Override
-            public void onChestOpened(ChestReward reward) {
-                // 领取奖励
-                if (reward != null) {
-                    reward.applyToPlayer(gameWorld.getPlayer());
-                    gameWorld.getFloatingTexts().add(new FloatingText(
-                            chest.getX(), chest.getY() + 0.5f,
-                            reward.getDisplayName(), Color.CYAN));
-                    de.tum.cit.fop.maze.utils.AudioManager.getInstance().playSound("collect");
-                }
-                chest.startOpening();
-                chest.update(0.5f);
-            }
-
-            @Override
-            public void onChestFailed() {
-                // 谜题失败，给安慰奖
-                gameWorld.getPlayer().addCoins(1);
-                chest.setInteracted(true); // 标记为已交互
-            }
-
-            @Override
-            public void onUIClose() {
-                // 关闭UI，恢复游戏
-                if (chestInteractUI != null) {
-                    chestInteractUI.remove();
-                    chestInteractUI = null;
-                }
-                activeChest = null;
-                isPaused = false;
-            }
-        });
-
-        uiStage.addActor(chestInteractUI);
-        GameLogger.info("GameScreen", "Puzzle chest interaction started");
+        // Feature removed: No UI interaction for chests.
+        // This method left empty to satisfy interface or for logging.
+        GameLogger.info("GameScreen", "Chest interaction triggered (No UI).");
     }
 
     // --- Main Loop ---
@@ -752,9 +714,9 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         int dir = gameWorld.getPlayerDirection();
         boolean flipX = false; // 用于水平翻转精灵
 
-        boolean isMoving = Gdx.input.isKeyPressed(GameSettings.KEY_UP) || Gdx.input.isKeyPressed(GameSettings.KEY_DOWN)
-                ||
-                Gdx.input.isKeyPressed(GameSettings.KEY_LEFT) || Gdx.input.isKeyPressed(GameSettings.KEY_RIGHT);
+        boolean isMoving = !isPaused && (Gdx.input.isKeyPressed(GameSettings.KEY_UP)
+                || Gdx.input.isKeyPressed(GameSettings.KEY_DOWN)
+                || Gdx.input.isKeyPressed(GameSettings.KEY_LEFT) || Gdx.input.isKeyPressed(GameSettings.KEY_RIGHT));
 
         // === 尝试使用自定义玩家皮肤 ===
         String playerSkinId = getActivePlayerSkinId();

@@ -754,28 +754,24 @@ public class GameWorld {
             float dy = player.getY() - chest.getY();
             float dist = (float) Math.sqrt(dx * dx + dy * dy);
 
-            if (dist < 1.2f) { // 交互半径
-                if (chest.getType() == TreasureChest.ChestType.PUZZLE) {
-                    // 谜题宝箱：通知监听器显示UI
-                    if (listener != null) {
-                        listener.onPuzzleChestInteract(chest);
-                    }
-                    return; // 让 Screen 处理暂停和 UI
-                } else {
-                    // 普通宝箱：直接打开
-                    chest.startOpening();
-                    chest.update(0.5f); // 快速完成开启动画
+            if (dist < 1.0f) { // 交互半径 (slightly reduced for tighter feel)
+                // 直接打开所有宝箱（移除谜题机制）
+                chest.startOpening();
 
-                    // 领取奖励
-                    boolean success = chest.claimReward(player);
-                    if (success && chest.getReward() != null) {
-                        floatingTexts.add(new FloatingText(
-                                chest.getX(), chest.getY() + 0.5f,
-                                chest.getReward().getDisplayName(), Color.YELLOW));
-                        AudioManager.getInstance().playSound("collect");
-                    }
-                    return;
+                // 领取奖励
+                boolean success = chest.claimReward(player);
+                if (success && chest.getReward() != null) {
+                    floatingTexts.add(new FloatingText(
+                            chest.getX(), chest.getY() + 0.5f,
+                            chest.getReward().getDisplayName(), Color.YELLOW));
+                    AudioManager.getInstance().playSound("collect");
                 }
+
+                // 可选：如果要保留 notify，可以只用于统计或成就
+                if (listener != null) {
+                    listener.onPuzzleChestInteract(chest);
+                }
+                return;
             }
         }
     }

@@ -110,8 +110,8 @@ public class TreasureChest extends GameObject {
      * @return 新创建的宝箱
      */
     public static TreasureChest createRandom(float x, float y, Random random, float puzzleProbability) {
-        ChestType type = random.nextFloat() < puzzleProbability ? ChestType.PUZZLE : ChestType.NORMAL;
-        return new TreasureChest(x, y, type);
+        // 强制所有宝箱为普通类型 (User Request: Simplify to touch-to-open)
+        return new TreasureChest(x, y, ChestType.NORMAL);
     }
 
     // ========== 核心方法 ==========
