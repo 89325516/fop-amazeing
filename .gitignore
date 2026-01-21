@@ -230,3 +230,4 @@ raw_assets/animations/
 assets/saves/
 docs/technical_plan_rendering_optimization.md
 docs/setup_guides/rendering_optimization_education.txt
+scripts/compress_mp3.py

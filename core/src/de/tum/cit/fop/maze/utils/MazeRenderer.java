@@ -45,12 +45,21 @@ public class MazeRenderer {
         maxX = Math.min(gameMap.getWidth() - 1, maxX);
         maxY = Math.min(gameMap.getHeight() - 1, maxY);
 
-        // Pass 1: Floors
+        // Pass 1: Floors - 区分可行走区域和墙体区域
+        // 获取墙体底砖纹理（用于墙体所在格子）
+        TextureRegion wallBaseFloor = textureManager.getWallBaseFloor(gameMap.getTheme());
+        TextureRegion walkableFloor = floorTexture != null ? floorTexture
+                : textureManager.getWalkableFloor(gameMap.getTheme());
+
         for (int x = minX; x <= maxX; x++) {
             for (int y = minY; y <= maxY; y++) {
-                TextureRegion region = floorTexture;
-                if (region == null) {
-                    region = getTextureForTheme(gameMap.getTheme());
+                TextureRegion region;
+                if (gameMap.isOccupied(x, y)) {
+                    // 墙体所在格子 -> 使用墙体底砖
+                    region = wallBaseFloor;
+                } else {
+                    // 可行走区域 -> 使用可行走地砖
+                    region = walkableFloor;
                 }
                 batch.draw(region, x * UNIT_SCALE, y * UNIT_SCALE, UNIT_SCALE, UNIT_SCALE);
             }

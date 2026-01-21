@@ -737,6 +737,24 @@ public class EndlessGameScreen implements Screen {
     }
 
     /**
+     * 检查指定区块内某格子是否被墙体占用（用于渲染时的高效检查）
+     * 
+     * @param chunk  区块
+     * @param worldX 世界坐标 X
+     * @param worldY 世界坐标 Y
+     * @return 是否被墙体占用
+     */
+    private boolean isWallAtInChunk(MapChunk chunk, int worldX, int worldY) {
+        for (WallEntity wall : chunk.getWalls()) {
+            if (worldX >= wall.getOriginX() && worldX < wall.getOriginX() + wall.getGridWidth() &&
+                    worldY >= wall.getOriginY() && worldY < wall.getOriginY() + wall.getGridHeight()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * 检查玩家是否可以移动到指定位置
      */
     private boolean canPlayerMoveTo(float x, float y) {
@@ -833,8 +851,9 @@ public class EndlessGameScreen implements Screen {
         int startY = chunk.getWorldStartY();
         int size = chunk.getSize();
 
-        // 获取区块主题对应的地砖纹理
+        // 获取区块主题对应的地砖纹理 - 双层地砖系统
         TextureRegion chunkFloor = getFloorTextureForTheme(chunk.getTheme());
+        TextureRegion wallBaseFloor = textureManager.getWallBaseFloor(chunk.getTheme());
 
         // 渲染地砖 - 只渲染可见范围内的地砖以优化性能
         float camX = camera.position.x / UNIT_SCALE;
@@ -849,9 +868,15 @@ public class EndlessGameScreen implements Screen {
 
         for (int lx = minLX; lx < maxLX; lx++) {
             for (int ly = minLY; ly < maxLY; ly++) {
-                float worldX = (startX + lx) * UNIT_SCALE;
-                float worldY = (startY + ly) * UNIT_SCALE;
-                game.getSpriteBatch().draw(chunkFloor, worldX, worldY, UNIT_SCALE, UNIT_SCALE);
+                int worldX = startX + lx;
+                int worldY = startY + ly;
+
+                // 检查该格子是否被墙体占用 - 使用区块内的墙体列表进行检查
+                boolean isWallTile = isWallAtInChunk(chunk, worldX, worldY);
+                TextureRegion tileRegion = isWallTile ? wallBaseFloor : chunkFloor;
+
+                game.getSpriteBatch().draw(tileRegion, worldX * UNIT_SCALE, worldY * UNIT_SCALE, UNIT_SCALE,
+                        UNIT_SCALE);
             }
         }
 

@@ -34,8 +34,12 @@ public class TextureManager implements Disposable {
         public TextureRegion wallRegion2x1, wallRegion3x1, wallRegion2x2, wallRegion3x3;
 
         public TextureRegion floorRegion; // Default
+        // 可行走地砖 (Walkable Floor) - 玩家可以走动的区域
         public TextureRegion floorDungeon, floorDesert, floorGrassland, floorJungle, floorIce, floorLava, floorRain,
                         floorSpace;
+        // 墙体底砖 (Wall Base Floor) - 墙体所在方格下面的地砖
+        public TextureRegion floorWallBaseDungeon, floorWallBaseDesert, floorWallBaseGrassland;
+        public TextureRegion floorWallBaseJungle, floorWallBaseIce, floorWallBaseSpace;
         public TextureRegion entryRegion;
         public TextureRegion exitRegion;
         public TextureRegion trapRegion;
@@ -256,7 +260,7 @@ public class TextureManager implements Disposable {
                         loadAttackAnimations();
                 }
 
-                // 5. Load Optimized Floor Textures
+                // 5. Load Optimized Floor Textures (Walkable Floor - 可行走地砖)
                 floorDungeon = loadTextureSafe("images/floors/tile_dungeon_stone.png");
                 floorDesert = loadTextureSafe("images/floors/tile_desert_sand.png");
                 floorGrassland = loadTextureSafe("images/floors/tile_grassland_grass.png");
@@ -265,6 +269,16 @@ public class TextureManager implements Disposable {
                 floorRain = loadTextureSafe("images/floors/tile_rain_puddle.png");
                 floorSpace = loadTextureSafe("images/floors/tile_space_metal.png");
                 floorJungle = loadTextureSafe("images/floors/tile_jungle_floor.png");
+
+                // 5.5 Load Wall Base Floor Textures (墙体底砖)
+                // 尝试加载专用墙体底砖，若不存在则回退到对应的可行走地砖
+                floorWallBaseDungeon = loadWallBaseFloorSafe("images/floors/tile_dungeon_wallbase.png", floorDungeon);
+                floorWallBaseDesert = loadWallBaseFloorSafe("images/floors/tile_desert_wallbase.png", floorDesert);
+                floorWallBaseGrassland = loadWallBaseFloorSafe("images/floors/tile_grassland_wallbase.png",
+                                floorGrassland);
+                floorWallBaseIce = loadWallBaseFloorSafe("images/floors/tile_ice_wallbase.png", floorIce);
+                floorWallBaseJungle = loadWallBaseFloorSafe("images/floors/tile_jungle_wallbase.png", floorJungle);
+                floorWallBaseSpace = loadWallBaseFloorSafe("images/floors/tile_space_wallbase.png", floorSpace);
 
                 // 6. Load Arrow Texture (Standalone)
                 TextureRegion loadedArrow = loadTextureSafe("images/items/item_arrow.png");
@@ -757,6 +771,82 @@ public class TextureManager implements Disposable {
                 } catch (Exception e) {
                         // System.err.println("Failed to load texture: " + path);
                         return fallbackRegion;
+                }
+        }
+
+        /**
+         * 加载墙体底砖纹理，若不存在则回退到指定的默认纹理
+         * 
+         * @param path     墙体底砖纹理路径
+         * @param fallback 回退纹理（通常是对应主题的可行走地砖）
+         * @return 加载的纹理或回退纹理
+         */
+        private TextureRegion loadWallBaseFloorSafe(String path, TextureRegion fallback) {
+                try {
+                        if (com.badlogic.gdx.Gdx.files.internal(path).exists()) {
+                                Texture t = new Texture(com.badlogic.gdx.Gdx.files.internal(path));
+                                calculateAndCacheColor(t, new TextureRegion(t));
+                                return new TextureRegion(t);
+                        }
+                } catch (Exception e) {
+                        // Silently fall back
+                }
+                // 回退到可行走地砖（保持视觉一致性直到素材准备好）
+                return fallback != null ? fallback : fallbackRegion;
+        }
+
+        /**
+         * 获取指定主题的可行走地砖纹理
+         * 
+         * @param theme 主题名称（Grassland, Desert, Ice, Jungle, Space, Dungeon）
+         * @return 对应主题的可行走地砖纹理
+         */
+        public TextureRegion getWalkableFloor(String theme) {
+                if (theme == null)
+                        return floorRegion;
+                switch (theme) {
+                        case "Grassland":
+                                return floorGrassland != null ? floorGrassland : floorRegion;
+                        case "Desert":
+                                return floorDesert != null ? floorDesert : floorRegion;
+                        case "Ice":
+                                return floorIce != null ? floorIce : floorRegion;
+                        case "Jungle":
+                                return floorJungle != null ? floorJungle : floorRegion;
+                        case "Space":
+                                return floorSpace != null ? floorSpace : floorRegion;
+                        case "Dungeon":
+                                return floorDungeon != null ? floorDungeon : floorRegion;
+                        default:
+                                return floorRegion;
+                }
+        }
+
+        /**
+         * 获取指定主题的墙体底砖纹理
+         * 
+         * @param theme 主题名称（Grassland, Desert, Ice, Jungle, Space, Dungeon）
+         * @return 对应主题的墙体底砖纹理（若未加载则回退到可行走地砖）
+         */
+        public TextureRegion getWallBaseFloor(String theme) {
+                if (theme == null)
+                        return floorWallBaseDungeon != null ? floorWallBaseDungeon : floorRegion;
+                switch (theme) {
+                        case "Grassland":
+                                return floorWallBaseGrassland != null ? floorWallBaseGrassland
+                                                : getWalkableFloor(theme);
+                        case "Desert":
+                                return floorWallBaseDesert != null ? floorWallBaseDesert : getWalkableFloor(theme);
+                        case "Ice":
+                                return floorWallBaseIce != null ? floorWallBaseIce : getWalkableFloor(theme);
+                        case "Jungle":
+                                return floorWallBaseJungle != null ? floorWallBaseJungle : getWalkableFloor(theme);
+                        case "Space":
+                                return floorWallBaseSpace != null ? floorWallBaseSpace : getWalkableFloor(theme);
+                        case "Dungeon":
+                                return floorWallBaseDungeon != null ? floorWallBaseDungeon : getWalkableFloor(theme);
+                        default:
+                                return floorWallBaseDungeon != null ? floorWallBaseDungeon : floorRegion;
                 }
         }
 
