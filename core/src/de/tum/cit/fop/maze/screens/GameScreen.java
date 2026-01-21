@@ -57,6 +57,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
     private GameHUD hud;
     private de.tum.cit.fop.maze.utils.TextureManager textureManager;
     private de.tum.cit.fop.maze.utils.MazeRenderer mazeRenderer;
+    private de.tum.cit.fop.maze.utils.AttackRangeRenderer attackRangeRenderer;
     private de.tum.cit.fop.maze.utils.FogRenderer fogRenderer;
 
     // --- Developer Console ---
@@ -98,6 +99,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         textureManager = new de.tum.cit.fop.maze.utils.TextureManager(game.getAtlas());
         mazeRenderer = new de.tum.cit.fop.maze.utils.MazeRenderer(game.getSpriteBatch(), textureManager);
         fogRenderer = new de.tum.cit.fop.maze.utils.FogRenderer(game.getSpriteBatch());
+        attackRangeRenderer = new de.tum.cit.fop.maze.utils.AttackRangeRenderer();
 
         this.currentLevelPath = "maps/level-1.properties";
         boolean isLoaded = false;
@@ -133,6 +135,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         this.textureManager = new de.tum.cit.fop.maze.utils.TextureManager(game.getAtlas());
         this.mazeRenderer = new de.tum.cit.fop.maze.utils.MazeRenderer(game.getSpriteBatch(), textureManager);
         this.fogRenderer = new de.tum.cit.fop.maze.utils.FogRenderer(game.getSpriteBatch());
+        this.attackRangeRenderer = new de.tum.cit.fop.maze.utils.AttackRangeRenderer();
 
         initGameWorld(this.currentLevelPath);
 
@@ -641,6 +644,23 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
 
         // 6. Render Player
         renderPlayer(player);
+
+        // 6.1 Render Attack Range Indicator (攻击范围可视化)
+        if (player.isAttacking()) {
+            game.getSpriteBatch().end();  // 暂停 SpriteBatch 以使用 ShapeRenderer
+            Weapon currentWeapon = player.getCurrentWeapon();
+            if (currentWeapon != null && !currentWeapon.isRanged()) {
+                float total = player.getAttackAnimTotalDuration();
+                if (total <= 0) total = 0.2f;
+                float elapsed = total - player.getAttackAnimTimer();
+                float progress = elapsed / total;
+                attackRangeRenderer.render(camera, player.getX(), player.getY(),
+                        gameWorld.getPlayerDirection(), currentWeapon.getRange(),
+                        currentWeapon.isRanged(), progress);
+            }
+            game.getSpriteBatch().begin();  // 恢复 SpriteBatch
+            game.getSpriteBatch().setProjectionMatrix(camera.combined);
+        }
 
         // 6.5 Render Projectiles (队友功能: 弹道渲染)
         for (de.tum.cit.fop.maze.model.Projectile p : gameWorld.getProjectiles()) {
@@ -1396,6 +1416,8 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
             hud.dispose();
         if (fogRenderer != null)
             fogRenderer.dispose();
+        if (attackRangeRenderer != null)
+            attackRangeRenderer.dispose();
         if (grayscaleShader != null)
             grayscaleShader.dispose();
     }
