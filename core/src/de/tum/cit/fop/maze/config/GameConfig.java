@@ -73,4 +73,21 @@ public class GameConfig {
 
     /** 每张地图最少宝箱数 */
     public static final int CHEST_MIN_COUNT = 3;
+
+    // ==================== 实时渲染优化配置 ====================
+
+    /** 空间索引格子大小（格子单位） */
+    public static final int SPATIAL_CELL_SIZE = 8;
+
+    /** 实体更新半径（格子单位）- 与相机无关 */
+    public static final float ENTITY_UPDATE_RADIUS = 25f;
+
+    /** 实体渲染半径（格子单位）- 与相机无关，约等于屏幕对角线一半 */
+    public static final float ENTITY_RENDER_RADIUS = 15f;
+
+    /** 敌人追踪激活半径（格子单位） */
+    public static final float ENEMY_CHASE_RADIUS = 15f;
+
+    /** 敌人巡逻激活半径（格子单位）- 超出则休眠 */
+    public static final float ENEMY_PATROL_RADIUS = 20f;
 }

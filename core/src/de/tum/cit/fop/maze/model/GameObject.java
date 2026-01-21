@@ -4,7 +4,7 @@ package de.tum.cit.fop.maze.model;
  * 所有游戏实体的基类
  * 对应文档要求：Inheriting from at least one common superclass
  */
-public abstract class GameObject {
+public abstract class GameObject implements Positioned {
     // 坐标使用 float，方便平滑移动，但地图解析时通常是整数
     protected float x;
     protected float y;
