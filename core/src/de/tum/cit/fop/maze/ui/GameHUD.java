@@ -245,6 +245,7 @@ public class GameHUD implements Disposable {
             // Healed
             currentLives = actualLives;
             isHeartAnimating = false;
+            lastRenderedLiveCount = -1; // 强制重建心形表格以显示增加的生命
         }
 
         if (isHeartAnimating) {

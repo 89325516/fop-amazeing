@@ -194,25 +194,25 @@ public class ChestReward {
     public String getDisplayName() {
         switch (type) {
             case WEAPON:
-                return payload instanceof Weapon ? ((Weapon) payload).getName() : "神秘武器";
+                return payload instanceof Weapon ? ((Weapon) payload).getName() : "Mystery Weapon";
             case COIN:
-                return value + " 金币";
+                return "Coins " + value;
             case HEALTH:
-                return "恢复 " + value + " 点生命";
+                return "Health " + value;
             case INVINCIBILITY:
-                return "无敌 " + value + " 秒";
+                return "Invincibility " + value + " s";
             case MEDKIT:
-                return "急救包 (+1 生命)";
+                return "Medkit";
             case SPEED_BUFF:
-                return "极速 " + value + " 秒";
+                return "Speed " + value + " s";
             case RAGE_BUFF:
-                return "狂暴 " + value + " 秒";
+                return "Rage " + value + " s";
             case SHIELD_BUFF:
-                return "护盾 (抵挡一次伤害)";
+                return "Shield";
             case EMP:
-                return "电磁脉冲 (全屏清场)";
+                return "EMP";
             default:
-                return "未知奖励";
+                return "Unknown Reward";
         }
     }
 
