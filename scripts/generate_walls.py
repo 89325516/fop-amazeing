@@ -19,11 +19,25 @@ def generate_walls(top_path, body_path, output_dir, theme_name, visual_height_li
         os.makedirs(output_dir)
 
     try:
-        top_img = Image.open(top_path).convert("RGBA")
-        body_img = Image.open(body_path).convert("RGBA")
+        top_img = Image.open(top_path).convert("RGBA").resize((16, 16), Image.LANCZOS)
+        body_img = Image.open(body_path).convert("RGBA").resize((16, 16), Image.LANCZOS)
     except Exception as e:
         print(f"Error loading images: {e}")
         return
+
+    # Function to calculate average color of visible pixels
+    def get_solid_avg_color(img):
+        # Weight RGB by Alpha
+        data = list(img.getdata())
+        r_total, g_total, b_total, count = 0, 0, 0, 0
+        for px in data:
+            if px[3] > 10: # Ignore totally transparent
+                r_total += px[0]
+                g_total += px[1]
+                b_total += px[2]
+                count += 1
+        if count == 0: return (128, 128, 128, 255)
+        return (r_total // count, g_total // count, b_total // count, 255)
 
     # Standard sizes from TextureManager.java
     # { 2, 2 }, { 3, 2 }, { 2, 3 }, { 2, 4 }, { 4, 2 }, { 3, 3 }, { 4, 4 }
@@ -32,6 +46,10 @@ def generate_walls(top_path, body_path, output_dir, theme_name, visual_height_li
     ]
     
     TILE_SIZE = 16
+    
+    # Calculate average color from Top Image for solid filling (Standard Mode)
+    avg_color = get_solid_avg_color(top_img)
+    solid_fill = Image.new("RGBA", (TILE_SIZE, TILE_SIZE), avg_color)
     
     # Check if we should use "Structure Mode" (Stretch/Fit) instead of tiling
     # This is useful for organic/large objects like Trees (Jungle) or Rocks
@@ -92,8 +110,12 @@ def generate_walls(top_path, body_path, output_dir, theme_name, visual_height_li
             canvas = Image.new("RGBA", (img_w, img_h))
 
             # 1. Draw Top Row (y=0) - The "Cap" (SHIFTED DOWN by 8px)
+            # Fill with Avg Color MASKED by Top Image Alpha
             cap_y = TILE_SIZE // 2
             for x in range(w_tiles):
+                # Background Fill (Masked so it doesn't fill transparent corners)
+                canvas.paste(solid_fill, (x * TILE_SIZE, cap_y), mask=top_img)
+                # Texture
                 canvas.paste(body_img, (x * TILE_SIZE, cap_y))
                 canvas.paste(top_img, (x * TILE_SIZE, cap_y), top_img)
 
@@ -101,14 +123,19 @@ def generate_walls(top_path, body_path, output_dir, theme_name, visual_height_li
             for y in range(1, h_tiles + 1):
                 dest_y = (y * TILE_SIZE) - (TILE_SIZE // 2)
                 for x in range(w_tiles):
+                    # Background Fill (Solid)
+                    canvas.paste(solid_fill, (x * TILE_SIZE, dest_y))
+                    # Texture
                     canvas.paste(body_img, (x * TILE_SIZE, dest_y))
                     canvas.paste(top_img, (x * TILE_SIZE, dest_y), top_img)
                     
             # 3. Fill Bottom Gap (8px)
             body_top_half = body_img.crop((0, 0, TILE_SIZE, TILE_SIZE // 2))
+            solid_half = solid_fill.crop((0, 0, TILE_SIZE, TILE_SIZE // 2))
             filler_y = h_tiles * TILE_SIZE + (TILE_SIZE // 2)
             
             for x in range(w_tiles):
+                canvas.paste(solid_half, (x * TILE_SIZE, filler_y))
                 canvas.paste(body_top_half, (x * TILE_SIZE, filler_y))
 
         # Save as v1
