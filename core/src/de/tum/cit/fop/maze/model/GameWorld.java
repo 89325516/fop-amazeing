@@ -611,6 +611,8 @@ public class GameWorld {
                     if (Math.abs(angleDiff) <= 90 || dist < 0.5f) {
                         int totalDamage = currentWeapon.getDamage() + player.getDamageBonus();
 
+                        // Set damage source for blood particle direction (include knockback strength)
+                        e.setDamageSource(player.getX(), player.getY(), player.getKnockbackMultiplier());
                         // Apply damage with damage type consideration
                         e.takeDamage(totalDamage, currentWeapon.getDamageType());
                         if (e.getHealth() > 0) {
@@ -1011,6 +1013,27 @@ public class GameWorld {
                         }
                         floatingTexts.add(new FloatingText(e.getX(), e.getY(), "-" + p.getDamage(), Color.ORANGE));
                         AudioManager.getInstance().playSound("hit");
+
+                        // === Ranged Knockback Logic ===
+                        // Calculate distance traveled to apply falloff
+                        float distTraveled = Vector2.dst(p.getStartX(), p.getStartY(), p.getX(), p.getY());
+
+                        // Base Knockback depends on weapon (Projectile usually inherits player bonus or
+                        // weapon stats)
+                        // Here we use a base value + decay
+                        float maxRange = 10.0f; // Distance where knockback becomes minimum
+                        float decayFactor = MathUtils.clamp(1.0f - (distTraveled / maxRange), 0.2f, 1.0f);
+
+                        // Apply Knockback
+                        // Use projectile position as source so enemy flies away from impact (or away
+                        // from shooter?)
+                        // Usually "away from bullet" means bullet velocity direction.
+                        // But setDamageSource expects a point. Using Projectile current pos is good
+                        // approximation.
+                        e.setDamageSource(p.getX(), p.getY(), 1.0f); // Update last damage source for blood particles
+
+                        float knockbackStrength = 1.5f * decayFactor; // Base 1.5f strength
+                        e.knockback(p.getX(), p.getY(), knockbackStrength, collisionManager);
 
                         if (e.isDead() && !e.isRemovable()) {
                             handleEnemyDeath(e);

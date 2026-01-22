@@ -31,6 +31,7 @@ import de.tum.cit.fop.maze.ui.GameHUD;
 import de.tum.cit.fop.maze.ui.InventoryUI;
 import de.tum.cit.fop.maze.ui.ChestInteractUI;
 import de.tum.cit.fop.maze.utils.AchievementManager;
+import de.tum.cit.fop.maze.utils.BloodParticleSystem;
 import de.tum.cit.fop.maze.utils.AchievementUnlockInfo;
 import de.tum.cit.fop.maze.utils.MapLoader;
 import de.tum.cit.fop.maze.utils.SaveManager;
@@ -60,6 +61,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
     private de.tum.cit.fop.maze.utils.MazeRenderer mazeRenderer;
     private de.tum.cit.fop.maze.utils.AttackRangeRenderer attackRangeRenderer;
     private de.tum.cit.fop.maze.utils.FogRenderer fogRenderer;
+    private BloodParticleSystem bloodParticles;
 
     // --- Developer Console ---
     private de.tum.cit.fop.maze.utils.DeveloperConsole developerConsole;
@@ -216,6 +218,21 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
                     de.tum.cit.fop.maze.utils.AudioManager.BGM_BOSS);
         } else {
             de.tum.cit.fop.maze.utils.AudioManager.getInstance().playThemeBgm(map.getTheme());
+        }
+
+        // === Initialize Blood Particle System ===
+        if (bloodParticles == null) {
+            bloodParticles = new BloodParticleSystem();
+        } else {
+            bloodParticles.clear();
+        }
+        // Wire up damage listeners
+        gameWorld.getPlayer()
+                .setDamageListener((x, y, amount, dirX, dirY, knockback) -> bloodParticles.spawn(x, y, amount, dirX,
+                        dirY, knockback));
+        for (Enemy enemy : gameWorld.getEnemies()) {
+            enemy.setDamageListener(
+                    (x, y, amount, dirX, dirY, knockback) -> bloodParticles.spawn(x, y, amount, dirX, dirY, knockback));
         }
 
         setInputProcessors();
@@ -732,7 +749,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
 
         // 2. Floating Texts
         com.badlogic.gdx.graphics.g2d.BitmapFont font = game.getSkin().getFont("font");
-        font.getData().setScale(0.5f);
+        font.getData().setScale(0.3f);
         for (FloatingText ft : gameWorld.getFloatingTexts()) {
             font.setColor(ft.color);
             font.draw(game.getSpriteBatch(), ft.text, ft.x * UNIT_SCALE, ft.y * UNIT_SCALE + 16);
@@ -750,6 +767,10 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         fogRenderer.render(playerCenterX, playerCenterY, camera);
 
         game.getSpriteBatch().end();
+
+        // === Render Blood Particles (after main batch, before HUD) ===
+        bloodParticles.update(delta);
+        bloodParticles.render(camera.combined);
 
         hud.getStage().getViewport().apply();
         hud.update(delta);

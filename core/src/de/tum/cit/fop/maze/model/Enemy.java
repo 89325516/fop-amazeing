@@ -3,6 +3,7 @@ package de.tum.cit.fop.maze.model;
 import de.tum.cit.fop.maze.config.GameConfig;
 import de.tum.cit.fop.maze.config.GameSettings;
 import de.tum.cit.fop.maze.model.weapons.WeaponEffect;
+import de.tum.cit.fop.maze.utils.BloodParticleSystem;
 import de.tum.cit.fop.maze.utils.GameLogger;
 import java.util.Random;
 
@@ -59,6 +60,9 @@ public class Enemy extends GameObject {
     private float stunTimer = 0f;
     private float hurtTimer = 0f; // Red flash timer
     private float deathTimer = 5.0f; // Dead body persists for 5s
+    private float lastDamageSourceX = 0f; // 最后一次伤害来源 X
+    private float lastDamageSourceY = 0f; // 最后一次伤害来源 Y
+    private float lastKnockbackStrength = 1.0f; // 最后一次击退强度
 
     // Knockback
     private float knockbackVx = 0f;
@@ -105,6 +109,9 @@ public class Enemy extends GameObject {
     // Custom Element Support
     private String customElementId = null;
 
+    // Blood particle listener (for visual damage feedback)
+    private BloodParticleSystem.DamageListener damageListener = null;
+
     public void setCustomElementId(String id) {
         this.customElementId = id;
     }
@@ -115,6 +122,19 @@ public class Enemy extends GameObject {
 
     public String getCustomElementId() {
         return customElementId;
+    }
+
+    public void setDamageListener(BloodParticleSystem.DamageListener listener) {
+        this.damageListener = listener;
+    }
+
+    /**
+     * 设置伤害来源位置和击退强度（用于血液粒子方向和扩散）
+     */
+    public void setDamageSource(float sourceX, float sourceY, float knockbackStrength) {
+        this.lastDamageSourceX = sourceX;
+        this.lastDamageSourceY = sourceY;
+        this.lastKnockbackStrength = knockbackStrength;
     }
 
     public Enemy(float x, float y) {
@@ -191,6 +211,17 @@ public class Enemy extends GameObject {
 
         if (remainingDamage > 0) {
             this.health -= remainingDamage;
+            // Trigger blood particle effect - 粒子从伤害源向外飞溅（远离攻击者）
+            if (damageListener != null) {
+                float dirX = x - lastDamageSourceX;
+                float dirY = y - lastDamageSourceY;
+                float len = (float) Math.sqrt(dirX * dirX + dirY * dirY);
+                if (len > 0) {
+                    dirX /= len;
+                    dirY /= len;
+                }
+                damageListener.onDamage(x + 0.5f, y + 0.5f, remainingDamage, dirX, dirY, lastKnockbackStrength);
+            }
         }
 
         this.hurtTimer = 0.2f; // Flash red for 0.2s

@@ -121,6 +121,9 @@ public class EndlessGameScreen implements Screen {
     private ShaderProgram grayscaleShader;
     private com.badlogic.gdx.graphics.glutils.ShapeRenderer shapeRenderer;
 
+    // === 溅血粒子系统 ===
+    private BloodParticleSystem bloodParticles;
+
     public EndlessGameScreen(MazeRunnerGame game) {
         this(game, null);
     }
@@ -176,6 +179,9 @@ public class EndlessGameScreen implements Screen {
 
         // 宝箱系统
         chunkChests = new HashMap<>();
+
+        // 溅血粒子系统
+        bloodParticles = new BloodParticleSystem();
 
         // 设置系统监听器
         setupSystemListeners();
@@ -235,6 +241,9 @@ public class EndlessGameScreen implements Screen {
         // 玩家出生在地图中心
         Vector2 spawnPoint = mapGenerator.getPlayerSpawnPoint();
         player = new Player(spawnPoint.x, spawnPoint.y);
+        // 绑定玩家溅血粒子监听器
+        player.setDamageListener(
+                (x, y, amount, dirX, dirY, knockback) -> bloodParticles.spawn(x, y, amount, dirX, dirY, knockback));
 
         // 加载初始区块
         chunkManager.updateActiveChunks(player.getX(), player.getY());
@@ -243,6 +252,9 @@ public class EndlessGameScreen implements Screen {
     private void loadState(EndlessGameState state) {
         player = new Player(state.playerX, state.playerY);
         player.setLives(state.playerLives);
+        // 绑定玩家溅血粒子监听器
+        player.setDamageListener(
+                (x, y, amount, dirX, dirY, knockback) -> bloodParticles.spawn(x, y, amount, dirX, dirY, knockback));
 
         // 恢复系统状态
         comboSystem.setCurrentCombo(state.currentCombo);
@@ -679,6 +691,8 @@ public class EndlessGameScreen implements Screen {
             float dist = Vector2.dst(player.getX(), player.getY(), enemy.getX(), enemy.getY());
             if (dist <= attackRange) {
                 int damage = (int) attackDamage;
+                // Set damage source for blood particle direction (include knockback strength)
+                enemy.setDamageSource(player.getX(), player.getY(), player.getKnockbackMultiplier());
                 // Apply damage with damage type consideration
                 int oldHealth = enemy.getHealth();
                 enemy.takeDamage(damage, weapon.getDamageType());
@@ -894,6 +908,9 @@ public class EndlessGameScreen implements Screen {
 
         enemies.add(enemy);
         enemyGrid.insert(enemy, spawnX, spawnY); // 插入空间网格
+        // 绑定溅血粒子监听器
+        enemy.setDamageListener(
+                (x, y, amount, dirX, dirY, knockback) -> bloodParticles.spawn(x, y, amount, dirX, dirY, knockback));
     }
 
     private void spawnBossNearPlayer() {
@@ -920,6 +937,9 @@ public class EndlessGameScreen implements Screen {
 
         enemies.add(boss);
         enemyGrid.insert(boss, spawnX, spawnY); // 插入空间网格
+        // 绑定溅血粒子监听器
+        boss.setDamageListener(
+                (x, y, amount, dirX, dirY, knockback) -> bloodParticles.spawn(x, y, amount, dirX, dirY, knockback));
 
         floatingTexts.add(new FloatingText(
                 spawnX, spawnY + 1, "BOSS!", Color.RED));
@@ -1036,7 +1056,7 @@ public class EndlessGameScreen implements Screen {
 
         // 渲染浮动文字
         com.badlogic.gdx.graphics.g2d.BitmapFont font = game.getSkin().getFont("font");
-        font.getData().setScale(0.5f);
+        font.getData().setScale(0.3f);
         for (FloatingText ft : floatingTexts) {
             font.setColor(ft.color);
             font.draw(game.getSpriteBatch(), ft.text, ft.x * UNIT_SCALE, ft.y * UNIT_SCALE + 16);
@@ -1062,6 +1082,10 @@ public class EndlessGameScreen implements Screen {
         fogRenderer.render(pcX, pcY, camera);
 
         game.getSpriteBatch().end();
+
+        // === 渲染溅血粒子 ===
+        bloodParticles.update(Gdx.graphics.getDeltaTime());
+        bloodParticles.render(camera.combined);
     }
 
     // [Helper] Render a single wall (Full render)

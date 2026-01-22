@@ -63,8 +63,23 @@ public class Projectile extends GameObject {
         this.width = 0.3f;
         this.height = 0.3f;
 
+        // Create a new field to store start position
+        this.startX = x;
+        this.startY = y;
+
         // 计算旋转角度（指向飞行方向）
         this.rotation = (float) Math.atan2(vy, vx);
+    }
+
+    private final float startX;
+    private final float startY;
+
+    public float getStartX() {
+        return startX;
+    }
+
+    public float getStartY() {
+        return startY;
     }
 
     /**

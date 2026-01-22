@@ -7,6 +7,7 @@ import de.tum.cit.fop.maze.model.weapons.Weapon;
 import de.tum.cit.fop.maze.model.weapons.Sword;
 import de.tum.cit.fop.maze.model.weapons.Crossbow;
 import de.tum.cit.fop.maze.model.weapons.Wand;
+import de.tum.cit.fop.maze.utils.BloodParticleSystem;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -108,6 +109,9 @@ public class Player extends GameObject {
     // === Cheat Flags (for Developer Console) ===
     private boolean godMode = false;
     private boolean noClip = false;
+
+    // Blood particle listener (for visual damage feedback)
+    private BloodParticleSystem.DamageListener damageListener = null;
 
     // 碰撞箱大小 (接近 1.0)
     private static final float SIZE = 0.99f;
@@ -412,6 +416,12 @@ public class Player extends GameObject {
             this.lives -= remainingDamage;
             if (this.lives < 0)
                 this.lives = 0;
+            // Trigger blood particle effect - 随机方向（玩家受伤无明确方向）
+            if (damageListener != null) {
+                float angle = (float) (Math.random() * Math.PI * 2);
+                damageListener.onDamage(x + 0.5f, y + 0.5f, remainingDamage,
+                        (float) Math.cos(angle), (float) Math.sin(angle), 1.0f);
+            }
         }
 
         // Trigger death animation if lives reach 0
@@ -424,6 +434,10 @@ public class Player extends GameObject {
         this.invincibilityTimer = GameSettings.playerInvincibilityDuration + invincibilityExtension;
         this.hurtTimer = 0.5f; // Red flash for 0.5s
         return true;
+    }
+
+    public void setDamageListener(BloodParticleSystem.DamageListener listener) {
+        this.damageListener = listener;
     }
 
     public void restoreHealth(int amount) {
