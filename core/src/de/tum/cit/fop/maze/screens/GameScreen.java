@@ -62,6 +62,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
     private de.tum.cit.fop.maze.utils.AttackRangeRenderer attackRangeRenderer;
     private de.tum.cit.fop.maze.utils.FogRenderer fogRenderer;
     private BloodParticleSystem bloodParticles;
+    private de.tum.cit.fop.maze.utils.DustParticleSystem dustParticles;
 
     // --- Developer Console ---
     private de.tum.cit.fop.maze.utils.DeveloperConsole developerConsole;
@@ -222,14 +223,18 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
 
         // === Initialize Blood Particle System ===
         if (bloodParticles == null) {
-            bloodParticles = new BloodParticleSystem();
+            this.bloodParticles = new BloodParticleSystem();
+            this.dustParticles = new de.tum.cit.fop.maze.utils.DustParticleSystem();
         } else {
             bloodParticles.clear();
         }
         // Wire up damage listeners
-        gameWorld.getPlayer()
-                .setDamageListener((x, y, amount, dirX, dirY, knockback) -> bloodParticles.spawn(x, y, amount, dirX,
-                        dirY, knockback));
+        // Wire up damage listeners (Player) [Correct Dark Blue Color]
+        gameWorld.getPlayer().setDamageListener(
+                (x, y, amount, dirX, dirY, knockback) -> bloodParticles.spawn(x, y, amount, dirX, dirY, knockback,
+                        new Color(0.0f, 0.0f, 0.5f, 1.0f)));
+
+        // Wire up damage listeners (Enemies)
         for (Enemy enemy : gameWorld.getEnemies()) {
             enemy.setDamageListener(
                     (x, y, amount, dirX, dirY, knockback) -> bloodParticles.spawn(x, y, amount, dirX, dirY, knockback));
@@ -446,6 +451,20 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
 
         mazeRenderer.renderFloor(gameMap, camera, currentFloor);
         game.getSpriteBatch().setColor(Color.WHITE); // Reset
+
+        game.getSpriteBatch().end();
+        // === Render Dust Particles (Behind entities, on top of floor) ===
+        dustParticles.update(delta);
+        if (player.isMoving() && !isPaused) {
+            // Spawn dust occasionally (random chance per frame)
+            if (Math.random() < 0.3f) {
+                String currentTheme = gameWorld.getGameMap().getTheme();
+                Color themeColor = getThemeColor(currentTheme);
+                dustParticles.spawn(player.getX(), player.getY(), themeColor);
+            }
+        }
+        dustParticles.render(camera.combined);
+        game.getSpriteBatch().begin();
 
         // 2. Render Static Dynamic Objects
         for (GameObject obj : gameMap.getDynamicObjects()) {
@@ -1496,6 +1515,8 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
             attackRangeRenderer.dispose();
         if (grayscaleShader != null)
             grayscaleShader.dispose();
+        if (dustParticles != null)
+            dustParticles.dispose();
     }
 
     @Override
@@ -1523,5 +1544,25 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
      */
     public GameWorld getGameWorld() {
         return gameWorld;
+    }
+
+    private Color getThemeColor(String theme) {
+        if (theme == null)
+            return Color.GRAY;
+        switch (theme.toLowerCase()) {
+            case "grassland":
+                return new Color(0.1f, 0.3f, 0.1f, 1f); // Darker Green
+            case "desert":
+                return new Color(0.8f, 0.7f, 0.4f, 1f); // Sand
+            case "ice":
+                return new Color(0.8f, 0.9f, 1.0f, 1f); // White/Blue
+            case "jungle":
+                return new Color(0.05f, 0.15f, 0.05f, 1f); // Very Dark Forest Green (Near Black)
+            case "space":
+                return new Color(0.2f, 0.1f, 0.4f, 1f); // Purple
+            case "dungeon":
+            default:
+                return new Color(0.4f, 0.4f, 0.4f, 1f); // Gray
+        }
     }
 }

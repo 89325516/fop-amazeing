@@ -455,35 +455,8 @@ public class GameWorld {
      * This ensures the player always rests on a tile center, not between tiles.
      */
     private void snapPlayerToGrid(float delta) {
-        float snapSpeed = 25.0f * delta; // Increased from 15.0f to 25.0f for snappier feel
-
-        float targetX = Math.round(player.getX());
-        float targetY = Math.round(player.getY());
-
-        float dx = targetX - player.getX();
-        float dy = targetY - player.getY();
-
-        // Already snapped
-        if (Math.abs(dx) < 0.01f && Math.abs(dy) < 0.01f) {
-            player.setPosition(targetX, targetY);
-            return;
-        }
-
-        // Move towards grid position (check collision)
-        float moveX = Math.signum(dx) * Math.min(Math.abs(dx), snapSpeed);
-        float moveY = Math.signum(dy) * Math.min(Math.abs(dy), snapSpeed);
-
-        // Apply snap movement with collision check
-        if (Math.abs(moveX) > 0.001f) {
-            if (canMoveToPosition(player.getX() + moveX, player.getY())) {
-                player.move(moveX, 0);
-            }
-        }
-        if (Math.abs(moveY) > 0.001f) {
-            if (canMoveToPosition(player.getX(), player.getY() + moveY)) {
-                player.move(0, moveY);
-            }
-        }
+        // [User Request] Disable grid snapping for arbitrary positioning
+        return;
     }
 
     /**

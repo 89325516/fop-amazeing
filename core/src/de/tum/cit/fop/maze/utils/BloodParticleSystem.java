@@ -46,7 +46,8 @@ public class BloodParticleSystem {
          * @param intensity 强度系数 (1.0 = 基础, >1.0 = 更夸张)
          * @param spread    扩散角度系数 (1.0 = 基础, >1.0 = 更大范围)
          */
-        BloodParticle(float spawnX, float spawnY, float dirX, float dirY, float intensity, float spread) {
+        BloodParticle(float spawnX, float spawnY, float dirX, float dirY, float intensity, float spread,
+                Color customColor) {
             this.x = spawnX;
             this.y = spawnY;
 
@@ -69,10 +70,18 @@ public class BloodParticleSystem {
             this.size = baseSize * intensity;
 
             // 颜色 (红色系, 带轻微变化)
-            float r = MathUtils.random(0.7f, 1.0f);
-            float g = MathUtils.random(0.0f, 0.15f);
-            float b = MathUtils.random(0.0f, 0.1f);
-            this.color = new Color(r, g, b, 1.0f);
+            if (customColor != null) {
+                this.color = new Color(customColor); // Copy base color
+                // Slight variation for custom color
+                this.color.r = MathUtils.clamp(this.color.r + MathUtils.random(-0.1f, 0.1f), 0f, 1f);
+                this.color.g = MathUtils.clamp(this.color.g + MathUtils.random(-0.1f, 0.1f), 0f, 1f);
+                this.color.b = MathUtils.clamp(this.color.b + MathUtils.random(-0.1f, 0.1f), 0f, 1f);
+            } else {
+                float r = MathUtils.random(0.7f, 1.0f);
+                float g = MathUtils.random(0.0f, 0.15f);
+                float b = MathUtils.random(0.0f, 0.1f);
+                this.color = new Color(r, g, b, 1.0f);
+            }
         }
 
         /**
@@ -127,6 +136,11 @@ public class BloodParticleSystem {
      * @param knockbackStrength 击退强度 (影响扩散范围)
      */
     public void spawn(float x, float y, int damageAmount, float attackDirX, float attackDirY, float knockbackStrength) {
+        spawn(x, y, damageAmount, attackDirX, attackDirY, knockbackStrength, null);
+    }
+
+    public void spawn(float x, float y, int damageAmount, float attackDirX, float attackDirY, float knockbackStrength,
+            Color customColor) {
         // 伤害越高，粒子越多
         int baseCount = Math.min(damageAmount * PARTICLES_PER_DAMAGE, MAX_PARTICLES - particles.size);
         baseCount = Math.max(baseCount, 5); // 至少5个粒子
@@ -146,7 +160,8 @@ public class BloodParticleSystem {
             float offsetX = MathUtils.random(-4f, 4f) * spread;
             float offsetY = MathUtils.random(-4f, 4f) * spread;
             particles.add(
-                    new BloodParticle(pixelX + offsetX, pixelY + offsetY, attackDirX, attackDirY, intensity, spread));
+                    new BloodParticle(pixelX + offsetX, pixelY + offsetY, attackDirX, attackDirY, intensity, spread,
+                            customColor));
         }
     }
 

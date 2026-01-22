@@ -123,6 +123,7 @@ public class EndlessGameScreen implements Screen {
 
     // === 溅血粒子系统 ===
     private BloodParticleSystem bloodParticles;
+    private de.tum.cit.fop.maze.utils.DustParticleSystem dustParticles;
 
     public EndlessGameScreen(MazeRunnerGame game) {
         this(game, null);
@@ -182,6 +183,7 @@ public class EndlessGameScreen implements Screen {
 
         // 溅血粒子系统
         bloodParticles = new BloodParticleSystem();
+        dustParticles = new de.tum.cit.fop.maze.utils.DustParticleSystem();
 
         // 设置系统监听器
         setupSystemListeners();
@@ -242,8 +244,10 @@ public class EndlessGameScreen implements Screen {
         Vector2 spawnPoint = mapGenerator.getPlayerSpawnPoint();
         player = new Player(spawnPoint.x, spawnPoint.y);
         // 绑定玩家溅血粒子监听器
+        // 绑定玩家溅血粒子监听器
         player.setDamageListener(
-                (x, y, amount, dirX, dirY, knockback) -> bloodParticles.spawn(x, y, amount, dirX, dirY, knockback));
+                (x, y, amount, dirX, dirY, knockback) -> bloodParticles.spawn(x, y, amount, dirX, dirY, knockback,
+                        new Color(0.0f, 0.0f, 0.5f, 1.0f)));
 
         // 加载初始区块
         chunkManager.updateActiveChunks(player.getX(), player.getY());
@@ -1028,6 +1032,20 @@ public class EndlessGameScreen implements Screen {
             }
         }
 
+        // === Render Dust Particles (Behind entities, on top of floor) ===
+        game.getSpriteBatch().end();
+        dustParticles.update(Gdx.graphics.getDeltaTime());
+        if (player.isMoving() && !isPaused) {
+            // Spawn dust occasionally
+            if (Math.random() < 0.3f) {
+                // Endless mode default dirt color
+                Color themeColor = new Color(0.5f, 0.45f, 0.35f, 1f);
+                dustParticles.spawn(player.getX(), player.getY(), themeColor);
+            }
+        }
+        dustParticles.render(camera.combined);
+        game.getSpriteBatch().begin();
+
         // 2. 渲染实体 (Entities) - 玩家和敌人都在墙下层
         // 敌人
         for (Enemy e : enemies) {
@@ -1392,6 +1410,7 @@ public class EndlessGameScreen implements Screen {
         if (!player.isDead() && dir != 1 && dir != 2) {
             renderEquippedWeapon(player, dir);
         }
+
     }
 
     /**
@@ -1894,11 +1913,42 @@ public class EndlessGameScreen implements Screen {
 
     @Override
     public void dispose() {
+        if (textureManager != null)
+            textureManager.dispose();
         uiStage.dispose();
-        hud.dispose();
-        chunkManager.dispose();
-        if (grayscaleShader != null) {
+        if (hud != null)
+            hud.dispose();
+        if (mazeRenderer != null)
+            mazeRenderer.dispose();
+        if (fogRenderer != null)
+            fogRenderer.dispose();
+        if (shapeRenderer != null)
+            shapeRenderer.dispose();
+        if (grayscaleShader != null)
             grayscaleShader.dispose();
+        if (bloodParticles != null)
+            bloodParticles.dispose();
+        if (dustParticles != null)
+            dustParticles.dispose();
+    }
+
+    private Color getThemeColor(String theme) {
+        if (theme == null)
+            return Color.GRAY;
+        switch (theme.toLowerCase()) {
+            case "grassland":
+                return new Color(0.1f, 0.3f, 0.1f, 1f); // Darker Green
+            case "desert":
+                return new Color(0.8f, 0.7f, 0.4f, 1f); // Sand
+            case "ice":
+                return new Color(0.8f, 0.9f, 1.0f, 1f); // White/Blue
+            case "jungle":
+                return new Color(0.05f, 0.15f, 0.05f, 1f); // Very Dark Forest Green (Near Black)
+            case "space":
+                return new Color(0.2f, 0.1f, 0.4f, 1f); // Purple
+            case "dungeon":
+            default:
+                return new Color(0.4f, 0.4f, 0.4f, 1f); // Gray
         }
     }
 }
