@@ -981,7 +981,7 @@ public class GameWorld {
 
         // Small chance to also drop a potion (10%)
         if (Math.random() < 0.1f) {
-            gameMap.addGameObject(new Potion(e.getX() + 0.5f, e.getY()));
+            gameMap.addGameObject(Potion.createHealthPotion(e.getX() + 0.5f, e.getY()));
         }
     }
 

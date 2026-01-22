@@ -28,6 +28,7 @@ import de.tum.cit.fop.maze.model.*;
 import de.tum.cit.fop.maze.model.items.Potion;
 import de.tum.cit.fop.maze.model.weapons.Weapon;
 import de.tum.cit.fop.maze.ui.GameHUD;
+import de.tum.cit.fop.maze.ui.InventoryUI;
 import de.tum.cit.fop.maze.ui.ChestInteractUI;
 import de.tum.cit.fop.maze.utils.AchievementManager;
 import de.tum.cit.fop.maze.utils.AchievementUnlockInfo;
@@ -86,6 +87,11 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
 
     // === 玩家/武器朝向记忆 (队友功能) ===
     private int lastPlayerFacing = 3; // 记录最后水平朝向 (2=左, 3=右)
+
+    // === 背包系统 (Inventory System) ===
+    private InventorySystem inventorySystem;
+    private InventoryUI inventoryUI;
+    private boolean isInventoryOpen = false;
 
     public GameScreen(MazeRunnerGame game, String saveFilePath) {
         this.game = game;
@@ -185,8 +191,14 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
 
         if (hud != null)
             hud.dispose();
+
+        // === 初始化背包系统 ===
+        inventorySystem = new InventorySystem(gameWorld.getPlayer());
+        inventoryUI = new InventoryUI(uiStage, game.getSkin(), textureManager, inventorySystem);
+        inventoryUI.setOnCloseCallback(this::onInventoryClosed);
+
         hud = new GameHUD(game.getSpriteBatch(), gameWorld.getPlayer(), gameViewport, game.getSkin(), textureManager,
-                this::togglePause);
+                this::togglePause, this::toggleInventory);
 
         // Find Exit for HUD
         for (GameObject obj : map.getDynamicObjects()) {
@@ -352,7 +364,16 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         if (consoleJustClosed) {
             consoleJustClosed = false;
         } else if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
-            togglePause();
+            if (isInventoryOpen) {
+                toggleInventory(); // 关闭背包
+            } else {
+                togglePause();
+            }
+        }
+
+        // 背包快捷键检测
+        if (Gdx.input.isKeyJustPressed(GameSettings.KEY_INVENTORY)) {
+            toggleInventory();
         }
 
         Gdx.gl.glClearColor(0.1f, 0.1f, 0.1f, 1);
@@ -1397,6 +1418,27 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         isPaused = !isPaused;
         pauseTable.setVisible(isPaused);
         setInputProcessors();
+    }
+
+    /**
+     * 切换背包界面显示状态
+     */
+    private void toggleInventory() {
+        isInventoryOpen = !isInventoryOpen;
+        inventoryUI.setVisible(isInventoryOpen);
+        if (isInventoryOpen) {
+            isPaused = true; // 打开背包时暂停游戏
+        } else {
+            isPaused = false;
+        }
+    }
+
+    /**
+     * 背包关闭回调
+     */
+    private void onInventoryClosed() {
+        isInventoryOpen = false;
+        isPaused = false;
     }
 
     @Override

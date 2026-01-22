@@ -552,7 +552,7 @@ public class EndlessGameScreen implements Screen {
     private void spawnDrops(Enemy enemy) {
         // 生命药水掉落 (10%)
         if (spawnRandom.nextFloat() < EndlessModeConfig.HEALTH_POTION_DROP_RATE) {
-            Potion potion = new Potion(enemy.getX(), enemy.getY());
+            Potion potion = Potion.createHealthPotion(enemy.getX(), enemy.getY());
             potions.add(potion);
             GameLogger.debug("EndlessGameScreen", "Potion dropped at " + enemy.getX() + ", " + enemy.getY());
         }

@@ -77,6 +77,7 @@ public class GameSettings {
     public static int KEY_SWITCH_WEAPON;
     public static int KEY_CONSOLE;
     public static int KEY_CONSOLE_ALT;
+    public static int KEY_INVENTORY;  // 背包快捷键
 
     // ==================== 保存/加载用户默认值 ====================
 
@@ -112,6 +113,7 @@ public class GameSettings {
 
         KEY_CONSOLE = prefs.getInteger("key_console", com.badlogic.gdx.Input.Keys.GRAVE);
         KEY_CONSOLE_ALT = prefs.getInteger("key_console_alt", com.badlogic.gdx.Input.Keys.F3);
+        KEY_INVENTORY = prefs.getInteger("key_inventory", com.badlogic.gdx.Input.Keys.I);
 
         // 同时设置当前值
         resetToUserDefaults();
@@ -167,6 +169,7 @@ public class GameSettings {
         prefs.putInteger("key_switch_weapon", KEY_SWITCH_WEAPON);
         prefs.putInteger("key_console", KEY_CONSOLE);
         prefs.putInteger("key_console_alt", KEY_CONSOLE_ALT);
+        prefs.putInteger("key_inventory", KEY_INVENTORY);
         prefs.flush();
     }
 
@@ -260,6 +263,7 @@ public class GameSettings {
     /**
      * @deprecated 使用 resetToUserDefaults() 代替
      */
+    @Deprecated
     public static void resetToDefaults() {
         resetToUserDefaults();
     }

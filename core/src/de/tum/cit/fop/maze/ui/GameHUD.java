@@ -43,6 +43,7 @@ public class GameHUD implements Disposable {
     private Table inventoryTable;
     private Image arrowImage;
     private TextButton settingsButton;
+    private TextButton inventoryButton;
     private float targetX, targetY;
 
     // Animation State
@@ -86,7 +87,7 @@ public class GameHUD implements Disposable {
     private AchievementPopup achievementPopup;
 
     public GameHUD(SpriteBatch batch, Player player, Viewport gameViewport, Skin skin, TextureManager tm,
-            Runnable onSettingsClicked) {
+            Runnable onSettingsClicked, Runnable onInventoryClicked) {
         this.player = player;
         this.gameViewport = gameViewport;
         this.textureManager = tm;
@@ -144,6 +145,17 @@ public class GameHUD implements Disposable {
         Label.LabelStyle armorStyle = new Label.LabelStyle(skin.getFont("font"), Color.CYAN);
         armorLabel = new Label("", armorStyle);
         topTable.add(armorLabel).right().padRight(20);
+
+        // Inventory Button (NEW) - 背包按钮
+        inventoryButton = new TextButton("Bag", skin);
+        inventoryButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                if (onInventoryClicked != null)
+                    onInventoryClicked.run();
+            }
+        });
+        topTable.add(inventoryButton).right().width(80).height(70).padRight(10);
 
         // Menu Button (Right) - ENLARGED
         settingsButton = new TextButton("Menu", skin);
