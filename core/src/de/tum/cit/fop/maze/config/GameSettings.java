@@ -65,6 +65,10 @@ public class GameSettings {
     public static float cameraZoom = DEFAULT_CAMERA_ZOOM;
     public static boolean showAttackRange = true;
 
+    // === 鼠标瞄准设置 (Mouse Aiming) ===
+    public static boolean useMouseAiming = false; // 默认关闭
+    private static boolean userUseMouseAiming = false;
+
     // Keys (Default WASD/ARROWS logic handled in game, but here is preferred
     // primary)
     // Actually typically we store int keycodes.
@@ -77,7 +81,7 @@ public class GameSettings {
     public static int KEY_SWITCH_WEAPON;
     public static int KEY_CONSOLE;
     public static int KEY_CONSOLE_ALT;
-    public static int KEY_INVENTORY;  // 背包快捷键
+    public static int KEY_INVENTORY; // 背包快捷键
 
     // ==================== 保存/加载用户默认值 ====================
 
@@ -102,6 +106,7 @@ public class GameSettings {
 
         userFogEnabled = prefs.getBoolean("fogEnabled", false);
         userShowAttackRange = prefs.getBoolean("showAttackRange", true);
+        userUseMouseAiming = prefs.getBoolean("useMouseAiming", false); // 默认关闭
 
         KEY_UP = prefs.getInteger("key_up", com.badlogic.gdx.Input.Keys.UP);
         KEY_DOWN = prefs.getInteger("key_down", com.badlogic.gdx.Input.Keys.DOWN);
@@ -151,6 +156,7 @@ public class GameSettings {
         prefs.putFloat("cameraZoom", userCameraZoom);
         prefs.putBoolean("fogEnabled", userFogEnabled);
         prefs.putBoolean("showAttackRange", userShowAttackRange);
+        prefs.putBoolean("useMouseAiming", userUseMouseAiming);
         prefs.flush();
     }
 
@@ -189,6 +195,7 @@ public class GameSettings {
         fogEnabled = userFogEnabled;
 
         showAttackRange = userShowAttackRange;
+        useMouseAiming = userUseMouseAiming;
         cameraZoom = DEFAULT_CAMERA_ZOOM; // Force new default zoom (0.67 for 15x15 view)
     }
 
@@ -213,6 +220,16 @@ public class GameSettings {
 
     public static boolean isShowAttackRange() {
         return showAttackRange;
+    }
+
+    // ==================== 鼠标瞄准模式 (Mouse Aiming) ====================
+    public static void setUseMouseAiming(boolean enabled) {
+        useMouseAiming = enabled;
+        userUseMouseAiming = enabled;
+    }
+
+    public static boolean isUseMouseAiming() {
+        return useMouseAiming;
     }
 
     /**

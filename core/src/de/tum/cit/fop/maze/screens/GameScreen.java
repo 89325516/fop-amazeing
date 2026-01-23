@@ -61,6 +61,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
     private de.tum.cit.fop.maze.utils.MazeRenderer mazeRenderer;
     private de.tum.cit.fop.maze.utils.AttackRangeRenderer attackRangeRenderer;
     private de.tum.cit.fop.maze.utils.FogRenderer fogRenderer;
+    private de.tum.cit.fop.maze.utils.CrosshairRenderer crosshairRenderer;
     private BloodParticleSystem bloodParticles;
     private de.tum.cit.fop.maze.utils.DustParticleSystem dustParticles;
 
@@ -225,6 +226,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         if (bloodParticles == null) {
             this.bloodParticles = new BloodParticleSystem();
             this.dustParticles = new de.tum.cit.fop.maze.utils.DustParticleSystem();
+            this.crosshairRenderer = new de.tum.cit.fop.maze.utils.CrosshairRenderer();
         } else {
             bloodParticles.clear();
         }
@@ -256,7 +258,44 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         // 3. HUD Stage (On-screen controls)
         multiplexer.addProcessor(hud.getStage());
 
+        // 4. Mouse Input for Aiming and Attack
+        multiplexer.addProcessor(getMouseInputProcessor());
+
         Gdx.input.setInputProcessor(multiplexer);
+    }
+
+    /**
+     * 鼠标输入处理器 - 处理攻击和武器切换
+     */
+    private com.badlogic.gdx.InputProcessor getMouseInputProcessor() {
+        return new com.badlogic.gdx.InputAdapter() {
+            @Override
+            public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+                // 控制台/暂停/背包打开时不处理游戏输入
+                if (isConsoleOpen || isPaused || isInventoryOpen)
+                    return false;
+
+                if (button == com.badlogic.gdx.Input.Buttons.LEFT) {
+                    // 左键攻击 - 仅在鼠标模式启用时生效
+                    if (!GameSettings.isUseMouseAiming())
+                        return false;
+                    if (gameWorld.triggerAttack()) {
+                        if (crosshairRenderer != null) {
+                            crosshairRenderer.triggerAttackFeedback();
+                        }
+                    }
+                    return true;
+                } else if (button == com.badlogic.gdx.Input.Buttons.RIGHT) {
+                    // 右键切换武器 - 仅在鼠标模式启用时生效
+                    if (!GameSettings.isUseMouseAiming())
+                        return false;
+                    gameWorld.getPlayer().switchWeapon();
+                    de.tum.cit.fop.maze.utils.AudioManager.getInstance().playSound("select");
+                    return true;
+                }
+                return false;
+            }
+        };
     }
 
     /**
@@ -402,6 +441,13 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         gameViewport.apply();
+
+        // === 更新鼠标瞄准 (每帧更新, 无论是否暂停) ===
+        gameWorld.updateMouseAim(camera);
+        if (crosshairRenderer != null) {
+            crosshairRenderer.update(delta);
+        }
+
         if (!isPaused) {
             // Apply time scale from developer console
             float effectiveDelta = delta * developerConsole.getTimeScale();
@@ -671,9 +717,16 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
                     total = 0.2f;
                 float elapsed = total - player.getAttackAnimTimer();
                 float progress = elapsed / total;
-                attackRangeRenderer.render(camera, player.getX(), player.getY(),
-                        gameWorld.getPlayerDirection(), currentWeapon.getRange(),
-                        currentWeapon.isRanged(), progress);
+                // 根据设置选择使用鼠标角度还是键盘方向
+                if (GameSettings.isUseMouseAiming()) {
+                    attackRangeRenderer.render(camera, player.getX(), player.getY(),
+                            gameWorld.getAimAngle(), currentWeapon.getRange(),
+                            currentWeapon.isRanged(), progress);
+                } else {
+                    attackRangeRenderer.render(camera, player.getX(), player.getY(),
+                            gameWorld.getPlayerDirection(), currentWeapon.getRange(),
+                            currentWeapon.isRanged(), progress);
+                }
             }
             game.getSpriteBatch().begin(); // 恢复 SpriteBatch
             game.getSpriteBatch().setProjectionMatrix(camera.combined);
@@ -792,6 +845,13 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         // === Render Blood Particles (after main batch, before HUD) ===
         bloodParticles.update(delta);
         bloodParticles.render(camera.combined);
+
+        // === 渲染准星 (Crosshair) - 仅在鼠标模式启用时显示 ===
+        if (crosshairRenderer != null && GameSettings.isUseMouseAiming() && !isPaused && !isConsoleOpen
+                && !isInventoryOpen) {
+            com.badlogic.gdx.math.Vector2 mousePos = gameWorld.getMouseWorldPos();
+            crosshairRenderer.render(camera, mousePos.x * UNIT_SCALE, mousePos.y * UNIT_SCALE);
+        }
 
         hud.getStage().getViewport().apply();
         hud.update(delta);

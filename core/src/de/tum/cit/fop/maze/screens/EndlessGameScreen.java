@@ -125,6 +125,12 @@ public class EndlessGameScreen implements Screen {
     private BloodParticleSystem bloodParticles;
     private de.tum.cit.fop.maze.utils.DustParticleSystem dustParticles;
 
+    // === 鼠标瞄准系统 ===
+    private float aimAngle = 270f; // 瞄准角度 (度数, 0=右, 90=上, 180=左, 270=下)
+    private com.badlogic.gdx.math.Vector2 mouseWorldPos = new com.badlogic.gdx.math.Vector2();
+    private int playerDirection = 0; // 0=下, 1=上, 2=左, 3=右
+    private de.tum.cit.fop.maze.utils.CrosshairRenderer crosshairRenderer;
+
     public EndlessGameScreen(MazeRunnerGame game) {
         this(game, null);
     }
@@ -184,6 +190,9 @@ public class EndlessGameScreen implements Screen {
         // 溅血粒子系统
         bloodParticles = new BloodParticleSystem();
         dustParticles = new de.tum.cit.fop.maze.utils.DustParticleSystem();
+
+        // 准星渲染器
+        crosshairRenderer = new de.tum.cit.fop.maze.utils.CrosshairRenderer();
 
         // 设置系统监听器
         setupSystemListeners();
@@ -461,7 +470,83 @@ public class EndlessGameScreen implements Screen {
         // 3. HUD Stage (On-screen controls)
         multiplexer.addProcessor(hud.getStage());
 
+        // 4. Mouse Input for Aiming and Attack
+        multiplexer.addProcessor(getMouseInputProcessor());
+
         Gdx.input.setInputProcessor(multiplexer);
+    }
+
+    /**
+     * 鼠标输入处理器 - 处理攻击和武器切换
+     */
+    private com.badlogic.gdx.InputProcessor getMouseInputProcessor() {
+        return new com.badlogic.gdx.InputAdapter() {
+            @Override
+            public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+                // 控制台/暂停/游戏结束时不处理输入
+                if (isConsoleOpen || isPaused || isGameOver)
+                    return false;
+
+                if (button == com.badlogic.gdx.Input.Buttons.LEFT) {
+                    // 左键攻击 - 仅在鼠标模式启用时生效
+                    if (!GameSettings.isUseMouseAiming())
+                        return false;
+                    if (player.canAttack()) {
+                        player.attack();
+                        performAttack();
+                        if (crosshairRenderer != null) {
+                            crosshairRenderer.triggerAttackFeedback();
+                        }
+                    }
+                    return true;
+                } else if (button == com.badlogic.gdx.Input.Buttons.RIGHT) {
+                    // 右键切换武器 - 仅在鼠标模式启用时生效
+                    if (!GameSettings.isUseMouseAiming())
+                        return false;
+                    player.switchWeapon();
+                    AudioManager.getInstance().playSound("select");
+                    return true;
+                }
+                return false;
+            }
+        };
+    }
+
+    /**
+     * 更新鼠标瞄准方向
+     */
+    private void updateMouseAim() {
+        // 获取鼠标屏幕坐标
+        float screenX = Gdx.input.getX();
+        float screenY = Gdx.input.getY();
+
+        // 转换为世界坐标
+        com.badlogic.gdx.math.Vector3 worldCoords = camera
+                .unproject(new com.badlogic.gdx.math.Vector3(screenX, screenY, 0));
+        mouseWorldPos.set(worldCoords.x / UNIT_SCALE, worldCoords.y / UNIT_SCALE);
+
+        // 计算玩家中心到鼠标的角度
+        float playerCenterX = player.getX() + 0.5f;
+        float playerCenterY = player.getY() + 0.5f;
+
+        float dx = mouseWorldPos.x - playerCenterX;
+        float dy = mouseWorldPos.y - playerCenterY;
+
+        // 计算角度
+        aimAngle = MathUtils.atan2(dy, dx) * MathUtils.radDeg;
+        if (aimAngle < 0)
+            aimAngle += 360;
+
+        // 更新 playerDirection (用于动画选择)
+        if (aimAngle >= 315 || aimAngle < 45) {
+            playerDirection = 3; // 右
+        } else if (aimAngle >= 45 && aimAngle < 135) {
+            playerDirection = 1; // 上
+        } else if (aimAngle >= 135 && aimAngle < 225) {
+            playerDirection = 2; // 左
+        } else {
+            playerDirection = 0; // 下
+        }
     }
 
     /**
@@ -535,6 +620,12 @@ public class EndlessGameScreen implements Screen {
     private void updateGame(float delta) {
         stateTime += delta;
 
+        // === 更新鼠标瞄准 (每帧更新) ===
+        updateMouseAim();
+        if (crosshairRenderer != null) {
+            crosshairRenderer.update(delta);
+        }
+
         // 更新玩家定时器（攻击动画、受伤闪烁等）
         player.updateTimers(delta);
 
@@ -590,18 +681,35 @@ public class EndlessGameScreen implements Screen {
         if (Gdx.input.isKeyPressed(GameSettings.KEY_UP)) {
             targetVy = speed;
             hasInput = true;
+            // 非鼠标模式时根据键盘更新方向
+            if (!GameSettings.isUseMouseAiming()) {
+                playerDirection = 1;
+                aimAngle = 90f;
+            }
         }
         if (Gdx.input.isKeyPressed(GameSettings.KEY_DOWN)) {
             targetVy = -speed;
             hasInput = true;
+            if (!GameSettings.isUseMouseAiming()) {
+                playerDirection = 0;
+                aimAngle = 270f;
+            }
         }
         if (Gdx.input.isKeyPressed(GameSettings.KEY_LEFT)) {
             targetVx = -speed;
             hasInput = true;
+            if (!GameSettings.isUseMouseAiming()) {
+                playerDirection = 2;
+                aimAngle = 180f;
+            }
         }
         if (Gdx.input.isKeyPressed(GameSettings.KEY_RIGHT)) {
             targetVx = speed;
             hasInput = true;
+            if (!GameSettings.isUseMouseAiming()) {
+                playerDirection = 3;
+                aimAngle = 0f;
+            }
         }
 
         player.setRunning(Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT));
@@ -632,14 +740,15 @@ public class EndlessGameScreen implements Screen {
             snapPlayerToGrid(delta);
         }
 
-        // 攻击
+        // 键盘攻击已移至鼠标输入处理器 (getMouseInputProcessor)
+        // 保留键盘攻击作为备选
         if (Gdx.input.isKeyJustPressed(GameSettings.KEY_ATTACK)) {
             if (player.canAttack()) {
-                GameLogger.debug("EndlessGameScreen", "Attack input detected. Cooldown ready.");
                 player.attack();
                 performAttack();
-            } else {
-                // GameLogger.debug("EndlessGameScreen", "Attack cooldown active.");
+                if (crosshairRenderer != null) {
+                    crosshairRenderer.triggerAttackFeedback();
+                }
             }
         }
     }
@@ -686,43 +795,58 @@ public class EndlessGameScreen implements Screen {
             return;
 
         float attackRange = weapon.getRange();
+        float attackRangeSq = attackRange * attackRange; // 用于快速预过滤
         float attackDamage = weapon.getDamage() + player.getDamageBonus();
 
         for (Enemy enemy : enemies) {
             if (enemy.isDead())
                 continue;
 
-            float dist = Vector2.dst(player.getX(), player.getY(), enemy.getX(), enemy.getY());
+            // 快速预过滤：用平方距离跳过明显远的敌人
+            float dx = enemy.getX() - player.getX();
+            float dy = enemy.getY() - player.getY();
+            if (dx * dx + dy * dy > attackRangeSq)
+                continue;
+
+            float dist = (float) Math.sqrt(dx * dx + dy * dy);
+
             if (dist <= attackRange) {
-                int damage = (int) attackDamage;
-                // Set damage source for blood particle direction (include knockback strength)
-                enemy.setDamageSource(player.getX(), player.getY(), player.getKnockbackMultiplier());
-                // Apply damage with damage type consideration
-                int oldHealth = enemy.getHealth();
-                enemy.takeDamage(damage, weapon.getDamageType());
-                int newHealth = enemy.getHealth();
+                // === 使用鼠标瞄准角度进行60度锥形攻击判定 ===
+                float enemyAngle = MathUtils.atan2(dy, dx) * MathUtils.radDeg;
+                if (enemyAngle < 0)
+                    enemyAngle += 360;
 
-                GameLogger.debug("EndlessGameScreen",
-                        "Hit Enemy! Damage: " + damage + " HP: " + oldHealth + " -> " + newHealth);
+                float angleDiff = enemyAngle - aimAngle;
+                while (angleDiff > 180)
+                    angleDiff -= 360;
+                while (angleDiff < -180)
+                    angleDiff += 360;
 
-                boolean killed = enemy.isDead(); // Fix: takeDamage returns false, check isDead() instead
+                // 攻击锥形半角 = 30度, 或极近距离直接命中
+                if (Math.abs(angleDiff) <= 30 || dist < 0.5f) {
+                    int damage = (int) attackDamage;
+                    // Set damage source for blood particle direction (include knockback strength)
+                    enemy.setDamageSource(player.getX(), player.getY(), player.getKnockbackMultiplier());
+                    // Apply damage with damage type consideration
+                    enemy.takeDamage(damage, weapon.getDamageType());
 
-                // === Hit Feedback: Damage Number (伤害数值显示) ===
-                floatingTexts.add(new FloatingText(enemy.getX(), enemy.getY(), "-" + damage, Color.RED));
-                AudioManager.getInstance().playSound("hit");
+                    boolean killed = enemy.isDead();
 
-                // === Hit Feedback: Knockback ===
-                if (!killed) {
-                    enemy.knockback(player.getX(), player.getY(), 2.0f, null);
+                    // === Hit Feedback: Damage Number (伤害数值显示) ===
+                    floatingTexts.add(new FloatingText(enemy.getX(), enemy.getY(), "-" + damage, Color.RED));
+                    AudioManager.getInstance().playSound("hit");
+
+                    // === Hit Feedback: Knockback ===
+                    if (!killed) {
+                        enemy.knockback(player.getX(), player.getY(), 2.0f, null);
+                    }
+                    // === Hit Feedback: Weapon Effect ===
+                    enemy.applyEffect(weapon.getEffect());
+
+                    if (killed) {
+                        onEnemyKilled(enemy);
+                    }
                 }
-                // === Hit Feedback: Weapon Effect ===
-                enemy.applyEffect(weapon.getEffect());
-
-                if (killed) {
-                    onEnemyKilled(enemy);
-                }
-            } else {
-                // GameLogger.debug("EndlessGameScreen", "Enemy out of range: " + dist);
             }
         }
     }
@@ -1104,6 +1228,12 @@ public class EndlessGameScreen implements Screen {
         // === 渲染溅血粒子 ===
         bloodParticles.update(Gdx.graphics.getDeltaTime());
         bloodParticles.render(camera.combined);
+
+        // === 渲染准星 (Crosshair) - 仅在鼠标模式启用时显示 ===
+        if (crosshairRenderer != null && GameSettings.isUseMouseAiming() && !isPaused && !isConsoleOpen
+                && !isGameOver) {
+            crosshairRenderer.render(camera, mouseWorldPos.x * UNIT_SCALE, mouseWorldPos.y * UNIT_SCALE);
+        }
     }
 
     // [Helper] Render a single wall (Full render)

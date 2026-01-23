@@ -31,7 +31,7 @@ public class SettingsUI {
 
     private Table contentTable;
     private Label statusLabel;
-    
+
     // Background for in-game overlay
     private Texture backgroundTexture;
 
@@ -56,7 +56,8 @@ public class SettingsUI {
     }
 
     /**
-     * Build settings UI without background (for SettingsScreen which handles its own background).
+     * Build settings UI without background (for SettingsScreen which handles its
+     * own background).
      */
     public Table build() {
         contentTable = new Table();
@@ -65,7 +66,7 @@ public class SettingsUI {
         buildContent();
         return contentTable;
     }
-    
+
     /**
      * Build settings UI with background (for in-game settings overlay).
      * Uses the same background as SettingsScreen with dim effect.
@@ -77,9 +78,9 @@ public class SettingsUI {
         } catch (Exception e) {
             backgroundTexture = null;
         }
-        
+
         contentTable = new Table();
-        
+
         // 设置带暗化的背景图片
         if (backgroundTexture != null) {
             // 创建暗化的背景
@@ -90,13 +91,13 @@ public class SettingsUI {
             // Fallback to dark semi-transparent background
             contentTable.setBackground(skin.newDrawable("white", 0.04f, 0.04f, 0.06f, 0.95f));
         }
-        
+
         contentTable.pad(50, 40, 20, 40); // 上50 左右40 下20
-        
+
         buildContent();
         return contentTable;
     }
-    
+
     /**
      * Dispose of background texture resources.
      */
@@ -106,7 +107,7 @@ public class SettingsUI {
             backgroundTexture = null;
         }
     }
-    
+
     private void buildContent() {
         // ===== Title =====
         Label title = new Label("Settings", skin, "title");
@@ -125,6 +126,7 @@ public class SettingsUI {
         addCameraRow();
         addFogRow();
         addAttackRangeRow();
+        addMouseAimingRow(); // 添加鼠标瞄准开关
         addHint();
 
         // ===== Controls Section =====
@@ -137,18 +139,18 @@ public class SettingsUI {
 
     private void addSectionHeader(String text) {
         Table header = new Table();
-        
+
         Image leftLine = new Image(skin.newDrawable("white", 0.5f, 0.45f, 0.3f, 0.6f));
         header.add(leftLine).width(100).height(2).padRight(20);
-        
+
         Label label = new Label(text, skin);
         label.setColor(UIConstants.SETTINGS_SECTION_TITLE);
         label.setFontScale(1.1f);
         header.add(label);
-        
+
         Image rightLine = new Image(skin.newDrawable("white", 0.5f, 0.45f, 0.3f, 0.6f));
         header.add(rightLine).width(100).height(2).padLeft(20);
-        
+
         contentTable.add(header).colspan(3).padTop(20).padBottom(15).row();
     }
 
@@ -300,6 +302,25 @@ public class SettingsUI {
         contentTable.row().padBottom(6);
     }
 
+    private void addMouseAimingRow() {
+        Label label = new Label("Mouse Aiming:", skin);
+        label.setFontScale(1.0f);
+        contentTable.add(label).width(LABEL_WIDTH).right().padRight(30);
+
+        final TextButton btn = new TextButton(GameSettings.isUseMouseAiming() ? "ON" : "OFF", skin);
+        btn.getLabel().setFontScale(0.9f);
+        btn.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent e, Actor a) {
+                boolean on = !GameSettings.isUseMouseAiming();
+                GameSettings.setUseMouseAiming(on);
+                btn.setText(on ? "ON" : "OFF");
+            }
+        });
+        contentTable.add(btn).width(BTN_WIDTH).height(32).colspan(2).left();
+        contentTable.row().padBottom(6);
+    }
+
     private void addHint() {
         Label hint = new Label("* Fog mode: vision range is fixed", skin);
         hint.setColor(0.6f, 0.6f, 0.6f, 1f);
@@ -365,7 +386,8 @@ public class SettingsUI {
             @Override
             public void changed(ChangeEvent e, Actor a) {
                 GameSettings.saveKeyBindingsOnly();
-                if (onBackAction != null) onBackAction.run();
+                if (onBackAction != null)
+                    onBackAction.run();
             }
         });
         contentTable.add(backBtn).colspan(3).width(220).height(45).padTop(20);
@@ -376,12 +398,24 @@ public class SettingsUI {
     private String getKeyName(String keyName) {
         int code = -1;
         switch (keyName) {
-            case "UP": code = GameSettings.KEY_UP; break;
-            case "DOWN": code = GameSettings.KEY_DOWN; break;
-            case "LEFT": code = GameSettings.KEY_LEFT; break;
-            case "RIGHT": code = GameSettings.KEY_RIGHT; break;
-            case "ATTACK": code = GameSettings.KEY_ATTACK; break;
-            case "SWITCH_WEAPON": code = GameSettings.KEY_SWITCH_WEAPON; break;
+            case "UP":
+                code = GameSettings.KEY_UP;
+                break;
+            case "DOWN":
+                code = GameSettings.KEY_DOWN;
+                break;
+            case "LEFT":
+                code = GameSettings.KEY_LEFT;
+                break;
+            case "RIGHT":
+                code = GameSettings.KEY_RIGHT;
+                break;
+            case "ATTACK":
+                code = GameSettings.KEY_ATTACK;
+                break;
+            case "SWITCH_WEAPON":
+                code = GameSettings.KEY_SWITCH_WEAPON;
+                break;
         }
         return Input.Keys.toString(code);
     }
@@ -410,12 +444,24 @@ public class SettingsUI {
                 return true;
             }
             switch (remappingKeyName) {
-                case "UP": GameSettings.KEY_UP = keycode; break;
-                case "DOWN": GameSettings.KEY_DOWN = keycode; break;
-                case "LEFT": GameSettings.KEY_LEFT = keycode; break;
-                case "RIGHT": GameSettings.KEY_RIGHT = keycode; break;
-                case "ATTACK": GameSettings.KEY_ATTACK = keycode; break;
-                case "SWITCH_WEAPON": GameSettings.KEY_SWITCH_WEAPON = keycode; break;
+                case "UP":
+                    GameSettings.KEY_UP = keycode;
+                    break;
+                case "DOWN":
+                    GameSettings.KEY_DOWN = keycode;
+                    break;
+                case "LEFT":
+                    GameSettings.KEY_LEFT = keycode;
+                    break;
+                case "RIGHT":
+                    GameSettings.KEY_RIGHT = keycode;
+                    break;
+                case "ATTACK":
+                    GameSettings.KEY_ATTACK = keycode;
+                    break;
+                case "SWITCH_WEAPON":
+                    GameSettings.KEY_SWITCH_WEAPON = keycode;
+                    break;
             }
             remappingKeyName = null;
             updateButtons();

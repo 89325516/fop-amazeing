@@ -2,9 +2,11 @@ package de.tum.cit.fop.maze.model;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.Vector3;
 import de.tum.cit.fop.maze.config.GameConfig;
 import de.tum.cit.fop.maze.config.GameSettings;
 import de.tum.cit.fop.maze.effects.FloatingText;
@@ -46,6 +48,11 @@ public class GameWorld {
     private int coinsCollected = 0; // Track coins collected this session
     private int playerDirection = 0; // 0=Down, 1=Up, 2=Left, 3=Right
     private Vector2 aimDirection = new Vector2(0, -1); // Default Down to match playerDirection
+
+    // === Mouse Aiming System ===
+    private float aimAngle = 270f; // 瞄准角度 (度数, 0=右, 90=上, 180=左, 270=下)
+    private Vector2 mouseWorldPos = new Vector2(); // 鼠标世界坐标
+    private static final float UNIT_SCALE = 16f; // 世界坐标缩放系数
 
     // === Achievement Tracking ===
     private boolean playerTookDamage = false; // For flawless victory
@@ -335,19 +342,28 @@ public class GameWorld {
 
         if (Gdx.input.isKeyPressed(GameSettings.KEY_LEFT)) {
             inputX -= 1;
-            playerDirection = 2;
+            // 非鼠标模式时，根据键盘输入更新朝向
+            if (!GameSettings.isUseMouseAiming()) {
+                playerDirection = 2;
+            }
         }
         if (Gdx.input.isKeyPressed(GameSettings.KEY_RIGHT)) {
             inputX += 1;
-            playerDirection = 3;
+            if (!GameSettings.isUseMouseAiming()) {
+                playerDirection = 3;
+            }
         }
         if (Gdx.input.isKeyPressed(GameSettings.KEY_UP)) {
             inputY += 1;
-            playerDirection = 1;
+            if (!GameSettings.isUseMouseAiming()) {
+                playerDirection = 1;
+            }
         }
         if (Gdx.input.isKeyPressed(GameSettings.KEY_DOWN)) {
             inputY -= 1;
-            playerDirection = 0;
+            if (!GameSettings.isUseMouseAiming()) {
+                playerDirection = 0;
+            }
         }
 
         // Step 2: Normalize diagonal movement (prevent faster diagonal speed)
@@ -357,8 +373,8 @@ public class GameWorld {
             inputY /= length;
         }
 
-        // Update aim direction if there is input
-        if (inputX != 0 || inputY != 0) {
+        // 非鼠标模式时，根据键盘输入更新瞄准方向
+        if (!GameSettings.isUseMouseAiming() && (inputX != 0 || inputY != 0)) {
             aimDirection.set(inputX, inputY).nor();
         }
 
@@ -412,8 +428,8 @@ public class GameWorld {
         // Step 6: Apply velocity to position with collision detection
         applyPhysicsMovement(delta);
 
-        // Step 7: Update facing direction based on velocity (if moving)
-        if (player.isMoving()) {
+        // Step 7: 非鼠标模式时根据移动速度更新朝向
+        if (!GameSettings.isUseMouseAiming() && player.isMoving()) {
             updateDirectionFromVelocity();
         }
 
@@ -575,33 +591,45 @@ public class GameWorld {
 
                 if (dist < attackRange) {
                     // Angle check (复用已计算的 dx/dy)
-                    float angle = MathUtils.atan2(dy, dx) * MathUtils.radDeg;
-                    if (angle < 0)
-                        angle += 360;
+                    float enemyAngle = MathUtils.atan2(dy, dx) * MathUtils.radDeg;
+                    if (enemyAngle < 0)
+                        enemyAngle += 360;
 
-                    float playerAngle = 0;
-                    switch (playerDirection) {
-                        case 0:
-                            playerAngle = 270;
-                            break;
-                        case 1:
-                            playerAngle = 90;
-                            break;
-                        case 2:
-                            playerAngle = 180;
-                            break;
-                        case 3:
-                            playerAngle = 0;
-                            break;
+                    // === 根据设置选择攻击角度和锥形范围 ===
+                    float attackAngle;
+                    float coneHalfAngle;
+                    if (GameSettings.isUseMouseAiming()) {
+                        // 鼠标模式: 使用 aimAngle, 60度锥形
+                        attackAngle = aimAngle;
+                        coneHalfAngle = 30f;
+                    } else {
+                        // 键盘模式: 使用 playerDirection, 90度锥形 (原始逻辑)
+                        switch (playerDirection) {
+                            case 0:
+                                attackAngle = 270f;
+                                break; // 下
+                            case 1:
+                                attackAngle = 90f;
+                                break; // 上
+                            case 2:
+                                attackAngle = 180f;
+                                break; // 左
+                            case 3:
+                            default:
+                                attackAngle = 0f;
+                                break; // 右
+                        }
+                        coneHalfAngle = 45f;
                     }
 
-                    float angleDiff = angle - playerAngle;
+                    float angleDiff = enemyAngle - attackAngle;
                     while (angleDiff > 180)
                         angleDiff -= 360;
                     while (angleDiff < -180)
                         angleDiff += 360;
 
-                    if (Math.abs(angleDiff) <= 90 || dist < 0.5f) {
+                    // 攻击锥形半角判定, 或极近距离直接命中
+                    if (Math.abs(angleDiff) <= coneHalfAngle || dist < 0.5f) {
                         int totalDamage = currentWeapon.getDamage() + player.getDamageBonus();
 
                         // Set damage source for blood particle direction (include knockback strength)
@@ -909,6 +937,77 @@ public class GameWorld {
 
     public int getPlayerDirection() {
         return playerDirection;
+    }
+
+    /**
+     * 获取瞄准角度 (度数)
+     * 
+     * @return 0=右, 90=上, 180=左, 270=下
+     */
+    public float getAimAngle() {
+        return aimAngle;
+    }
+
+    /**
+     * 获取鼠标世界坐标
+     */
+    public Vector2 getMouseWorldPos() {
+        return mouseWorldPos;
+    }
+
+    /**
+     * 更新鼠标瞄准方向
+     * 应在每帧渲染循环中调用
+     * 
+     * @param camera 游戏相机
+     */
+    public void updateMouseAim(Camera camera) {
+        // 获取鼠标屏幕坐标
+        float screenX = Gdx.input.getX();
+        float screenY = Gdx.input.getY();
+
+        // 转换为世界坐标
+        Vector3 worldCoords = camera.unproject(new Vector3(screenX, screenY, 0));
+        mouseWorldPos.set(worldCoords.x / UNIT_SCALE, worldCoords.y / UNIT_SCALE);
+
+        // 计算玩家中心到鼠标的角度
+        float playerCenterX = player.getX() + 0.5f;
+        float playerCenterY = player.getY() + 0.5f;
+
+        float dx = mouseWorldPos.x - playerCenterX;
+        float dy = mouseWorldPos.y - playerCenterY;
+
+        // 计算角度 (弧度转度数)
+        aimAngle = MathUtils.atan2(dy, dx) * MathUtils.radDeg;
+        if (aimAngle < 0)
+            aimAngle += 360;
+
+        // 更新 aimDirection 向量
+        aimDirection.set(dx, dy).nor();
+
+        // 更新 playerDirection (用于动画选择)
+        // 将360度分成4个方向区间
+        if (aimAngle >= 315 || aimAngle < 45) {
+            playerDirection = 3; // 右
+        } else if (aimAngle >= 45 && aimAngle < 135) {
+            playerDirection = 1; // 上
+        } else if (aimAngle >= 135 && aimAngle < 225) {
+            playerDirection = 2; // 左
+        } else {
+            playerDirection = 0; // 下
+        }
+    }
+
+    /**
+     * 触发攻击 (供鼠标点击调用)
+     * 
+     * @return true 如果攻击成功触发
+     */
+    public boolean triggerAttack() {
+        if (player.isDead())
+            return false;
+        handleAttack();
+        return true;
     }
 
     // === New Methods for Extended Systems ===
