@@ -21,6 +21,7 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 import de.tum.cit.fop.maze.model.Player;
 import de.tum.cit.fop.maze.model.items.Armor;
 import de.tum.cit.fop.maze.model.weapons.Weapon;
+import de.tum.cit.fop.maze.ui.widgets.HealthBarWidget;
 import de.tum.cit.fop.maze.utils.AchievementRarity;
 import de.tum.cit.fop.maze.utils.AchievementUnlockInfo;
 import de.tum.cit.fop.maze.utils.TextureManager;
@@ -39,21 +40,14 @@ public class GameHUD implements Disposable {
     private final Viewport gameViewport;
 
     // UI Elements
-    private Table livesTable;
+    private HealthBarWidget healthBarWidget; // Replaced manual livesTable logic
     private Table inventoryTable;
     private Image arrowImage;
     private TextButton settingsButton;
     private TextButton inventoryButton;
     private float targetX, targetY;
 
-    // Animation State
-    private int currentLives = -1;
-    private boolean isHeartAnimating = false;
-    private float heartAnimTime = 0f;
-
     // Cached UI elements to reduce GC pressure
-    private Array<Image> cachedHearts = new Array<>();
-    private int lastRenderedLiveCount = -1;
     private Image cachedKeyIcon;
     private boolean lastKeyState = false;
 
@@ -104,15 +98,15 @@ public class GameHUD implements Disposable {
 
         // --- Top Bar ---
         Table topTable = new Table();
-        rootTable.add(topTable).growX().top().pad(20);
+        rootTable.add(topTable).growX().top().pad(15); // Adjusted padding to 15 (aligned with EndlessHUD)
 
         // Left Container (Lives + Compass)
         Table topLeftGroup = new Table();
         topTable.add(topLeftGroup).left();
 
-        // Lives (Row 1 of Left)
-        livesTable = new Table();
-        topLeftGroup.add(livesTable).left().row();
+        // Lives (Row 1 of Left) - Using HealthBarWidget
+        healthBarWidget = new HealthBarWidget(player, textureManager);
+        topLeftGroup.add(healthBarWidget).left().row();
 
         // Navigation Arrow (Row 2 of Left)
         if (tm.arrowRegion != null) {
@@ -244,55 +238,8 @@ public class GameHUD implements Disposable {
         // 0.5 Update Skill Points Display
         skillPointsLabel.setText("SP: " + player.getSkillPoints());
 
-        // 1. Update Lives (Hearts)
-        int actualLives = player.getLives();
-
-        // Initialize logic state if needed
-        if (currentLives == -1)
-            currentLives = actualLives;
-
-        if (actualLives < currentLives) {
-            isHeartAnimating = true;
-        } else if (actualLives > currentLives) {
-            // Healed
-            currentLives = actualLives;
-            isHeartAnimating = false;
-            lastRenderedLiveCount = -1; // 强制重建心形表格以显示增加的生命
-        }
-
-        if (isHeartAnimating) {
-            heartAnimTime += delta;
-            // If animation finished, sync lives
-            if (textureManager.heartBreak.isAnimationFinished(heartAnimTime)) {
-                currentLives = actualLives;
-                isHeartAnimating = false;
-                heartAnimTime = 0;
-                lastRenderedLiveCount = -1; // Force rebuild after animation
-            }
-        }
-
-        int heartsToDraw = isHeartAnimating ? currentLives : actualLives;
-
-        // OPTIMIZATION: Only rebuild hearts table if count changed
-        if (heartsToDraw != lastRenderedLiveCount && textureManager.heartRegion != null) {
-            livesTable.clearChildren();
-            cachedHearts.clear();
-
-            for (int i = 0; i < heartsToDraw; i++) {
-                Image heart = new Image(textureManager.heartRegion);
-                cachedHearts.add(heart);
-                livesTable.add(heart).size(70, 70).pad(6);
-            }
-            lastRenderedLiveCount = heartsToDraw;
-        }
-
-        // Update the dying heart's texture if animating (no allocation, just drawable
-        // swap)
-        if (isHeartAnimating && cachedHearts.size > 0) {
-            Image dyingHeart = cachedHearts.peek();
-            TextureRegion frame = textureManager.heartBreak.getKeyFrame(heartAnimTime, false);
-            dyingHeart.setDrawable(new TextureRegionDrawable(frame));
-        }
+        // 1. Update Lives (Hearts) using Widget
+        healthBarWidget.update(delta);
 
         // 2. Update Inventory - OPTIMIZATION: Only rebuild if key state changed
         boolean hasKeyNow = player.hasKey();
