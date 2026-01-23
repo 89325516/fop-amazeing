@@ -119,28 +119,15 @@ public class GameHUD implements Disposable {
         // Spacer
         topTable.add().growX();
 
-        // Skill Points Label (Right side)
-        Label.LabelStyle spStyle = new Label.LabelStyle(skin.getFont("font"), Color.GOLD);
-        skillPointsLabel = new Label("SP: 0", spStyle);
-        topTable.add(skillPointsLabel).right().padRight(20);
+        // Right Container (Stats + Buttons) - Vertical Stack Layout
+        Table rightTable = new Table();
+        topTable.add(rightTable).right();
 
-        // FPS Label (Right side, before Menu button)
-        Label.LabelStyle fpsStyle = new Label.LabelStyle(skin.getFont("font"), Color.YELLOW);
-        fpsLabel = new Label("FPS: --", fpsStyle);
-        fpsUpdateTimer = 1.0f; // Trigger immediate update
-        topTable.add(fpsLabel).right().padRight(20);
+        // === Row 1: Buttons (Bag | Menu) ===
+        Table buttonTable = new Table();
+        rightTable.add(buttonTable).right().padBottom(5).row();
 
-        // Coins Display (NEW)
-        Label.LabelStyle coinStyle = new Label.LabelStyle(skin.getFont("font"), Color.GOLD);
-        coinLabel = new Label("Coins: 0", coinStyle);
-        topTable.add(coinLabel).right().padRight(20);
-
-        // Armor Status Display (NEW)
-        Label.LabelStyle armorStyle = new Label.LabelStyle(skin.getFont("font"), Color.CYAN);
-        armorLabel = new Label("", armorStyle);
-        topTable.add(armorLabel).right().padRight(20);
-
-        // Inventory Button - 背包按钮 - 使用文字按钮 "Bag"
+        // Inventory Button
         inventoryButton = new TextButton("Bag", skin);
         inventoryButton.addListener(new ChangeListener() {
             @Override
@@ -149,9 +136,9 @@ public class GameHUD implements Disposable {
                     onInventoryClicked.run();
             }
         });
-        topTable.add(inventoryButton).right().width(100).height(70).padRight(10);
+        buttonTable.add(inventoryButton).width(80).height(50).padRight(10);
 
-        // Menu Button (Right) - ENLARGED
+        // Menu Button
         settingsButton = new TextButton("Menu", skin);
         settingsButton.addListener(new ChangeListener() {
             @Override
@@ -160,7 +147,32 @@ public class GameHUD implements Disposable {
                     onSettingsClicked.run();
             }
         });
-        topTable.add(settingsButton).right().width(150).height(70);
+        buttonTable.add(settingsButton).width(80).height(50);
+
+        // === Row 2: SP ===
+        Label.LabelStyle spStyle = new Label.LabelStyle(skin.getFont("font"), Color.GOLD);
+        skillPointsLabel = new Label("SP: 0", spStyle);
+        skillPointsLabel.setAlignment(Align.right);
+        rightTable.add(skillPointsLabel).right().padBottom(2).row();
+
+        // === Row 3: FPS ===
+        Label.LabelStyle fpsStyle = new Label.LabelStyle(skin.getFont("font"), Color.YELLOW);
+        fpsLabel = new Label("FPS: --", fpsStyle);
+        fpsLabel.setAlignment(Align.right);
+        fpsUpdateTimer = 1.0f; // Trigger immediate update
+        rightTable.add(fpsLabel).right().padBottom(2).row();
+
+        // === Row 4: Coins ===
+        Label.LabelStyle coinStyle = new Label.LabelStyle(skin.getFont("font"), Color.GOLD);
+        coinLabel = new Label("Coins: 0", coinStyle);
+        coinLabel.setAlignment(Align.right);
+        rightTable.add(coinLabel).right().padBottom(2).row();
+
+        // === Row 5: Armor ===
+        Label.LabelStyle armorStyle = new Label.LabelStyle(skin.getFont("font"), Color.CYAN);
+        armorLabel = new Label("", armorStyle);
+        armorLabel.setAlignment(Align.right);
+        rightTable.add(armorLabel).right();
 
         // --- Bottom Area (Inventory) ---
         rootTable.row();
