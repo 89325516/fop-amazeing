@@ -147,4 +147,24 @@ public class GameState {
     public void setInventoryWeaponTypes(java.util.List<String> inventoryWeaponTypes) {
         this.inventoryWeaponTypes = inventoryWeaponTypes;
     }
+
+    // === Metaprogression Persistence (Coins & Shop) ===
+    private int coins;
+    private java.util.List<String> purchasedItemIds;
+
+    public int getCoins() {
+        return coins;
+    }
+
+    public void setCoins(int coins) {
+        this.coins = coins;
+    }
+
+    public java.util.List<String> getPurchasedItemIds() {
+        return purchasedItemIds;
+    }
+
+    public void setPurchasedItemIds(java.util.List<String> purchasedItemIds) {
+        this.purchasedItemIds = purchasedItemIds;
+    }
 }

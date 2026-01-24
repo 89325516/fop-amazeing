@@ -19,7 +19,7 @@ import com.badlogic.gdx.Preferences;
  */
 public class GameSettings {
 
-    private static final String PREFS_NAME = "maze_runner_settings_v2";
+    private static final String PREFS_NAME = "maze_runner_settings_v3";
 
     // ==================== 硬编码默认值 (不可修改) ====================
 
@@ -247,6 +247,7 @@ public class GameSettings {
 
         userFogEnabled = false;
         userShowAttackRange = true;
+        userUseMouseAiming = false; // Reset to Keyboard Mode
 
         // 同时更新当前值
         resetToUserDefaults();

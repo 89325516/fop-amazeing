@@ -134,4 +134,15 @@ public class MazeRunnerGame extends Game {
     public TextureAtlas getAtlas() {
         return atlas;
     }
+
+    // === Save System Context ===
+    private String currentSaveFilePath;
+
+    public void setCurrentSaveFilePath(String path) {
+        this.currentSaveFilePath = path;
+    }
+
+    public String getCurrentSaveFilePath() {
+        return currentSaveFilePath;
+    }
 }

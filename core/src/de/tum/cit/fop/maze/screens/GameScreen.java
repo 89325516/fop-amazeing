@@ -150,11 +150,29 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         initGameWorld(this.currentLevelPath);
 
         if (loadPersistentStats) {
-            GameState state = SaveManager.loadGame("auto_save_victory");
+            // Priority: Load from active save slot first
+            String activeSave = game.getCurrentSaveFilePath();
+            GameState state = null;
+
+            if (activeSave != null) {
+                state = SaveManager.loadGame(activeSave);
+                if (state != null) {
+                    GameLogger.info("GameScreen", "Loaded persistent stats from active slot: " + activeSave);
+                }
+            }
+
+            // Fallback: Legacy auto-save
+            if (state == null) {
+                state = SaveManager.loadGame("auto_save_victory");
+                if (state != null) {
+                    GameLogger.info("GameScreen", "Loaded persistent stats from legacy auto_save");
+                }
+            }
+
             if (state != null) {
                 Player p = gameWorld.getPlayer();
                 p.setLives(state.getLives());
-                p.setHasKey(false);
+                p.setHasKey(false); // Key resets between levels
                 p.setSkillStats(state.getSkillPoints(),
                         state.getMaxHealthBonus(),
                         state.getDamageBonus(),
@@ -163,6 +181,9 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
                         state.getCooldownReduction(),
                         state.getSpeedBonus());
                 p.setInventoryFromTypes(state.getInventoryWeaponTypes());
+
+                // Also ensure ShopManager is synced (just in case)
+                de.tum.cit.fop.maze.shop.ShopManager.importState(state.getCoins(), state.getPurchasedItemIds());
             }
         }
 
@@ -385,7 +406,17 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         state.setCooldownReduction(player.getCooldownReduction());
         state.setSpeedBonus(player.getSpeedBonus());
         state.setInventoryWeaponTypes(player.getInventoryWeaponTypes());
-        SaveManager.saveGame(state, "auto_save_victory");
+        // Auto-save logic
+        // Use current save context if available, otherwise fallback
+        String saveFile = game.getCurrentSaveFilePath();
+        if (saveFile == null)
+            saveFile = "auto_save_victory.json";
+
+        // === PERSIST SHOP STATE ===
+        state.setCoins(de.tum.cit.fop.maze.shop.ShopManager.getPlayerCoins());
+        state.setPurchasedItemIds(de.tum.cit.fop.maze.shop.ShopManager.getPurchasedItemIds());
+
+        SaveManager.saveGame(state, saveFile);
 
         // Build summary data
         LevelSummaryData summaryData = new LevelSummaryData(
@@ -1284,6 +1315,29 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
                 state.getCooldownReduction(),
                 state.getSpeedBonus());
         player.setInventoryFromTypes(state.getInventoryWeaponTypes());
+
+        // === RESTORE GLOBAL SHOP STATE FOR THIS SAVE SLOT ===
+        de.tum.cit.fop.maze.shop.ShopManager.importState(state.getCoins(), state.getPurchasedItemIds());
+    }
+
+    private void saveGameContext(String filename) {
+        Player p = gameWorld.getPlayer();
+        GameState s = new GameState(p.getX(), p.getY(), currentLevelPath, p.getLives(), p.hasKey());
+
+        s.setSkillPoints(p.getSkillPoints());
+        s.setMaxHealthBonus(p.getMaxHealthBonus());
+        s.setDamageBonus(p.getDamageBonus());
+        s.setInvincibilityExtension(p.getInvincibilityExtension());
+        s.setKnockbackMultiplier(p.getKnockbackMultiplier());
+        s.setCooldownReduction(p.getCooldownReduction());
+        s.setSpeedBonus(p.getSpeedBonus());
+        s.setInventoryWeaponTypes(p.getInventoryWeaponTypes());
+
+        // === PERSIST SHOP STATE ===
+        s.setCoins(de.tum.cit.fop.maze.shop.ShopManager.getPlayerCoins());
+        s.setPurchasedItemIds(de.tum.cit.fop.maze.shop.ShopManager.getPurchasedItemIds());
+
+        SaveManager.saveGame(s, filename);
     }
 
     private void setupPauseMenu() {
@@ -1538,18 +1592,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
                 if (name.isEmpty())
                     name = "unnamed";
                 Player p = gameWorld.getPlayer();
-                GameState s = new GameState(p.getX(), p.getY(), currentLevelPath, p.getLives(), p.hasKey());
-
-                s.setSkillPoints(p.getSkillPoints());
-                s.setMaxHealthBonus(p.getMaxHealthBonus());
-                s.setDamageBonus(p.getDamageBonus());
-                s.setInvincibilityExtension(p.getInvincibilityExtension());
-                s.setKnockbackMultiplier(p.getKnockbackMultiplier());
-                s.setCooldownReduction(p.getCooldownReduction());
-                s.setSpeedBonus(p.getSpeedBonus());
-
-                s.setInventoryWeaponTypes(p.getInventoryWeaponTypes());
-                SaveManager.saveGame(s, name);
+                saveGameContext(name);
                 GameLogger.info("GameScreen", "Game saved as: " + name);
                 win.remove();
                 pauseTable.setVisible(true);

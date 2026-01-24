@@ -56,8 +56,7 @@ public class MenuScreen implements Screen {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 GameLogger.info("MenuScreen", "New Game clicked");
-                // Go to Story Screen first, passing null to indicate default Level 1
-                game.setScreen(new StoryScreen(game, "maps/level-1.properties"));
+                showNewGameDialog();
             }
         });
 
@@ -213,8 +212,17 @@ public class MenuScreen implements Screen {
                 loadBtn.addListener(new ChangeListener() {
                     @Override
                     public void changed(ChangeEvent event, Actor actor) {
-                        game.goToGame(file.name());
-                        win.remove();
+                        // Pre-load state to sync global managers (Shop, etc)
+                        de.tum.cit.fop.maze.model.GameState loaded = SaveManager.loadGame(file.name());
+                        if (loaded != null) {
+                            de.tum.cit.fop.maze.shop.ShopManager.importState(loaded.getCoins(),
+                                    loaded.getPurchasedItemIds());
+                            game.setCurrentSaveFilePath(file.name());
+                            game.goToGame(file.name());
+                            win.remove();
+                        } else {
+                            GameLogger.error("MenuScreen", "Failed to load save: " + file.name());
+                        }
                     }
                 });
 
@@ -267,6 +275,65 @@ public class MenuScreen implements Screen {
         win.setPosition(screenW / 2 - dialogW / 2, screenH / 2 - dialogH / 2);
 
         stage.addActor(win);
+    }
+
+    /**
+     * Show dialog for New Game (Input Save Name)
+     */
+    private void showNewGameDialog() {
+        Dialog dialog = new Dialog("New Game", game.getSkin()) {
+            @Override
+            protected void result(Object object) {
+                if ((Boolean) object) {
+                    TextField nameField = findActor("nameField");
+                    String saveName = nameField.getText().trim();
+                    if (!saveName.isEmpty()) {
+                        startNewGame(saveName);
+                    } else {
+                        // Invalid name
+                        GameLogger.error("MenuScreen", "Invalid save name");
+                    }
+                }
+            }
+        };
+
+        dialog.text("Enter Save Name:");
+        TextField nameField = new TextField("MySave", game.getSkin());
+        nameField.setName("nameField");
+        dialog.getContentTable().add(nameField).width(200).pad(10).row();
+
+        dialog.button("Start Game", true);
+        dialog.button("Cancel", false);
+
+        dialog.show(stage);
+    }
+
+    private void startNewGame(String saveName) {
+        GameLogger.info("MenuScreen", "Starting new game: " + saveName);
+
+        // 1. Reset Global State (Shop)
+        de.tum.cit.fop.maze.shop.ShopManager.importState(0, new java.util.ArrayList<>());
+
+        // 2. Create Initial GameState
+        // Start at Level 1, default position (will be overwritten by map spawn), 3
+        // lives
+        de.tum.cit.fop.maze.model.GameState initialState = new de.tum.cit.fop.maze.model.GameState(0, 0,
+                "maps/level-1.properties", 3, false);
+        initialState.setCoins(0);
+        initialState.setPurchasedItemIds(new java.util.ArrayList<>());
+        // Reset Skills
+        initialState.setSkillPoints(0);
+        initialState.setDamageBonus(0);
+        initialState.setMaxHealthBonus(0);
+
+        // 3. Save it
+        SaveManager.saveGame(initialState, saveName);
+
+        // 4. Set Context
+        game.setCurrentSaveFilePath(saveName + ".json");
+
+        // 5. Start Game (Go to Story first)
+        game.setScreen(new StoryScreen(game, "maps/level-1.properties"));
     }
 
     @Override

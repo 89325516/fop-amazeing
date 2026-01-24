@@ -268,4 +268,39 @@ public class ShopManager {
             item.setPurchased(false);
         }
     }
+
+    /**
+     * Import state from GameState (Save File)
+     * Overwrites current persistent storage with data from the save.
+     */
+    public static void importState(int coins, List<String> purchasedItemIds) {
+        // 1. Set Coins
+        setPlayerCoins(coins);
+
+        // 2. Set Items
+        // Reset current in-memory status
+        for (ShopItem item : allItems) {
+            item.setPurchased(false);
+        }
+
+        // Re-apply purchased status and build string
+        StringBuilder sb = new StringBuilder();
+        if (purchasedItemIds != null) {
+            for (String id : purchasedItemIds) {
+                // Find item
+                for (ShopItem item : allItems) {
+                    if (item.getId().equals(id)) {
+                        item.setPurchased(true);
+                        break;
+                    }
+                }
+                sb.append(id).append(";");
+            }
+        }
+
+        // Save to Prefs (Cache)
+        Preferences prefs = Gdx.app.getPreferences(PREFS_NAME);
+        prefs.putString(KEY_PURCHASED_ITEMS, sb.toString());
+        prefs.flush();
+    }
 }
