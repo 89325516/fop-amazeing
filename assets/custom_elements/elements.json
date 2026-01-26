@@ -792,6 +792,80 @@
 	}
 },
 {
+	"id": "d6ec4815",
+	"name": "Corss Bow",
+	"type": "WEAPON",
+	"frameCount": 4,
+	"spritePaths": {
+		"class": "java.util.HashMap",
+		"Idle": [
+			"custom_images/d6ec4815/idle_0.png",
+			"custom_images/d6ec4815/idle_1.png",
+			"custom_images/d6ec4815/idle_2.png",
+			"custom_images/d6ec4815/idle_3.png"
+		],
+		"IdleDown": [
+			"custom_images/d6ec4815/idledown_0.png",
+			"custom_images/d6ec4815/idledown_1.png",
+			"custom_images/d6ec4815/idledown_2.png",
+			"custom_images/d6ec4815/idledown_3.png"
+		],
+		"IdleUp": [
+			"custom_images/d6ec4815/idleup_0.png",
+			"custom_images/d6ec4815/idleup_1.png",
+			"custom_images/d6ec4815/idleup_2.png",
+			"custom_images/d6ec4815/idleup_3.png"
+		],
+		"Attack": [
+			"custom_images/d6ec4815/attack_0.png",
+			"custom_images/d6ec4815/attack_1.png",
+			"custom_images/d6ec4815/attack_2.png",
+			"custom_images/d6ec4815/attack_3.png"
+		],
+		"Projectile": [
+			"custom_images/d6ec4815/projectile_0.png",
+			"custom_images/d6ec4815/projectile_1.png",
+			"custom_images/d6ec4815/projectile_2.png",
+			"custom_images/d6ec4815/projectile_3.png"
+		]
+	},
+	"properties": {
+		"class": "java.util.HashMap",
+		"damage": {
+			"class": "java.lang.Integer",
+			"value": 6
+		},
+		"effect": {
+			"class": "java.lang.String",
+			"value": "NONE"
+		},
+		"cooldown": {
+			"class": "java.lang.Integer",
+			"value": 2
+		},
+		"range": {
+			"class": "java.lang.Float",
+			"value": 5
+		},
+		"projectileSize": {
+			"class": "java.lang.Float",
+			"value": 1
+		},
+		"isRanged": {
+			"class": "java.lang.Boolean",
+			"value": true
+		},
+		"projectileSpeed": {
+			"class": "java.lang.Float",
+			"value": 10
+		},
+		"energyCost": {
+			"class": "java.lang.Float",
+			"value": 10
+		}
+	}
+},
+{
 	"id": "ffdca0ed",
 	"name": "Govlin1",
 	"type": "ENEMY",
