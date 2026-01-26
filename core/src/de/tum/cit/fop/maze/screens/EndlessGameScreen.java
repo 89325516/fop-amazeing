@@ -1289,7 +1289,10 @@ public class EndlessGameScreen implements Screen {
             }
         }
 
-        // 渲染药水掉落物 (根据类型选择正确的贴图)
+        // 渲染药水掉落物 (根据类型选择正确的贴图，尺寸缩放60%)
+        float dropScale = 0.6f;
+        float dropSize = UNIT_SCALE * dropScale;
+        float dropOffset = (UNIT_SCALE - dropSize) / 2; // 居中偏移
         for (Potion potion : potions) {
             TextureRegion potionTex;
             // 生命药水使用爱心贴图，其他类型使用默认药水贴图
@@ -1301,8 +1304,9 @@ public class EndlessGameScreen implements Screen {
             }
             if (potionTex != null) {
                 game.getSpriteBatch().draw(potionTex,
-                        potion.getX() * UNIT_SCALE, potion.getY() * UNIT_SCALE,
-                        UNIT_SCALE, UNIT_SCALE);
+                        potion.getX() * UNIT_SCALE + dropOffset,
+                        potion.getY() * UNIT_SCALE + dropOffset,
+                        dropSize, dropSize);
             }
         }
 

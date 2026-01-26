@@ -659,6 +659,48 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
             }
         }
 
+        // 2.6 Render Dropped Items (金币、武器、护甲等掉落物)
+        float dropScale = 0.6f; // 掉落物尺寸缩放为60%
+        float dropSize = UNIT_SCALE * dropScale;
+        float dropOffset = (UNIT_SCALE - dropSize) / 2; // 居中偏移
+        for (de.tum.cit.fop.maze.model.items.DroppedItem item : gameWorld.getDroppedItems()) {
+            if (item.isPickedUp())
+                continue;
+
+            TextureRegion itemTex = null;
+            switch (item.getType()) {
+                case COIN:
+                    itemTex = textureManager.coinRegion;
+                    break;
+                case WEAPON:
+                    // 尝试使用商店素材贴图
+                    de.tum.cit.fop.maze.model.weapons.Weapon weapon = (de.tum.cit.fop.maze.model.weapons.Weapon) item
+                            .getPayload();
+                    itemTex = getWeaponTexture(weapon.getName());
+                    if (itemTex == null)
+                        itemTex = textureManager.keyRegion; // 回退
+                    break;
+                case ARMOR:
+                    de.tum.cit.fop.maze.model.items.Armor armor = (de.tum.cit.fop.maze.model.items.Armor) item
+                            .getPayload();
+                    itemTex = getArmorTexture(armor.getName());
+                    if (itemTex == null)
+                        itemTex = textureManager.keyRegion; // 回退
+                    break;
+                case POTION:
+                    itemTex = textureManager.potionRegion;
+                    break;
+            }
+
+            if (itemTex != null) {
+                float bobY = item.getBobOffset() * UNIT_SCALE; // 浮动动画
+                game.getSpriteBatch().draw(itemTex,
+                        item.getX() * UNIT_SCALE + dropOffset,
+                        item.getY() * UNIT_SCALE + dropOffset + bobY,
+                        dropSize, dropSize);
+            }
+        }
+
         // 3. Render Enemies with Health Bars
         // Note: Now using boar animations with directional support
         float renderRadius = de.tum.cit.fop.maze.config.GameConfig.ENTITY_RENDER_RADIUS;
@@ -1544,5 +1586,61 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
             default:
                 return new Color(0.4f, 0.4f, 0.4f, 1f); // Gray
         }
+    }
+
+    // 武器贴图缓存 (使用商店素材)
+    private java.util.Map<String, TextureRegion> weaponTexCache = new java.util.HashMap<>();
+    private java.util.Map<String, TextureRegion> armorTexCache = new java.util.HashMap<>();
+
+    /**
+     * 获取武器掉落物的贴图 (优先使用商店素材)
+     */
+    private TextureRegion getWeaponTexture(String weaponName) {
+        if (weaponTexCache.containsKey(weaponName)) {
+            return weaponTexCache.get(weaponName);
+        }
+
+        // 尝试从商店素材加载
+        String fileName = weaponName.toLowerCase().replace(" ", "_").replace("'", "") + ".png";
+        String path = "images/items/shop/" + fileName;
+        try {
+            if (Gdx.files.internal(path).exists()) {
+                Texture tex = new Texture(Gdx.files.internal(path));
+                TextureRegion region = new TextureRegion(tex);
+                weaponTexCache.put(weaponName, region);
+                return region;
+            }
+        } catch (Exception e) {
+            // 忽略加载失败
+        }
+
+        weaponTexCache.put(weaponName, null);
+        return null;
+    }
+
+    /**
+     * 获取护甲掉落物的贴图 (优先使用商店素材)
+     */
+    private TextureRegion getArmorTexture(String armorName) {
+        if (armorTexCache.containsKey(armorName)) {
+            return armorTexCache.get(armorName);
+        }
+
+        // 尝试从商店素材加载
+        String fileName = armorName.toLowerCase().replace(" ", "_").replace("'", "") + ".png";
+        String path = "images/items/shop/" + fileName;
+        try {
+            if (Gdx.files.internal(path).exists()) {
+                Texture tex = new Texture(Gdx.files.internal(path));
+                TextureRegion region = new TextureRegion(tex);
+                armorTexCache.put(armorName, region);
+                return region;
+            }
+        } catch (Exception e) {
+            // 忽略加载失败
+        }
+
+        armorTexCache.put(armorName, null);
+        return null;
     }
 }

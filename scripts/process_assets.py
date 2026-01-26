@@ -2,6 +2,7 @@ from PIL import Image, ImageFilter, ImageDraw
 import os
 import re
 import numpy as np
+from collections import Counter
 
 input_dir = "raw_assets/ai_generated_raw"
 output_dir = "raw_assets/ai_processed_transparent"
@@ -11,9 +12,60 @@ WATERMARK_DETECTION_HEIGHT_PCT = 0.08  # Bottom 8% height to check
 WATERMARK_DETECTION_WIDTH_PCT = 0.25   # Right 25% width to check
 INPAINT_RADIUS = 5  # Radius for inpainting blur
 
+# Background color detection settings
+COLOR_TOLERANCE = 35  # Tolerance for background color matching (0-255)
+CORNER_SAMPLE_SIZE = 15  # Pixels to sample from each corner
+
+def detect_background_color(img, sample_size=CORNER_SAMPLE_SIZE):
+    """
+    自动检测背景颜色，通过采样四个角落的像素。
+    返回最常见的颜色作为背景色 (R, G, B)。
+    """
+    width, height = img.size
+    pixels = img.load()
+    
+    corner_pixels = []
+    
+    # 采样四个角落
+    corners = [
+        (0, 0),                          # 左上
+        (width - sample_size, 0),        # 右上
+        (0, height - sample_size),       # 左下
+        (width - sample_size, height - sample_size)  # 右下
+    ]
+    
+    for cx, cy in corners:
+        for dx in range(sample_size):
+            for dy in range(sample_size):
+                x = min(max(cx + dx, 0), width - 1)
+                y = min(max(cy + dy, 0), height - 1)
+                r, g, b, a = pixels[x, y]
+                if a > 128:  # 只统计非透明像素
+                    # 量化颜色以减少噪声（每8级一个桶）
+                    quantized = ((r // 8) * 8, (g // 8) * 8, (b // 8) * 8)
+                    corner_pixels.append(quantized)
+    
+    if not corner_pixels:
+        return (255, 255, 255)  # 默认白色
+    
+    # 找出最常见的颜色
+    color_counts = Counter(corner_pixels)
+    most_common = color_counts.most_common(1)[0][0]
+    
+    return most_common
+
+def is_background_color(r, g, b, bg_color, tolerance=COLOR_TOLERANCE):
+    """
+    检查像素是否接近背景色（使用欧几里得距离）。
+    """
+    bg_r, bg_g, bg_b = bg_color
+    distance = ((r - bg_r) ** 2 + (g - bg_g) ** 2 + (b - bg_b) ** 2) ** 0.5
+    return distance < tolerance
+
 def is_white_or_light(r, g, b, threshold=200):
     """
     Checks if a pixel is considered white/light background.
+    (Legacy function for backward compatibility)
     """
     c_max = max(r, g, b)
     c_min = min(r, g, b)
@@ -150,10 +202,11 @@ def smart_watermark_removal(img):
         print(f"  -> No watermark detected, skipping inpaint")
         return img
 
-def remove_all_white_pixels(image_path, output_path):
+def remove_background_pixels(image_path, output_path):
     """
     1. Smart watermark removal (Inpainting if detected)
-    2. Removes all white/light background pixels globally
+    2. Auto-detect background color from corners
+    3. Remove all background pixels with color tolerance
     """
     img = Image.open(image_path)
     img = img.convert("RGBA")
@@ -163,18 +216,31 @@ def remove_all_white_pixels(image_path, output_path):
     # Step 1: Smart watermark removal (Only if watermark detected)
     img = smart_watermark_removal(img)
     
+    # Step 2: Auto-detect background color
+    bg_color = detect_background_color(img)
+    print(f"  -> Detected background color: RGB{bg_color}")
+    
+    # Determine if it's a dark background (like gray #3C3C3C = 60,60,60)
+    is_dark_bg = sum(bg_color) < 400  # Dark if average < 133
+    
     width, height = img.size
     pixels = img.load()
     
     removed_count = 0
     
-    # Step 2: Remove white pixels
+    # Step 3: Remove background pixels
     for y in range(height):
         for x in range(width):
             r, g, b, a = pixels[x, y]
             if a == 0:
                 continue
-            if is_white_or_light(r, g, b):
+            
+            # Use detected background color matching
+            if is_background_color(r, g, b, bg_color):
+                pixels[x, y] = (0, 0, 0, 0)
+                removed_count += 1
+            # Also check for white/light background (fallback for mixed backgrounds)
+            elif not is_dark_bg and is_white_or_light(r, g, b):
                 pixels[x, y] = (0, 0, 0, 0)
                 removed_count += 1
     
@@ -182,7 +248,7 @@ def remove_all_white_pixels(image_path, output_path):
     print(f"  -> Done: removed {removed_count} bg pixels\n")
 
 print("=" * 50)
-print("Smart Asset Pipeline v4 - Intelligent Inpainting")
+print("Smart Asset Pipeline v5 - Auto Background Detection")
 print("=" * 50)
 print(f"Input:  {input_dir}")
 print(f"Output: {output_dir}\n")
@@ -199,7 +265,7 @@ else:
     for filename in files:
         input_path = os.path.join(input_dir, filename)
         output_path = os.path.join(output_dir, filename)
-        remove_all_white_pixels(input_path, output_path)
+        remove_background_pixels(input_path, output_path)
 
 print("=" * 50)
 print("Pipeline complete!")
