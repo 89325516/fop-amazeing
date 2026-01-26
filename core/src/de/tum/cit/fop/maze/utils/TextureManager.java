@@ -58,6 +58,10 @@ public class TextureManager implements Disposable {
         public TextureRegion arrowRegion;
         public TextureRegion bagIconRegion;
 
+        // Dropped Item Textures (金币和爱心掉落物)
+        public TextureRegion coinRegion;
+        public TextureRegion heartDropRegion;
+
         // Treasure Chest Textures
         public TextureRegion chestClosedRegion;
         public TextureRegion chestHalfRegion;
@@ -316,6 +320,10 @@ public class TextureManager implements Disposable {
 
                 // 9. Load Treasure Chest Textures
                 loadChestAssets();
+
+                // 10. Load Dropped Item Textures (金币和爱心)
+                coinRegion = loadTextureSafe("images/items/item_coin.png");
+                heartDropRegion = loadTextureSafe("images/items/item_heart_drop.png");
         }
 
         /**

@@ -1289,9 +1289,16 @@ public class EndlessGameScreen implements Screen {
             }
         }
 
-        // 渲染药水掉落物
+        // 渲染药水掉落物 (根据类型选择正确的贴图)
         for (Potion potion : potions) {
-            TextureRegion potionTex = textureManager.potionRegion;
+            TextureRegion potionTex;
+            // 生命药水使用爱心贴图，其他类型使用默认药水贴图
+            if (potion.getType() == Potion.PotionType.HEALTH) {
+                potionTex = textureManager.heartDropRegion != null ? textureManager.heartDropRegion
+                        : textureManager.potionRegion;
+            } else {
+                potionTex = textureManager.potionRegion;
+            }
             if (potionTex != null) {
                 game.getSpriteBatch().draw(potionTex,
                         potion.getX() * UNIT_SCALE, potion.getY() * UNIT_SCALE,

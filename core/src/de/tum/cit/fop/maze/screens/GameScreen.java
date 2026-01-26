@@ -624,9 +624,16 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
                 reg = textureManager.getTrapRegion(theme);
             } else if (obj instanceof Key)
                 reg = textureManager.keyRegion;
-            else if (obj instanceof Potion)
-                reg = textureManager.potionRegion;
-            else if (obj instanceof Weapon) {
+            else if (obj instanceof Potion) {
+                Potion potion = (Potion) obj;
+                // 生命药水使用爱心贴图，其他类型使用默认药水贴图
+                if (potion.getType() == Potion.PotionType.HEALTH) {
+                    reg = textureManager.heartDropRegion != null ? textureManager.heartDropRegion
+                            : textureManager.potionRegion;
+                } else {
+                    reg = textureManager.potionRegion;
+                }
+            } else if (obj instanceof Weapon) {
                 reg = textureManager.keyRegion;
                 game.getSpriteBatch().setColor(Color.CYAN);
             }
