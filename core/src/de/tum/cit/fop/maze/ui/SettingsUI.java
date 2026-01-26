@@ -1,10 +1,8 @@
 package de.tum.cit.fop.maze.ui;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.InputListener;
@@ -12,7 +10,6 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import de.tum.cit.fop.maze.MazeRunnerGame;
 import de.tum.cit.fop.maze.config.GameSettings;
 import de.tum.cit.fop.maze.utils.AudioManager;
@@ -77,41 +74,29 @@ public class SettingsUI {
 
     /**
      * Build settings UI with screenshot background (for in-game settings overlay).
-     * Uses the provided screenshot texture as background with dim effect.
+     * Uses a dark opaque overlay to fully cover the game, then displays settings
+     * content.
      * 
-     * @param screenshotTexture 游戏暂停时的截图纹理，如果为null则使用默认背景
+     * @param screenshotTexture 游戏暂停时的截图纹理 (不再使用，改为深色遮罩)
      */
     public Table buildWithBackground(Texture screenshotTexture) {
+        // 创建外层容器 - 使用完全不透明的深色背景
+        Table outerContainer = new Table();
+        outerContainer.setFillParent(true);
+
+        // 使用完全不透明的深色背景遮罩游戏画面
+        outerContainer.setBackground(skin.newDrawable("white", 0.05f, 0.05f, 0.08f, 1.0f));
+
+        // 内层内容表格
         contentTable = new Table();
-
-        // 优先使用传入的截图作为背景
-        if (screenshotTexture != null) {
-            // 使用游戏暂停时的截图作为背景
-            TextureRegionDrawable bgDrawable = new TextureRegionDrawable(new TextureRegion(screenshotTexture));
-            contentTable.setBackground(bgDrawable);
-            contentTable.setColor(0.5f, 0.5f, 0.5f, 1f); // 轻微暗化以突出设置内容
-        } else {
-            // Fallback: 加载固定背景图片
-            try {
-                backgroundTexture = new Texture(Gdx.files.internal("settings_bg.png"));
-            } catch (Exception e) {
-                backgroundTexture = null;
-            }
-
-            if (backgroundTexture != null) {
-                TextureRegionDrawable bgDrawable = new TextureRegionDrawable(new TextureRegion(backgroundTexture));
-                contentTable.setBackground(bgDrawable);
-                contentTable.setColor(0.4f, 0.4f, 0.4f, 1f);
-            } else {
-                // Fallback to dark semi-transparent background
-                contentTable.setBackground(skin.newDrawable("white", 0.04f, 0.04f, 0.06f, 0.95f));
-            }
-        }
-
         contentTable.pad(50, 40, 20, 40); // 上50 左右40 下20
 
         buildContent();
-        return contentTable;
+
+        // 将内容表格添加到外层容器中
+        outerContainer.add(contentTable).expand().center();
+
+        return outerContainer;
     }
 
     /**

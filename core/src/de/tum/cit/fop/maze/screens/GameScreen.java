@@ -1289,17 +1289,8 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         pauseTable.add(btn).width(200).padBottom(20).row();
     }
 
-    // === 设置界面截图背景 ===
-    private Texture settingsScreenshotTexture;
-
     private void showSettingsOverlay() {
-        // 截取当前游戏画面作为设置界面背景
-        if (settingsScreenshotTexture != null) {
-            settingsScreenshotTexture.dispose();
-        }
-        settingsScreenshotTexture = captureScreenshot();
-
-        // 每次重新创建设置界面以使用新截图
+        // 每次重新创建设置界面
         if (settingsTable != null) {
             settingsTable.remove();
             if (settingsUI != null) {
@@ -1312,32 +1303,12 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
             settingsTable.setVisible(false);
             pauseTable.setVisible(true);
         });
-        settingsTable = settingsUI.buildWithBackground(settingsScreenshotTexture);
+        // 使用不透明深色背景（不再使用截图）
+        settingsTable = settingsUI.buildWithBackground(null);
         settingsTable.setVisible(true);
         settingsTable.setFillParent(true);
         uiStage.addActor(settingsTable);
         settingsTable.toFront();
-    }
-
-    /**
-     * 截取当前游戏画面
-     */
-    private Texture captureScreenshot() {
-        int width = Gdx.graphics.getWidth();
-        int height = Gdx.graphics.getHeight();
-
-        // 读取当前帧缓冲区的像素
-        byte[] pixels = com.badlogic.gdx.utils.ScreenUtils.getFrameBufferPixels(0, 0, width, height, true);
-
-        // 创建 Pixmap
-        Pixmap pixmap = new Pixmap(width, height, Pixmap.Format.RGBA8888);
-        com.badlogic.gdx.utils.BufferUtils.copy(pixels, 0, pixmap.getPixels(), pixels.length);
-
-        // 创建纹理
-        Texture texture = new Texture(pixmap);
-        pixmap.dispose();
-
-        return texture;
     }
 
     // --- Popups (Keep logic in Screen for now) ---
@@ -1517,8 +1488,6 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         if (dustParticles != null)
             dustParticles.dispose();
         // 清理设置界面相关资源
-        if (settingsScreenshotTexture != null)
-            settingsScreenshotTexture.dispose();
         if (settingsUI != null)
             settingsUI.dispose();
     }
