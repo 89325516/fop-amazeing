@@ -42,6 +42,8 @@ public class TextureManager implements Disposable {
         public TextureRegion floorWallBaseJungle, floorWallBaseIce, floorWallBaseSpace;
         public TextureRegion entryRegion;
         public TextureRegion exitRegion;
+        // Themed Exit Textures
+        public TextureRegion exitGrassland, exitJungle, exitDesert, exitIce, exitSpace;
         public TextureRegion trapRegion;
         // Themed Trap Regions
         public TextureRegion trapGrassland, trapDesert, trapIce, trapJungle, trapSpace;
@@ -324,6 +326,13 @@ public class TextureManager implements Disposable {
                 // 10. Load Dropped Item Textures (金币和爱心)
                 coinRegion = loadTextureSafe("images/items/item_coin.png");
                 heartDropRegion = loadTextureSafe("images/items/item_heart_drop.png");
+
+                // 11. Load Themed Exit Textures
+                exitGrassland = loadTextureSafe("images/exits/exit_grassland_1f.png");
+                exitJungle = loadTextureSafe("images/exits/exit_jungle_1f.png");
+                exitDesert = loadTextureSafe("images/exits/exit_desert_1f.png");
+                exitIce = loadTextureSafe("images/exits/exit_ice_1f.png");
+                exitSpace = loadTextureSafe("images/exits/exit_space_1f.png");
         }
 
         /**
@@ -616,6 +625,29 @@ public class TextureManager implements Disposable {
                                 return trapSpaceAnim;
                         default:
                                 return null;
+                }
+        }
+
+        /**
+         * Returns the exit texture region for the given theme.
+         * Falls back to default exitRegion if themed texture is not available.
+         */
+        public TextureRegion getExitRegion(String theme) {
+                if (theme == null)
+                        return exitRegion;
+                switch (theme) {
+                        case "Grassland":
+                                return exitGrassland != fallbackRegion ? exitGrassland : exitRegion;
+                        case "Jungle":
+                                return exitJungle != fallbackRegion ? exitJungle : exitRegion;
+                        case "Desert":
+                                return exitDesert != fallbackRegion ? exitDesert : exitRegion;
+                        case "Ice":
+                                return exitIce != fallbackRegion ? exitIce : exitRegion;
+                        case "Space":
+                                return exitSpace != fallbackRegion ? exitSpace : exitRegion;
+                        default:
+                                return exitRegion;
                 }
         }
 

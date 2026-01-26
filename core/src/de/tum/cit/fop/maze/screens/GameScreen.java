@@ -600,7 +600,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
 
             TextureRegion reg = null;
             if (obj instanceof Exit)
-                reg = textureManager.exitRegion;
+                reg = textureManager.getExitRegion(theme);
             else if (obj instanceof Trap) {
                 // Check for animation (Overlay)
                 Animation<TextureRegion> trapAnim = textureManager.getTrapAnimation(theme);
