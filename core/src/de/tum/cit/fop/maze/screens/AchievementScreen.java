@@ -399,6 +399,8 @@ public class AchievementScreen implements Screen {
     @Override
     public void show() {
         Gdx.input.setInputProcessor(stage);
+        // 🔊 全局按钮音效
+        de.tum.cit.fop.maze.utils.UIUtils.enableMenuButtonSound(stage);
         refreshAchievementList(); // Refresh on show in case data changed
         // Initial scroll focus
         if (scrollPane != null) {

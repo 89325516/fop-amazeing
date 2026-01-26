@@ -55,6 +55,7 @@ public class GameOverScreen implements Screen {
         }
 
         TextButton menuBtn = new TextButton("Back to Menu", game.getSkin());
+        de.tum.cit.fop.maze.utils.UIUtils.addGameClickSound(menuBtn);
         menuBtn.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
@@ -72,6 +73,8 @@ public class GameOverScreen implements Screen {
     @Override
     public void show() {
         Gdx.input.setInputProcessor(stage);
+        // 🔊 全局按钮音效
+        de.tum.cit.fop.maze.utils.UIUtils.enableGameButtonSound(stage);
     }
 
     @Override

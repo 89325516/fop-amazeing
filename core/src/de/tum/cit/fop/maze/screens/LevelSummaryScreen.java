@@ -236,11 +236,10 @@ public class LevelSummaryScreen implements Screen {
 
         // 角落混合色 (在四个角创建渐变过渡效果)
         Color cornerBlend = new Color(
-            (borderStart.r + borderEnd.r) / 2f,
-            (borderStart.g + borderEnd.g) / 2f,
-            (borderStart.b + borderEnd.b) / 2f,
-            1f
-        );
+                (borderStart.r + borderEnd.r) / 2f,
+                (borderStart.g + borderEnd.g) / 2f,
+                (borderStart.b + borderEnd.b) / 2f,
+                1f);
 
         // 右上角
         pm.setColor(cornerBlend);
@@ -431,12 +430,18 @@ public class LevelSummaryScreen implements Screen {
      */
     private Color getRankGlowColor(String rank) {
         switch (rank) {
-            case "S": return UIConstants.RANK_S_GLOW;
-            case "A": return UIConstants.RANK_A_GLOW;
-            case "B": return UIConstants.RANK_B_GLOW;
-            case "C": return UIConstants.RANK_C_GLOW;
-            case "D": return UIConstants.RANK_D_GLOW;
-            default: return Color.GRAY;
+            case "S":
+                return UIConstants.RANK_S_GLOW;
+            case "A":
+                return UIConstants.RANK_A_GLOW;
+            case "B":
+                return UIConstants.RANK_B_GLOW;
+            case "C":
+                return UIConstants.RANK_C_GLOW;
+            case "D":
+                return UIConstants.RANK_D_GLOW;
+            default:
+                return Color.GRAY;
         }
     }
 
@@ -661,6 +666,8 @@ public class LevelSummaryScreen implements Screen {
     @Override
     public void show() {
         Gdx.input.setInputProcessor(stage);
+        // 🔊 全局按钮音效
+        de.tum.cit.fop.maze.utils.UIUtils.enableGameButtonSound(stage);
     }
 
     @Override

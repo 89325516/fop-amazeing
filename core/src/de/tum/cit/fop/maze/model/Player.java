@@ -422,6 +422,8 @@ public class Player extends GameObject {
                 damageListener.onDamage(x + 0.5f, y + 0.5f, remainingDamage,
                         (float) Math.cos(angle), (float) Math.sin(angle), 1.0f);
             }
+            // Play player hurt sound effect
+            de.tum.cit.fop.maze.utils.AudioManager.getInstance().playSound("player_hurt");
         }
 
         // Trigger death animation if lives reach 0
@@ -473,7 +475,10 @@ public class Player extends GameObject {
 
             attackAnimTimer = attackAnimTotalDuration;
 
-            de.tum.cit.fop.maze.utils.AudioManager.getInstance().playSound("attack");
+            // Play weapon-specific attack sound
+            String weaponType = currentWeapon.getClass().getSimpleName();
+            String soundKey = de.tum.cit.fop.maze.utils.AudioManager.getAttackSoundForWeapon(weaponType);
+            de.tum.cit.fop.maze.utils.AudioManager.getInstance().playSound(soundKey);
         }
     }
 

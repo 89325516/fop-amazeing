@@ -50,6 +50,7 @@ public class MenuScreen implements Screen {
 
         // 2. "New Game" Button
         TextButton newGameButton = new TextButton("New Game", game.getSkin());
+        UIUtils.addMenuClickSound(newGameButton);
         table.add(newGameButton).width(300).height(60).padBottom(20).row();
 
         newGameButton.addListener(new ChangeListener() {
@@ -62,6 +63,7 @@ public class MenuScreen implements Screen {
 
         // 3. "Select Level" Button
         TextButton selectLevelButton = new TextButton("Select Level", game.getSkin());
+        UIUtils.addMenuClickSound(selectLevelButton);
         table.add(selectLevelButton).width(300).height(60).padBottom(20).row();
 
         selectLevelButton.addListener(new ChangeListener() {
@@ -73,6 +75,7 @@ public class MenuScreen implements Screen {
 
         // 4. "Endless Mode" Button (原 Random Map 位置)
         TextButton endlessButton = new TextButton("Endless Mode", game.getSkin());
+        UIUtils.addMenuClickSound(endlessButton);
         endlessButton.setColor(1f, 0.8f, 0.3f, 1f); // 金黄色高亮
         table.add(endlessButton).width(300).height(60).padBottom(20).row();
 
@@ -87,6 +90,7 @@ public class MenuScreen implements Screen {
 
         // 5. "Load Game" Button
         TextButton loadButton = new TextButton("Load Game", game.getSkin());
+        UIUtils.addMenuClickSound(loadButton);
         table.add(loadButton).width(300).height(60).padBottom(20).row();
 
         loadButton.addListener(new ChangeListener() {
@@ -98,6 +102,7 @@ public class MenuScreen implements Screen {
 
         // Shop Button
         TextButton shopButton = new TextButton("Shop", game.getSkin());
+        UIUtils.addMenuClickSound(shopButton);
         table.add(shopButton).width(300).height(60).padBottom(20).row();
 
         shopButton.addListener(new ChangeListener() {
@@ -110,6 +115,7 @@ public class MenuScreen implements Screen {
 
         // Achievements Button
         TextButton achievementsButton = new TextButton("Achievements", game.getSkin());
+        UIUtils.addMenuClickSound(achievementsButton);
         table.add(achievementsButton).width(300).height(60).padBottom(20).row();
 
         achievementsButton.addListener(new ChangeListener() {
@@ -122,6 +128,7 @@ public class MenuScreen implements Screen {
 
         // Leaderboard Button
         TextButton leaderboardButton = new TextButton("Leaderboard", game.getSkin());
+        UIUtils.addMenuClickSound(leaderboardButton);
         table.add(leaderboardButton).width(300).height(60).padBottom(20).row();
 
         leaderboardButton.addListener(new ChangeListener() {
@@ -134,6 +141,7 @@ public class MenuScreen implements Screen {
 
         // Help Button
         TextButton helpButton = new TextButton("Help", game.getSkin());
+        UIUtils.addMenuClickSound(helpButton);
         table.add(helpButton).width(300).height(60).padBottom(20).row();
 
         helpButton.addListener(new ChangeListener() {
@@ -146,6 +154,7 @@ public class MenuScreen implements Screen {
 
         // Element Manager Button (Developer Feature)
         TextButton elementCreatorButton = new TextButton("Element Manager", game.getSkin());
+        UIUtils.addMenuClickSound(elementCreatorButton);
         elementCreatorButton.setColor(0.6f, 0.8f, 1f, 1f); // Light blue to indicate dev feature
         table.add(elementCreatorButton).width(300).height(60).padBottom(20).row();
 
@@ -161,6 +170,7 @@ public class MenuScreen implements Screen {
 
         // "Settings" Button
         TextButton settingsButton = new TextButton("Settings", game.getSkin());
+        UIUtils.addMenuClickSound(settingsButton);
         table.add(settingsButton).width(300).height(60).padBottom(20).row();
 
         settingsButton.addListener(new ChangeListener() {
@@ -172,6 +182,7 @@ public class MenuScreen implements Screen {
 
         // "Exit" Button
         TextButton exitButton = new TextButton("Exit", game.getSkin());
+        UIUtils.addMenuClickSound(exitButton);
         table.add(exitButton).width(300).height(60).row();
 
         exitButton.addListener(new ChangeListener() {
@@ -437,6 +448,8 @@ public class MenuScreen implements Screen {
     @Override
     public void show() {
         Gdx.input.setInputProcessor(stage);
+        // 🔊 全局按钮音效
+        UIUtils.enableMenuButtonSound(stage);
         // Play menu background music
         de.tum.cit.fop.maze.utils.AudioManager.getInstance().playMenuBgm();
     }

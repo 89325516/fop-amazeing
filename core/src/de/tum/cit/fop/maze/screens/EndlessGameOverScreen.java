@@ -38,6 +38,8 @@ public class EndlessGameOverScreen implements Screen {
 
         stage = new Stage(new FitViewport(1920, 1080), game.getSpriteBatch());
         Gdx.input.setInputProcessor(stage);
+        // 🔊 全局按钮音效
+        de.tum.cit.fop.maze.utils.UIUtils.enableGameButtonSound(stage);
 
         // 创建半透明黑色背景
         Pixmap bg = new Pixmap(1, 1, Pixmap.Format.RGBA8888);

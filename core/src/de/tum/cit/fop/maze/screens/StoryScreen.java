@@ -262,6 +262,8 @@ public class StoryScreen implements Screen {
     @Override
     public void show() {
         Gdx.input.setInputProcessor(stage);
+        // 🔊 全局按钮音效
+        de.tum.cit.fop.maze.utils.UIUtils.enableMenuButtonSound(stage);
     }
 
     @Override
@@ -318,19 +320,25 @@ public class StoryScreen implements Screen {
     }
 
     @Override
-    public void pause() {}
+    public void pause() {
+    }
 
     @Override
-    public void resume() {}
+    public void resume() {
+    }
 
     @Override
-    public void hide() {}
+    public void hide() {
+    }
 
     @Override
     public void dispose() {
         stage.dispose();
-        if (backgroundTexture != null) backgroundTexture.dispose();
-        if (dialogBoxTexture != null) dialogBoxTexture.dispose();
-        if (borderTexture != null) borderTexture.dispose();
+        if (backgroundTexture != null)
+            backgroundTexture.dispose();
+        if (dialogBoxTexture != null)
+            dialogBoxTexture.dispose();
+        if (borderTexture != null)
+            borderTexture.dispose();
     }
 }

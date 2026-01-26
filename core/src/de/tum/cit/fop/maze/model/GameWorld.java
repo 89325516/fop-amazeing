@@ -439,8 +439,8 @@ public class GameWorld {
             updateDirectionFromVelocity();
         }
 
-        // Attack (按住攻击键时持续攻击，由武器冷却控制攻击频率)
-        if (Gdx.input.isKeyPressed(GameSettings.KEY_ATTACK)) {
+        // Attack (每次按下攻击键触发一次攻击，与无尽模式一致)
+        if (Gdx.input.isKeyJustPressed(GameSettings.KEY_ATTACK)) {
             handleAttack();
         }
     }
@@ -579,24 +579,37 @@ public class GameWorld {
             }
 
             // Logic moved from GameScreen (Melee)
+            // === 新攻击范围逻辑 (New Attack Range Logic) ===
+            // 360度全方位攻击圈: innerRadius = R0 × 0.8
+            // 朝向扇形扩展: outerRadius = R0 × 1.2
             float attackRange = currentWeapon.getRange();
-            float attackRangeSq = attackRange * attackRange; // 用于快速预过滤
+            float innerRadius = attackRange * 0.8f; // 360度全方位攻击半径
+            float outerRadius = attackRange * 1.2f; // 朝向扇形扩展半径
+            float outerRadiusSq = outerRadius * outerRadius; // 用于快速预过滤
             Iterator<Enemy> iter = enemies.iterator();
             while (iter.hasNext()) {
                 Enemy e = iter.next();
                 if (e.isDead())
                     continue;
 
-                // 快速预过滤：用平方距离跳过明显远的敌人
+                // 快速预过滤：用平方距离跳过明显远的敌人 (使用外半径)
                 float dx = e.getX() - player.getX();
                 float dy = e.getY() - player.getY();
-                if (dx * dx + dy * dy > attackRangeSq)
+                if (dx * dx + dy * dy > outerRadiusSq)
                     continue;
 
                 float dist = (float) Math.sqrt(dx * dx + dy * dy);
 
-                if (dist < attackRange) {
-                    // Angle check (复用已计算的 dx/dy)
+                // === 新判定逻辑 ===
+                // 条件1: 在innerRadius内 → 360度全方位命中
+                // 条件2: 在innerRadius~outerRadius范围内 → 需要在朝向扇形内才能命中
+                boolean canHit = false;
+
+                if (dist < innerRadius) {
+                    // 360度全方位攻击圈内，直接命中
+                    canHit = true;
+                } else if (dist < outerRadius) {
+                    // 在扇形扩展范围内，需要检查角度
                     float enemyAngle = MathUtils.atan2(dy, dx) * MathUtils.radDeg;
                     if (enemyAngle < 0)
                         enemyAngle += 360;
@@ -610,7 +623,6 @@ public class GameWorld {
                         coneHalfAngle = 30f;
                     } else {
                         // 键盘模式: 使用 aimDirection 向量计算8向攻击角度, 45度锥形
-                        // aimDirection 在 handleInput() 中根据键盘组合键更新
                         attackAngle = MathUtils.atan2(aimDirection.y, aimDirection.x) * MathUtils.radDeg;
                         if (attackAngle < 0) {
                             attackAngle += 360;
@@ -624,38 +636,40 @@ public class GameWorld {
                     while (angleDiff < -180)
                         angleDiff += 360;
 
-                    // 攻击锥形半角判定, 或极近距离直接命中
-                    if (Math.abs(angleDiff) <= coneHalfAngle || dist < 0.5f) {
-                        int totalDamage = currentWeapon.getDamage() + player.getDamageBonus();
+                    // 攻击锥形半角判定
+                    canHit = Math.abs(angleDiff) <= coneHalfAngle;
+                }
 
-                        // Set damage source for blood particle direction (include knockback strength)
-                        e.setDamageSource(player.getX(), player.getY(), player.getKnockbackMultiplier());
-                        // Apply damage with damage type consideration
-                        e.takeDamage(totalDamage, currentWeapon.getDamageType());
-                        if (e.getHealth() > 0) {
-                            e.applyEffect(currentWeapon.getEffect());
-                            // === NEW: Track effect application for achievements ===
-                            if (currentWeapon.getEffect() != null &&
-                                    currentWeapon.getEffect() != de.tum.cit.fop.maze.model.weapons.WeaponEffect.NONE) {
-                                newAchievements.addAll(AchievementManager.recordEffectApplied(
-                                        currentWeapon.getEffect().name()));
-                            }
+                if (canHit) {
+                    int totalDamage = currentWeapon.getDamage() + player.getDamageBonus();
+
+                    // Set damage source for blood particle direction (include knockback strength)
+                    e.setDamageSource(player.getX(), player.getY(), player.getKnockbackMultiplier());
+                    // Apply damage with damage type consideration
+                    e.takeDamage(totalDamage, currentWeapon.getDamageType());
+                    if (e.getHealth() > 0) {
+                        e.applyEffect(currentWeapon.getEffect());
+                        // === NEW: Track effect application for achievements ===
+                        if (currentWeapon.getEffect() != null &&
+                                currentWeapon.getEffect() != de.tum.cit.fop.maze.model.weapons.WeaponEffect.NONE) {
+                            newAchievements.addAll(AchievementManager.recordEffectApplied(
+                                    currentWeapon.getEffect().name()));
                         }
+                    }
 
-                        floatingTexts.add(new FloatingText(e.getX(), e.getY(), "-" + totalDamage, Color.RED));
-                        AudioManager.getInstance().playSound("hit");
+                    floatingTexts.add(new FloatingText(e.getX(), e.getY(), "-" + totalDamage, Color.RED));
+                    AudioManager.getInstance().playSound("enemy_hurt");
 
-                        float kbMult = 1.0f + (1.0f - (dist / Math.max(0.1f, attackRange)));
-                        if (player.isRunning())
-                            kbMult *= 2.0f;
-                        kbMult = MathUtils.clamp(kbMult, 1.0f, 4.0f);
+                    float kbMult = 1.0f + (1.0f - (dist / Math.max(0.1f, attackRange)));
+                    if (player.isRunning())
+                        kbMult *= 2.0f;
+                    kbMult = MathUtils.clamp(kbMult, 1.0f, 4.0f);
 
-                        e.knockback(player.getX(), player.getY(), kbMult * player.getKnockbackMultiplier(),
-                                collisionManager);
+                    e.knockback(player.getX(), player.getY(), kbMult * player.getKnockbackMultiplier(),
+                            collisionManager);
 
-                        if (e.isDead() && !e.isRemovable()) { // Just died
-                            handleEnemyDeath(e);
-                        }
+                    if (e.isDead() && !e.isRemovable()) { // Just died
+                        handleEnemyDeath(e);
                     }
                 }
             }
@@ -1158,7 +1172,7 @@ public class GameWorld {
                             e.applyEffect(p.getEffect());
                         }
                         floatingTexts.add(new FloatingText(e.getX(), e.getY(), "-" + p.getDamage(), Color.ORANGE));
-                        AudioManager.getInstance().playSound("hit");
+                        AudioManager.getInstance().playSound("enemy_hurt");
 
                         // === Ranged Knockback Logic ===
                         // Calculate distance traveled to apply falloff

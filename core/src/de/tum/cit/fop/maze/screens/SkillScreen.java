@@ -24,9 +24,10 @@ public class SkillScreen implements Screen {
 
     /**
      * 构造函数 - 需要知道玩家是胜利还是失败进入 Skill Tree
-     * @param game 游戏实例
+     * 
+     * @param game         游戏实例
      * @param currentLevel 当前关卡路径
-     * @param isVictory true=胜利后进入, false=失败后进入
+     * @param isVictory    true=胜利后进入, false=失败后进入
      */
     public SkillScreen(MazeRunnerGame game, String currentLevel, boolean isVictory) {
         this.game = game;
@@ -56,6 +57,8 @@ public class SkillScreen implements Screen {
     public void show() {
         stage = new Stage(new FitViewport(1920, 1080), game.getSpriteBatch());
         Gdx.input.setInputProcessor(stage);
+        // 🔊 全局按钮音效
+        de.tum.cit.fop.maze.utils.UIUtils.enableGameButtonSound(stage);
 
         Table rootTable = new Table();
         rootTable.setFillParent(true);
@@ -86,7 +89,7 @@ public class SkillScreen implements Screen {
                         gameState.setMaxHealthBonus(gameState.getMaxHealthBonus() + 1);
                         gameState.setLives(gameState.getLives() + 1);
                         updateLabels(spLabel, rootTable);
-                        de.tum.cit.fop.maze.utils.AudioManager.getInstance().playSound("select");
+                        de.tum.cit.fop.maze.utils.AudioManager.getInstance().playSound("skill_upgrade");
                     }
                 });
 
@@ -99,7 +102,7 @@ public class SkillScreen implements Screen {
                         gameState.setSkillPoints(gameState.getSkillPoints() - cost);
                         gameState.setDamageBonus(gameState.getDamageBonus() + 1);
                         updateLabels(spLabel, rootTable);
-                        de.tum.cit.fop.maze.utils.AudioManager.getInstance().playSound("select");
+                        de.tum.cit.fop.maze.utils.AudioManager.getInstance().playSound("skill_upgrade");
                     }
                 });
 
@@ -112,7 +115,7 @@ public class SkillScreen implements Screen {
                         gameState.setSkillPoints(gameState.getSkillPoints() - cost);
                         gameState.setInvincibilityExtension(gameState.getInvincibilityExtension() + 0.2f);
                         updateLabels(spLabel, rootTable);
-                        de.tum.cit.fop.maze.utils.AudioManager.getInstance().playSound("select");
+                        de.tum.cit.fop.maze.utils.AudioManager.getInstance().playSound("skill_upgrade");
                     }
                 });
 
@@ -125,7 +128,7 @@ public class SkillScreen implements Screen {
                         gameState.setSkillPoints(gameState.getSkillPoints() - cost);
                         gameState.setKnockbackMultiplier(gameState.getKnockbackMultiplier() + 0.1f);
                         updateLabels(spLabel, rootTable);
-                        de.tum.cit.fop.maze.utils.AudioManager.getInstance().playSound("select");
+                        de.tum.cit.fop.maze.utils.AudioManager.getInstance().playSound("skill_upgrade");
                     }
                 });
 
@@ -138,7 +141,7 @@ public class SkillScreen implements Screen {
                         gameState.setSkillPoints(gameState.getSkillPoints() - cost);
                         gameState.setCooldownReduction(gameState.getCooldownReduction() + 0.1f);
                         updateLabels(spLabel, rootTable);
-                        de.tum.cit.fop.maze.utils.AudioManager.getInstance().playSound("select");
+                        de.tum.cit.fop.maze.utils.AudioManager.getInstance().playSound("skill_upgrade");
                     }
                 });
 
@@ -151,7 +154,7 @@ public class SkillScreen implements Screen {
                         gameState.setSkillPoints(gameState.getSkillPoints() - cost);
                         gameState.setSpeedBonus(gameState.getSpeedBonus() + 0.05f);
                         updateLabels(spLabel, rootTable);
-                        de.tum.cit.fop.maze.utils.AudioManager.getInstance().playSound("select");
+                        de.tum.cit.fop.maze.utils.AudioManager.getInstance().playSound("skill_upgrade");
                     }
                 });
 
@@ -166,23 +169,22 @@ public class SkillScreen implements Screen {
 
         // 4. Done Button - 根据isVictory返回正确界面
         TextButton doneBtn = new TextButton("Done / Continue", skin);
+        de.tum.cit.fop.maze.utils.UIUtils.addGameClickSound(doneBtn);
         doneBtn.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 SaveManager.saveGame(gameState, "auto_save_victory");
                 SaveManager.saveGame(gameState, "auto_save");
-                
+
                 // 根据进入时的状态返回正确界面
                 if (isVictory) {
                     // 胜利后返回 VictoryScreen
                     game.setScreen(new VictoryScreen(game, currentLevel));
                 } else {
                     // 失败后返回 LevelSummaryScreen (Defeat 模式)
-                    de.tum.cit.fop.maze.model.LevelSummaryData defeatData = 
-                        new de.tum.cit.fop.maze.model.LevelSummaryData(
-                            de.tum.cit.fop.maze.model.LevelSummaryData.Result.DEFEAT, 
-                            currentLevel
-                        );
+                    de.tum.cit.fop.maze.model.LevelSummaryData defeatData = new de.tum.cit.fop.maze.model.LevelSummaryData(
+                            de.tum.cit.fop.maze.model.LevelSummaryData.Result.DEFEAT,
+                            currentLevel);
                     game.setScreen(new LevelSummaryScreen(game, defeatData));
                 }
             }

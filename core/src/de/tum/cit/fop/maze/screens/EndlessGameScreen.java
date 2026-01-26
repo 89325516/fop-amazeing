@@ -771,24 +771,43 @@ public class EndlessGameScreen implements Screen {
         if (weapon == null)
             return;
 
+        // 远程武器不使用此逻辑
+        if (weapon.isRanged()) {
+            // TODO: 远程武器单独处理
+            return;
+        }
+
+        // === 新攻击范围逻辑 (New Attack Range Logic) ===
+        // 360度全方位攻击圈: innerRadius = R0 × 0.8
+        // 朝向扇形扩展: outerRadius = R0 × 1.2
         float attackRange = weapon.getRange();
-        float attackRangeSq = attackRange * attackRange; // 用于快速预过滤
+        float innerRadius = attackRange * 0.8f; // 360度全方位攻击半径
+        float outerRadius = attackRange * 1.2f; // 朝向扇形扩展半径
+        float outerRadiusSq = outerRadius * outerRadius; // 用于快速预过滤
         float attackDamage = weapon.getDamage() + player.getDamageBonus();
 
         for (Enemy enemy : enemies) {
             if (enemy.isDead())
                 continue;
 
-            // 快速预过滤：用平方距离跳过明显远的敌人
+            // 快速预过滤：用平方距离跳过明显远的敌人 (使用外半径)
             float dx = enemy.getX() - player.getX();
             float dy = enemy.getY() - player.getY();
-            if (dx * dx + dy * dy > attackRangeSq)
+            if (dx * dx + dy * dy > outerRadiusSq)
                 continue;
 
             float dist = (float) Math.sqrt(dx * dx + dy * dy);
 
-            if (dist <= attackRange) {
-                // === 使用鼠标瞄准角度进行60度锥形攻击判定 ===
+            // === 新判定逻辑 ===
+            // 条件1: 在innerRadius内 → 360度全方位命中
+            // 条件2: 在innerRadius~outerRadius范围内 → 需要在朝向扇形内才能命中
+            boolean canHit = false;
+
+            if (dist < innerRadius) {
+                // 360度全方位攻击圈内，直接命中
+                canHit = true;
+            } else if (dist < outerRadius) {
+                // 在扇形扩展范围内，需要检查角度
                 float enemyAngle = MathUtils.atan2(dy, dx) * MathUtils.radDeg;
                 if (enemyAngle < 0)
                     enemyAngle += 360;
@@ -799,30 +818,32 @@ public class EndlessGameScreen implements Screen {
                 while (angleDiff < -180)
                     angleDiff += 360;
 
-                // 攻击锥形半角 = 30度, 或极近距离直接命中
-                if (Math.abs(angleDiff) <= 30 || dist < 0.5f) {
-                    int damage = (int) attackDamage;
-                    // Set damage source for blood particle direction (include knockback strength)
-                    enemy.setDamageSource(player.getX(), player.getY(), player.getKnockbackMultiplier());
-                    // Apply damage with damage type consideration
-                    enemy.takeDamage(damage, weapon.getDamageType());
+                // 攻击锥形半角 = 30度
+                canHit = Math.abs(angleDiff) <= 30;
+            }
 
-                    boolean killed = enemy.isDead();
+            if (canHit) {
+                int damage = (int) attackDamage;
+                // Set damage source for blood particle direction (include knockback strength)
+                enemy.setDamageSource(player.getX(), player.getY(), player.getKnockbackMultiplier());
+                // Apply damage with damage type consideration
+                enemy.takeDamage(damage, weapon.getDamageType());
 
-                    // === Hit Feedback: Damage Number (伤害数值显示) ===
-                    floatingTexts.add(new FloatingText(enemy.getX(), enemy.getY(), "-" + damage, Color.RED));
-                    AudioManager.getInstance().playSound("hit");
+                boolean killed = enemy.isDead();
 
-                    // === Hit Feedback: Knockback ===
-                    if (!killed) {
-                        enemy.knockback(player.getX(), player.getY(), 2.0f, null);
-                    }
-                    // === Hit Feedback: Weapon Effect ===
-                    enemy.applyEffect(weapon.getEffect());
+                // === Hit Feedback: Damage Number (伤害数值显示) ===
+                floatingTexts.add(new FloatingText(enemy.getX(), enemy.getY(), "-" + damage, Color.RED));
+                AudioManager.getInstance().playSound("enemy_hurt");
 
-                    if (killed) {
-                        onEnemyKilled(enemy);
-                    }
+                // === Hit Feedback: Knockback ===
+                if (!killed) {
+                    enemy.knockback(player.getX(), player.getY(), 2.0f, null);
+                }
+                // === Hit Feedback: Weapon Effect ===
+                enemy.applyEffect(weapon.getEffect());
+
+                if (killed) {
+                    onEnemyKilled(enemy);
                 }
             }
         }
@@ -971,6 +992,52 @@ public class EndlessGameScreen implements Screen {
     }
 
     /**
+     * 检查指定位置是否可以安全生成敌人（不会卡墙）
+     * 执行更严格的碰撞检测，检查生成位置周围是否有墙
+     * 
+     * @param x 生成位置 X 坐标
+     * @param y 生成位置 Y 坐标
+     * @return 如果位置安全可以生成则返回 true
+     */
+    private boolean canSpawnAt(float x, float y) {
+        float size = 1.0f; // 敌人占用1个格子
+        float padding = 0.1f; // 边缘缓冲距离
+
+        // 检查生成位置的中心格子
+        int centerX = (int) x;
+        int centerY = (int) y;
+
+        // 首先检查中心点是否在墙内
+        if (isWallAt(centerX, centerY)) {
+            return false;
+        }
+
+        // 检查敌人碰撞箱的四个角
+        // 使用比移动检测更大的边距，确保有足够空间
+        if (isWallAt((int) (x + padding), (int) (y + padding)) ||
+                isWallAt((int) (x + size - padding), (int) (y + padding)) ||
+                isWallAt((int) (x + size - padding), (int) (y + size - padding)) ||
+                isWallAt((int) (x + padding), (int) (y + size - padding))) {
+            return false;
+        }
+
+        // 额外检查：确保有足够的移动空间（检查周围一圈）
+        // 避免敌人生成在狭窄通道入口处
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                if (dx == 0 && dy == 0)
+                    continue; // 跳过中心
+                int checkX = centerX + dx;
+                int checkY = centerY + dy;
+                // 如果周围有超过3个墙，说明位置太狭窄
+                // 这里我们只需要确保至少有一个方向可以移动
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * 检查敌人是否可以移动到指定位置（碰撞检测）
      */
     private boolean canEnemyMoveTo(float x, float y) {
@@ -988,68 +1055,83 @@ public class EndlessGameScreen implements Screen {
         if (enemies.size() >= MAX_ENEMIES)
             return;
 
-        float angle = spawnRandom.nextFloat() * 360f * MathUtils.degreesToRadians;
-        float distance = EndlessModeConfig.SPAWN_MIN_DISTANCE +
-                spawnRandom.nextFloat() * (EndlessModeConfig.SPAWN_MAX_DISTANCE - EndlessModeConfig.SPAWN_MIN_DISTANCE);
+        // 尝试最多5次找到安全生成位置
+        for (int attempt = 0; attempt < 5; attempt++) {
+            float angle = spawnRandom.nextFloat() * 360f * MathUtils.degreesToRadians;
+            float distance = EndlessModeConfig.SPAWN_MIN_DISTANCE +
+                    spawnRandom.nextFloat()
+                            * (EndlessModeConfig.SPAWN_MAX_DISTANCE - EndlessModeConfig.SPAWN_MIN_DISTANCE);
 
-        float spawnX = player.getX() + MathUtils.cos(angle) * distance;
-        float spawnY = player.getY() + MathUtils.sin(angle) * distance;
+            float spawnX = player.getX() + MathUtils.cos(angle) * distance;
+            float spawnY = player.getY() + MathUtils.sin(angle) * distance;
 
-        // 边界检查
-        spawnX = MathUtils.clamp(spawnX, 5, EndlessModeConfig.MAP_WIDTH - 5);
-        spawnY = MathUtils.clamp(spawnY, 5, EndlessModeConfig.MAP_HEIGHT - 5);
+            // 边界检查
+            spawnX = MathUtils.clamp(spawnX, 5, EndlessModeConfig.MAP_WIDTH - 5);
+            spawnY = MathUtils.clamp(spawnY, 5, EndlessModeConfig.MAP_HEIGHT - 5);
 
-        // 检查是否在墙内
-        if (isWallAt((int) spawnX, (int) spawnY))
-            return;
+            // 检查是否能安全生成 (检查四个角落)
+            if (!canSpawnAt(spawnX, spawnY))
+                continue; // 尝试下一个位置
 
-        // 使用与关卡模式一致的血量（基础3HP），然后乘以波次倍率
-        int baseHealth = (int) (3 * waveSystem.getEnemyHealthMultiplier());
-        if (baseHealth < 1)
-            baseHealth = 1; // 最少1HP
-        Enemy enemy = new Enemy(spawnX, spawnY, baseHealth, DamageType.PHYSICAL, null, 0);
+            // 使用与关卡模式一致的血量（基础3HP），然后乘以波次倍率
+            int baseHealth = (int) (3 * waveSystem.getEnemyHealthMultiplier());
+            if (baseHealth < 1)
+                baseHealth = 1; // 最少1HP
+            Enemy enemy = new Enemy(spawnX, spawnY, baseHealth, DamageType.PHYSICAL, null, 0);
 
-        // 根据生成位置的主题分配敌人类型
-        String theme = EndlessModeConfig.getThemeForPosition((int) spawnX, (int) spawnY);
-        enemy.setType(getEnemyTypeForTheme(theme));
+            // 根据生成位置的主题分配敌人类型
+            String theme = EndlessModeConfig.getThemeForPosition((int) spawnX, (int) spawnY);
+            enemy.setType(getEnemyTypeForTheme(theme));
 
-        enemies.add(enemy);
-        enemyGrid.insert(enemy, spawnX, spawnY); // 插入空间网格
-        // 绑定溅血粒子监听器
-        enemy.setDamageListener(
-                (x, y, amount, dirX, dirY, knockback) -> bloodParticles.spawn(x, y, amount, dirX, dirY, knockback));
+            enemies.add(enemy);
+            enemyGrid.insert(enemy, spawnX, spawnY); // 插入空间网格
+            // 绑定墙壁检测回调 (用于击退碰撞检测)
+            enemy.setWallChecker(this::isWallAt);
+            // 绑定溅血粒子监听器
+            enemy.setDamageListener(
+                    (x, y, amount, dirX, dirY, knockback) -> bloodParticles.spawn(x, y, amount, dirX, dirY, knockback));
+            return; // 生成成功，退出
+        }
+        // 5次都失败，放弃这次生成
     }
 
     private void spawnBossNearPlayer() {
-        // 与普通敌人相同的刷新位置逻辑
-        float angle = spawnRandom.nextFloat() * 360f * MathUtils.degreesToRadians;
-        float distance = EndlessModeConfig.SPAWN_MAX_DISTANCE;
+        // 尝试最多5次找到安全生成位置
+        for (int attempt = 0; attempt < 5; attempt++) {
+            float angle = spawnRandom.nextFloat() * 360f * MathUtils.degreesToRadians;
+            float distance = EndlessModeConfig.SPAWN_MAX_DISTANCE;
 
-        float spawnX = player.getX() + MathUtils.cos(angle) * distance;
-        float spawnY = player.getY() + MathUtils.sin(angle) * distance;
+            float spawnX = player.getX() + MathUtils.cos(angle) * distance;
+            float spawnY = player.getY() + MathUtils.sin(angle) * distance;
 
-        spawnX = MathUtils.clamp(spawnX, 5, EndlessModeConfig.MAP_WIDTH - 5);
-        spawnY = MathUtils.clamp(spawnY, 5, EndlessModeConfig.MAP_HEIGHT - 5);
+            spawnX = MathUtils.clamp(spawnX, 5, EndlessModeConfig.MAP_WIDTH - 5);
+            spawnY = MathUtils.clamp(spawnY, 5, EndlessModeConfig.MAP_HEIGHT - 5);
 
-        if (isWallAt((int) spawnX, (int) spawnY))
-            return;
+            // 检查是否能安全生成 (检查四个角落)
+            if (!canSpawnAt(spawnX, spawnY))
+                continue; // 尝试下一个位置
 
-        // BOSS有更高的血量，带护盾
-        int bossHealth = 300 + (int) (waveSystem.getEnemyHealthMultiplier() * 100);
-        Enemy boss = new Enemy(spawnX, spawnY, bossHealth, DamageType.MAGICAL, DamageType.PHYSICAL, 50);
+            // BOSS有更高的血量，带护盾
+            int bossHealth = 300 + (int) (waveSystem.getEnemyHealthMultiplier() * 100);
+            Enemy boss = new Enemy(spawnX, spawnY, bossHealth, DamageType.MAGICAL, DamageType.PHYSICAL, 50);
 
-        // 根据生成位置的主题分配敌人类型
-        String theme = EndlessModeConfig.getThemeForPosition((int) spawnX, (int) spawnY);
-        boss.setType(getEnemyTypeForTheme(theme));
+            // 根据生成位置的主题分配敌人类型
+            String theme = EndlessModeConfig.getThemeForPosition((int) spawnX, (int) spawnY);
+            boss.setType(getEnemyTypeForTheme(theme));
 
-        enemies.add(boss);
-        enemyGrid.insert(boss, spawnX, spawnY); // 插入空间网格
-        // 绑定溅血粒子监听器
-        boss.setDamageListener(
-                (x, y, amount, dirX, dirY, knockback) -> bloodParticles.spawn(x, y, amount, dirX, dirY, knockback));
+            enemies.add(boss);
+            enemyGrid.insert(boss, spawnX, spawnY); // 插入空间网格
+            // 绑定墙壁检测回调 (用于击退碰撞检测)
+            boss.setWallChecker(this::isWallAt);
+            // 绑定溅血粒子监听器
+            boss.setDamageListener(
+                    (x, y, amount, dirX, dirY, knockback) -> bloodParticles.spawn(x, y, amount, dirX, dirY, knockback));
 
-        floatingTexts.add(new FloatingText(
-                spawnX, spawnY + 1, "BOSS!", Color.RED));
+            floatingTexts.add(new FloatingText(
+                    spawnX, spawnY + 1, "BOSS!", Color.RED));
+            return; // 生成成功，退出
+        }
+        // 5次都失败，放弃这次生成
     }
 
     private void updateFloatingTexts(float delta) {

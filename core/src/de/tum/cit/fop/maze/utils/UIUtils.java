@@ -57,6 +57,114 @@ public class UIUtils implements Disposable {
     }
 
     /**
+     * 为按钮添加点击音效监听器。
+     * Add click sound listener to a button.
+     * 
+     * @param button    要添加音效的按钮 (The button to add sound to)
+     * @param soundName 音效名称 (Sound effect name: "menu_click" or "game_click")
+     */
+    public static void addClickSound(com.badlogic.gdx.scenes.scene2d.ui.Button button, String soundName) {
+        button.addListener(new InputListener() {
+            @Override
+            public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
+                AudioManager.getInstance().playSound(soundName);
+                return false; // 不消费事件，让ChangeListener继续执行
+            }
+        });
+    }
+
+    /**
+     * 为按钮添加菜单点击音效。
+     * Shortcut for adding menu click sound.
+     * 
+     * @param button 要添加音效的按钮
+     */
+    public static void addMenuClickSound(com.badlogic.gdx.scenes.scene2d.ui.Button button) {
+        addClickSound(button, "menu_click");
+    }
+
+    /**
+     * 为按钮添加游戏内点击音效。
+     * Shortcut for adding in-game click sound.
+     * 
+     * @param button 要添加音效的按钮
+     */
+    public static void addGameClickSound(com.badlogic.gdx.scenes.scene2d.ui.Button button) {
+        addClickSound(button, "game_click");
+    }
+
+    /**
+     * 🔊 全局按钮音效 - 底层解决方案
+     * 
+     * 为Stage启用全局按钮点击音效。所有在此Stage中的Button（包括TextButton、ImageButton等）
+     * 在被点击时都会自动播放指定的音效，无需为每个按钮单独添加监听器。
+     * 
+     * Enable global button click sound for a Stage. All Buttons (including
+     * TextButton,
+     * ImageButton, etc.) in this Stage will automatically play the specified sound
+     * when clicked, without manually adding listeners to each button.
+     * 
+     * @param stage     要启用音效的Stage
+     * @param soundName 音效名称 ("menu_click" 或 "game_click")
+     */
+    public static void enableGlobalButtonSound(Stage stage, String soundName) {
+        stage.addListener(new InputListener() {
+            @Override
+            public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
+                // 检查被点击的Actor是否是Button或其子类
+                Actor target = event.getTarget();
+                if (isButtonOrChild(target)) {
+                    AudioManager.getInstance().playSound(soundName);
+                }
+                return false; // 不消费事件，让其他监听器继续处理
+            }
+
+            /**
+             * 递归检查Actor是否是Button或Button的子元素
+             */
+            private boolean isButtonOrChild(Actor actor) {
+                if (actor == null)
+                    return false;
+
+                // 直接是Button
+                if (actor instanceof com.badlogic.gdx.scenes.scene2d.ui.Button) {
+                    return true;
+                }
+
+                // 检查父级是否是Button (例如Button内的Label)
+                Actor parent = actor.getParent();
+                while (parent != null) {
+                    if (parent instanceof com.badlogic.gdx.scenes.scene2d.ui.Button) {
+                        return true;
+                    }
+                    parent = parent.getParent();
+                }
+                return false;
+            }
+        });
+    }
+
+    /**
+     * 为Stage启用全局菜单按钮音效 (menu_click)
+     * Enable global menu button sound for a Stage.
+     * 
+     * @param stage 要启用音效的Stage
+     */
+    public static void enableMenuButtonSound(Stage stage) {
+        enableGlobalButtonSound(stage, "menu_click");
+    }
+
+    /**
+     * 为Stage启用全局游戏内按钮音效 (game_click)
+     * Enable global in-game button sound for a Stage.
+     * 
+     * @param stage 要启用音效的Stage
+     */
+    public static void enableGameButtonSound(Stage stage) {
+        enableGlobalButtonSound(stage, "game_click");
+    }
+
+    /**
      * 创建纯色Drawable并管理其Texture的生命周期。
      * 使用此方法创建的Texture会在调用dispose()时被释放。
      *

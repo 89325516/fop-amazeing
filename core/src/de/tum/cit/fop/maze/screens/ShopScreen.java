@@ -160,11 +160,11 @@ public class ShopScreen implements Screen {
         // Item icon with solid black background using Stack layout
         Stack iconStack = new Stack();
         iconStack.setSize(50, 50);
-        
+
         // 黑色背景層
         Image bgImage = new Image(skin.newDrawable("white", Color.BLACK));
         iconStack.add(bgImage);
-        
+
         // 加载物品图标贴图
         String iconPath = "images/items/shop/" + item.getTextureKey() + ".png";
         try {
@@ -259,6 +259,8 @@ public class ShopScreen implements Screen {
     public void show() {
         GameLogger.info("ShopScreen", "Showing Shop Screen");
         Gdx.input.setInputProcessor(stage);
+        // 🔊 全局按钮音效
+        de.tum.cit.fop.maze.utils.UIUtils.enableMenuButtonSound(stage);
         // Initial scroll focus
         if (scrollPane != null) {
             stage.setScrollFocus(scrollPane);

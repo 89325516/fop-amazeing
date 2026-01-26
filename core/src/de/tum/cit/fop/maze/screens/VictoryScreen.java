@@ -159,6 +159,7 @@ public class VictoryScreen implements Screen {
         }
 
         TextButton nextBtn = new TextButton("Next Region", game.getSkin());
+        UIUtils.addGameClickSound(nextBtn);
         nextBtn.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
@@ -174,6 +175,7 @@ public class VictoryScreen implements Screen {
         table.add(nextBtn).width(300).height(60).padBottom(15).row();
 
         TextButton skillBtn = new TextButton("Open Skill Tree", game.getSkin());
+        UIUtils.addGameClickSound(skillBtn);
         skillBtn.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
@@ -183,6 +185,7 @@ public class VictoryScreen implements Screen {
         table.add(skillBtn).width(300).height(60).padBottom(15).row();
 
         TextButton menuBtn = new TextButton("Back to Menu", game.getSkin());
+        UIUtils.addGameClickSound(menuBtn);
         menuBtn.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
@@ -293,6 +296,8 @@ public class VictoryScreen implements Screen {
     @Override
     public void show() {
         Gdx.input.setInputProcessor(stage);
+        // 🔊 全局按钮音效
+        UIUtils.enableGameButtonSound(stage);
     }
 
     @Override

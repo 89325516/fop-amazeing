@@ -39,11 +39,15 @@ public class AttackRangeRenderer {
     /**
      * 渲染攻击范围扇形指示器 (使用任意角度)
      * 
+     * 新范围可视化:
+     * - 内圈: 360度全方位攻击圈 (0.8R)
+     * - 外圈: 朝向方向扇形扩展 (1.2R)
+     * 
      * @param camera         当前相机
      * @param playerX        玩家世界坐标 X (tile units)
      * @param playerY        玩家世界坐标 Y (tile units)
      * @param aimAngle       瞄准角度 (度数, 0=右, 90=上, 180=左, 270=下)
-     * @param range          武器攻击范围 (tile units)
+     * @param range          武器攻击范围 (tile units) - 原始R0
      * @param isRanged       是否为远程武器
      * @param attackProgress 攻击进度 (0.0 ~ 1.0)，用于淡出效果
      */
@@ -54,6 +58,10 @@ public class AttackRangeRenderer {
         if (isRanged) {
             return;
         }
+
+        // 计算新的攻击范围
+        float innerRadius = range * 0.8f; // 360度全方位攻击半径
+        float outerRadius = range * 1.2f; // 朝向扇形扩展半径
 
         // 设置混合模式实现透明效果
         Gdx.gl.glEnable(GL20.GL_BLEND);
@@ -66,38 +74,52 @@ public class AttackRangeRenderer {
         float centerX = playerX * UNIT_SCALE + UNIT_SCALE / 2f;
         float centerY = playerY * UNIT_SCALE + UNIT_SCALE / 2f;
 
-        // 使用鼠标瞄准角度计算扇形起始角度
-        float startAngle = aimAngle - ARC_ANGLE / 2f;
-
-        // 计算扇形半径（像素单位）
-        float radiusPixels = range * UNIT_SCALE;
-
         // 淡出效果：攻击结束时逐渐变透明
         float fadeAlpha = 1f - attackProgress * 0.7f;
-        Color color = MELEE_COLOR.cpy();
-        color.a = INDICATOR_ALPHA * fadeAlpha;
 
-        // 绘制扇形
-        drawArc(centerX, centerY, radiusPixels, startAngle, ARC_ANGLE, color);
+        // === 绘制内圈: 360度全方位攻击圈 (0.8R) ===
+        float innerRadiusPixels = innerRadius * UNIT_SCALE;
+        Color innerColor = new Color(0.5f, 0.8f, 0.5f, INDICATOR_ALPHA * fadeAlpha * 0.7f); // 淡绿色
+        drawCircle(centerX, centerY, innerRadiusPixels, innerColor);
+
+        // === 绘制外圈扇形: 朝向扇形扩展 (1.2R) ===
+        float outerRadiusPixels = outerRadius * UNIT_SCALE;
+        float startAngle = aimAngle - ARC_ANGLE / 2f;
+        Color outerColor = MELEE_COLOR.cpy();
+        outerColor.a = INDICATOR_ALPHA * fadeAlpha;
+
+        // 只绘制外圈中超出内圈的部分 (环形扇形)
+        drawArcRing(centerX, centerY, innerRadiusPixels, outerRadiusPixels, startAngle, ARC_ANGLE, outerColor);
 
         shapeRenderer.end();
 
-        // 绘制扇形边框（增加视觉清晰度）
+        // 绘制边框（增加视觉清晰度）
         shapeRenderer.begin(ShapeType.Line);
-        Color borderColor = new Color(1f, 1f, 1f, 0.5f * fadeAlpha);
+        Color borderColor = new Color(1f, 1f, 1f, 0.4f * fadeAlpha);
         shapeRenderer.setColor(borderColor);
 
-        // 绘制两条边线
+        // 内圈边框
+        drawCircleOutline(centerX, centerY, innerRadiusPixels);
+
+        // 外圈扇形边框
         float endAngle = startAngle + ARC_ANGLE;
         float startRad = startAngle * com.badlogic.gdx.math.MathUtils.degreesToRadians;
         float endRad = endAngle * com.badlogic.gdx.math.MathUtils.degreesToRadians;
 
-        shapeRenderer.line(centerX, centerY,
-                centerX + radiusPixels * (float) Math.cos(startRad),
-                centerY + radiusPixels * (float) Math.sin(startRad));
-        shapeRenderer.line(centerX, centerY,
-                centerX + radiusPixels * (float) Math.cos(endRad),
-                centerY + radiusPixels * (float) Math.sin(endRad));
+        // 两条边线（从内圈边缘到外圈边缘）
+        shapeRenderer.line(
+                centerX + innerRadiusPixels * (float) Math.cos(startRad),
+                centerY + innerRadiusPixels * (float) Math.sin(startRad),
+                centerX + outerRadiusPixels * (float) Math.cos(startRad),
+                centerY + outerRadiusPixels * (float) Math.sin(startRad));
+        shapeRenderer.line(
+                centerX + innerRadiusPixels * (float) Math.cos(endRad),
+                centerY + innerRadiusPixels * (float) Math.sin(endRad),
+                centerX + outerRadiusPixels * (float) Math.cos(endRad),
+                centerY + outerRadiusPixels * (float) Math.sin(endRad));
+
+        // 外圈弧线
+        drawArcOutline(centerX, centerY, outerRadiusPixels, startAngle, ARC_ANGLE);
 
         shapeRenderer.end();
 
@@ -117,7 +139,7 @@ public class AttackRangeRenderer {
     }
 
     /**
-     * 绘制填充扇形
+     * 绘制填充扇形 (从圆心出发)
      */
     private void drawArc(float cx, float cy, float radius, float startAngle, float arcAngle, Color color) {
         shapeRenderer.setColor(color);
@@ -134,6 +156,97 @@ public class AttackRangeRenderer {
             float y2 = cy + radius * (float) Math.sin(angle2);
 
             shapeRenderer.triangle(cx, cy, x1, y1, x2, y2);
+        }
+    }
+
+    /**
+     * 绘制填充圆形
+     */
+    private void drawCircle(float cx, float cy, float radius, Color color) {
+        shapeRenderer.setColor(color);
+        int segments = 32;
+        float angleStep = 360f / segments;
+
+        for (int i = 0; i < segments; i++) {
+            float angle1 = i * angleStep * com.badlogic.gdx.math.MathUtils.degreesToRadians;
+            float angle2 = (i + 1) * angleStep * com.badlogic.gdx.math.MathUtils.degreesToRadians;
+
+            float x1 = cx + radius * (float) Math.cos(angle1);
+            float y1 = cy + radius * (float) Math.sin(angle1);
+            float x2 = cx + radius * (float) Math.cos(angle2);
+            float y2 = cy + radius * (float) Math.sin(angle2);
+
+            shapeRenderer.triangle(cx, cy, x1, y1, x2, y2);
+        }
+    }
+
+    /**
+     * 绘制环形扇形 (内圈到外圈之间的扇形区域)
+     */
+    private void drawArcRing(float cx, float cy, float innerRadius, float outerRadius,
+            float startAngle, float arcAngle, Color color) {
+        shapeRenderer.setColor(color);
+
+        float angleStep = arcAngle / ARC_SEGMENTS;
+
+        for (int i = 0; i < ARC_SEGMENTS; i++) {
+            float angle1 = (startAngle + i * angleStep) * com.badlogic.gdx.math.MathUtils.degreesToRadians;
+            float angle2 = (startAngle + (i + 1) * angleStep) * com.badlogic.gdx.math.MathUtils.degreesToRadians;
+
+            // 内圈两点
+            float ix1 = cx + innerRadius * (float) Math.cos(angle1);
+            float iy1 = cy + innerRadius * (float) Math.sin(angle1);
+            float ix2 = cx + innerRadius * (float) Math.cos(angle2);
+            float iy2 = cy + innerRadius * (float) Math.sin(angle2);
+
+            // 外圈两点
+            float ox1 = cx + outerRadius * (float) Math.cos(angle1);
+            float oy1 = cy + outerRadius * (float) Math.sin(angle1);
+            float ox2 = cx + outerRadius * (float) Math.cos(angle2);
+            float oy2 = cy + outerRadius * (float) Math.sin(angle2);
+
+            // 用两个三角形绘制四边形 (环形扇形的一个小片段)
+            shapeRenderer.triangle(ix1, iy1, ox1, oy1, ix2, iy2);
+            shapeRenderer.triangle(ix2, iy2, ox1, oy1, ox2, oy2);
+        }
+    }
+
+    /**
+     * 绘制圆形边框
+     */
+    private void drawCircleOutline(float cx, float cy, float radius) {
+        int segments = 32;
+        float angleStep = 360f / segments;
+
+        for (int i = 0; i < segments; i++) {
+            float angle1 = i * angleStep * com.badlogic.gdx.math.MathUtils.degreesToRadians;
+            float angle2 = (i + 1) * angleStep * com.badlogic.gdx.math.MathUtils.degreesToRadians;
+
+            float x1 = cx + radius * (float) Math.cos(angle1);
+            float y1 = cy + radius * (float) Math.sin(angle1);
+            float x2 = cx + radius * (float) Math.cos(angle2);
+            float y2 = cy + radius * (float) Math.sin(angle2);
+
+            shapeRenderer.line(x1, y1, x2, y2);
+        }
+    }
+
+    /**
+     * 绘制弧线 (扇形外边缘)
+     */
+    private void drawArcOutline(float cx, float cy, float radius, float startAngle, float arcAngle) {
+        float angleStep = arcAngle / ARC_SEGMENTS;
+
+        for (int i = 0; i < ARC_SEGMENTS; i++) {
+            float angle1 = (startAngle + i * angleStep) * com.badlogic.gdx.math.MathUtils.degreesToRadians;
+            float angle2 = (startAngle + (i + 1) * angleStep) * com.badlogic.gdx.math.MathUtils.degreesToRadians;
+
+            float x1 = cx + radius * (float) Math.cos(angle1);
+            float y1 = cy + radius * (float) Math.sin(angle1);
+            float x2 = cx + radius * (float) Math.cos(angle2);
+            float y2 = cy + radius * (float) Math.sin(angle2);
+
+            shapeRenderer.line(x1, y1, x2, y2);
         }
     }
 

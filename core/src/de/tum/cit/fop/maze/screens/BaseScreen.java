@@ -74,6 +74,8 @@ public abstract class BaseScreen implements Screen {
     @Override
     public void show() {
         Gdx.input.setInputProcessor(stage);
+        // 🔊 全局按钮音效 - 所有继承BaseScreen的界面自动启用
+        UIUtils.enableMenuButtonSound(stage);
     }
 
     @Override

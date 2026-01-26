@@ -83,6 +83,23 @@ public class AudioManager implements Disposable {
         loadSound("victory", "audio/victory.ogg");
         loadSound("gameover", "audio/gameover.ogg");
         loadSound("select", "audio/select.ogg");
+
+        // === NEW: UI Sound Effects ===
+        loadSound("menu_click", "audio/sfx/menu_click.wav");
+        loadSound("game_click", "audio/sfx/game_click.wav");
+
+        // === NEW: Weapon-Specific Attack Sounds ===
+        loadSound("attack_sword", "audio/sfx/attack_sword.wav");
+        loadSound("attack_bow", "audio/sfx/attack_bow.wav");
+        loadSound("attack_wand", "audio/sfx/attack_wand.wav");
+        loadSound("attack_staff", "audio/sfx/attack_staff.wav");
+
+        // === NEW: Combat Feedback Sounds ===
+        loadSound("player_hurt", "audio/sfx/player_hurt.wav");
+        loadSound("enemy_hurt", "audio/sfx/enemy_hurt.wav");
+
+        // === NEW: Skill System Sounds ===
+        loadSound("skill_upgrade", "audio/sfx/skill_upgrade.wav");
     }
 
     private void loadBgm(String key, String path) {
@@ -312,6 +329,28 @@ public class AudioManager implements Disposable {
         Sound sound = soundEffects.get(name);
         if (sound != null) {
             sound.play(volume * sfxVolume);
+        }
+    }
+
+    /**
+     * Get attack sound name based on weapon type.
+     * 
+     * @param weaponClassName Simple class name of weapon (e.g., "Sword", "Bow")
+     * @return Sound effect key
+     */
+    public static String getAttackSoundForWeapon(String weaponClassName) {
+        switch (weaponClassName) {
+            case "Sword":
+            case "Crossbow":
+                return "attack_sword";
+            case "Bow":
+                return "attack_bow";
+            case "Wand":
+                return "attack_wand";
+            case "MagicStaff":
+                return "attack_staff";
+            default:
+                return "attack_sword"; // Fallback to sword sound
         }
     }
 

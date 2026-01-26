@@ -93,7 +93,7 @@ public class EndingStoryScreen implements Screen {
 
         // 創建裝飾性邊框 - 使用金色調代表勝利
         Pixmap borderPixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
-        borderPixmap.setColor(0.85f, 0.68f, 0.25f, 0.8f);  // 金色
+        borderPixmap.setColor(0.85f, 0.68f, 0.25f, 0.8f); // 金色
         borderPixmap.fill();
         borderTexture = new Texture(borderPixmap);
         borderPixmap.dispose();
@@ -219,6 +219,8 @@ public class EndingStoryScreen implements Screen {
     @Override
     public void show() {
         Gdx.input.setInputProcessor(stage);
+        // 🔊 全局按钮音效
+        de.tum.cit.fop.maze.utils.UIUtils.enableMenuButtonSound(stage);
     }
 
     @Override
@@ -235,7 +237,7 @@ public class EndingStoryScreen implements Screen {
         batch.getProjectionMatrix().setToOrtho2D(0, 0, screenWidth, screenHeight);
         batch.begin();
         drawBackgroundCover(batch, screenWidth, screenHeight);
-        
+
         // 添加微暗遮罩層，讓對話框更清晰
         batch.setColor(0, 0, 0, 0.35f);
         batch.draw(dialogBoxTexture, 0, 0, screenWidth, screenHeight);
@@ -276,19 +278,25 @@ public class EndingStoryScreen implements Screen {
     }
 
     @Override
-    public void pause() {}
+    public void pause() {
+    }
 
     @Override
-    public void resume() {}
+    public void resume() {
+    }
 
     @Override
-    public void hide() {}
+    public void hide() {
+    }
 
     @Override
     public void dispose() {
         stage.dispose();
-        if (backgroundTexture != null) backgroundTexture.dispose();
-        if (dialogBoxTexture != null) dialogBoxTexture.dispose();
-        if (borderTexture != null) borderTexture.dispose();
+        if (backgroundTexture != null)
+            backgroundTexture.dispose();
+        if (dialogBoxTexture != null)
+            dialogBoxTexture.dispose();
+        if (borderTexture != null)
+            borderTexture.dispose();
     }
 }

@@ -113,6 +113,22 @@ public class Enemy extends GameObject {
     // Blood particle listener (for visual damage feedback)
     private BloodParticleSystem.DamageListener damageListener = null;
 
+    /**
+     * 墙壁检测函数式接口 (用于无尽模式的碰撞检测)
+     * Wall checker functional interface for Endless Mode collision detection
+     */
+    @FunctionalInterface
+    public interface WallChecker {
+        boolean isWall(int x, int y);
+    }
+
+    // 墙壁检测回调 (Endless Mode 使用)
+    private WallChecker wallChecker = null;
+
+    public void setWallChecker(WallChecker checker) {
+        this.wallChecker = checker;
+    }
+
     public void setCustomElementId(String id) {
         this.customElementId = id;
     }
@@ -418,7 +434,7 @@ public class Enemy extends GameObject {
      * @param delta Frame delta time
      */
     public void updateTimers(float delta) {
-        // Knockback physics with simple boundary check
+        // Knockback physics with wall collision check (for Endless Mode)
         if (Math.abs(knockbackVx) > 0.1f || Math.abs(knockbackVy) > 0.1f) {
             float moveX = knockbackVx * delta;
             float moveY = knockbackVy * delta;
@@ -427,34 +443,66 @@ public class Enemy extends GameObject {
             float newX = this.x + moveX;
             float newY = this.y + moveY;
 
-            // 简单边界检查：防止位置变成负数或超出合理范围
-            // 如果新位置在墙内（根据整数坐标检查地图边界），停止击退
-            boolean wallCollision = false;
+            // 分轴碰撞检测 (Split axis collision detection)
+            float padding = 0.1f;
 
             // X轴移动检查
             if (moveX != 0) {
-                // 检查目标位置是否在合理范围内且非负
+                boolean xBlocked = false;
+                // 边界检查
                 if (newX < 1 || newX > 898) {
-                    knockbackVx = 0;
-                    wallCollision = true;
+                    xBlocked = true;
+                }
+                // 墙壁检查 (使用 WallChecker 回调)
+                if (!xBlocked && wallChecker != null) {
+                    // 检查四个角落
+                    if (wallChecker.isWall((int) (newX + padding), (int) (this.y + padding)) ||
+                            wallChecker.isWall((int) (newX + SIZE - padding), (int) (this.y + padding)) ||
+                            wallChecker.isWall((int) (newX + SIZE - padding), (int) (this.y + SIZE - padding)) ||
+                            wallChecker.isWall((int) (newX + padding), (int) (this.y + SIZE - padding))) {
+                        xBlocked = true;
+                    }
+                }
+                if (xBlocked) {
+                    // 墙壁反弹
+                    if (Math.abs(knockbackVx) > 5.0f) {
+                        GameLogger.debug("Enemy", "Endless: Enemy hit wall (X) Vel: " + knockbackVx);
+                    }
+                    knockbackVx = -knockbackVx * 0.5f; // Bounce with 0.5 elasticity
                     newX = this.x;
                 }
             }
 
             // Y轴移动检查
             if (moveY != 0) {
+                boolean yBlocked = false;
+                // 边界检查
                 if (newY < 1 || newY > 898) {
-                    knockbackVy = 0;
-                    wallCollision = true;
+                    yBlocked = true;
+                }
+                // 墙壁检查 (使用 WallChecker 回调)
+                if (!yBlocked && wallChecker != null) {
+                    // 检查四个角落
+                    if (wallChecker.isWall((int) (newX + padding), (int) (newY + padding)) ||
+                            wallChecker.isWall((int) (newX + SIZE - padding), (int) (newY + padding)) ||
+                            wallChecker.isWall((int) (newX + SIZE - padding), (int) (newY + SIZE - padding)) ||
+                            wallChecker.isWall((int) (newX + padding), (int) (newY + SIZE - padding))) {
+                        yBlocked = true;
+                    }
+                }
+                if (yBlocked) {
+                    // 墙壁反弹
+                    if (Math.abs(knockbackVy) > 5.0f) {
+                        GameLogger.debug("Enemy", "Endless: Enemy hit wall (Y) Vel: " + knockbackVy);
+                    }
+                    knockbackVy = -knockbackVy * 0.5f; // Bounce with 0.5 elasticity
                     newY = this.y;
                 }
             }
 
-            // 应用位置更新（如果没有碰撞）
-            if (!wallCollision) {
-                this.x = newX;
-                this.y = newY;
-            }
+            // 应用位置更新
+            this.x = newX;
+            this.y = newY;
 
             // Friction
             knockbackVx -= knockbackVx * KNOCKBACK_FRICTION * delta;

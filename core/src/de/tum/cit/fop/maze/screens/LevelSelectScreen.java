@@ -299,7 +299,7 @@ public class LevelSelectScreen implements Screen {
 
     private void showUnlockDialog(int level) {
         Dialog dialog = new Dialog("LOCKED ACCESS", game.getSkin());
-        
+
         // Add padding to the content table to prevent title overlap
         dialog.getContentTable().padTop(60).padLeft(40).padRight(40).padBottom(20);
 
@@ -347,6 +347,8 @@ public class LevelSelectScreen implements Screen {
     @Override
     public void show() {
         Gdx.input.setInputProcessor(stage);
+        // 🔊 全局按钮音效
+        de.tum.cit.fop.maze.utils.UIUtils.enableMenuButtonSound(stage);
         // Play menu background music (same as main menu)
         de.tum.cit.fop.maze.utils.AudioManager.getInstance().playMenuBgm();
     }
