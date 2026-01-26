@@ -678,14 +678,14 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
                             .getPayload();
                     itemTex = getWeaponTexture(weapon.getName());
                     if (itemTex == null)
-                        itemTex = textureManager.keyRegion; // 回退
+                        itemTex = textureManager.coinRegion; // 回退（避免使用钥匙纹理）
                     break;
                 case ARMOR:
                     de.tum.cit.fop.maze.model.items.Armor armor = (de.tum.cit.fop.maze.model.items.Armor) item
                             .getPayload();
                     itemTex = getArmorTexture(armor.getName());
                     if (itemTex == null)
-                        itemTex = textureManager.keyRegion; // 回退
+                        itemTex = textureManager.coinRegion; // 回退（避免使用钥匙纹理）
                     break;
                 case POTION:
                     itemTex = textureManager.potionRegion;
