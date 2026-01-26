@@ -1119,10 +1119,18 @@ public class EndlessGameScreen implements Screen {
         game.getSpriteBatch().begin();
 
         // 1. 渲染地板 (背景层)
-        String currentTheme = EndlessModeConfig.getThemeForPosition((int) player.getX(), (int) player.getY());
-        TextureRegion floor = getFloorTextureForTheme(currentTheme);
-
+        // [FIX] 每个区块使用自己的主题纹理，而不是使用玩家位置的主题
+        // 这样确保不同主题区域保持各自的地板纹理
         for (MapChunk chunk : chunkManager.getLoadedChunks()) {
+            // 获取该区块的主题（优先使用区块存储的主题，否则根据区块中心坐标计算）
+            String chunkTheme = chunk.getTheme();
+            if (chunkTheme == null) {
+                chunkTheme = EndlessModeConfig.getThemeForPosition(
+                        chunk.getWorldStartX() + chunk.getSize() / 2,
+                        chunk.getWorldStartY() + chunk.getSize() / 2);
+            }
+            TextureRegion floor = getFloorTextureForTheme(chunkTheme);
+
             int startX = chunk.getWorldStartX();
             int startY = chunk.getWorldStartY();
             int endX = startX + chunk.getSize();
@@ -1148,6 +1156,40 @@ public class EndlessGameScreen implements Screen {
         }
         dustParticles.render(camera.combined);
         game.getSpriteBatch().begin();
+
+        // 1.5 渲染陷阱 (Traps) - 在地板上方、实体下方
+        for (MapChunk chunk : chunkManager.getLoadedChunks()) {
+            String chunkTheme = chunk.getTheme();
+            if (chunkTheme == null) {
+                chunkTheme = EndlessModeConfig.getThemeForPosition(chunk.getWorldStartX(), chunk.getWorldStartY());
+            }
+
+            for (Vector2 trapPos : chunk.getTraps()) {
+                // 检查是否有动画效果
+                com.badlogic.gdx.graphics.g2d.Animation<TextureRegion> trapAnim = textureManager
+                        .getTrapAnimation(chunkTheme);
+                if (trapAnim != null) {
+                    // 1. 绘制静态底图
+                    TextureRegion base = textureManager.getTrapRegion(chunkTheme);
+                    if (base != null) {
+                        game.getSpriteBatch().draw(base, trapPos.x * UNIT_SCALE, trapPos.y * UNIT_SCALE,
+                                UNIT_SCALE, UNIT_SCALE);
+                    }
+                    // 2. 绘制动画叠加层（向上偏移，使效果从格子中心开始）
+                    TextureRegion currentFrame = trapAnim.getKeyFrame(stateTime, true);
+                    float overlayY = trapPos.y * UNIT_SCALE + (UNIT_SCALE / 2f);
+                    game.getSpriteBatch().draw(currentFrame, trapPos.x * UNIT_SCALE, overlayY,
+                            UNIT_SCALE, UNIT_SCALE);
+                } else {
+                    // 无动画时仅绘制静态纹理
+                    TextureRegion trapTex = textureManager.getTrapRegion(chunkTheme);
+                    if (trapTex != null) {
+                        game.getSpriteBatch().draw(trapTex, trapPos.x * UNIT_SCALE, trapPos.y * UNIT_SCALE,
+                                UNIT_SCALE, UNIT_SCALE);
+                    }
+                }
+            }
+        }
 
         // 2. 渲染实体 (Entities) - 玩家和敌人都在墙下层
         // 敌人

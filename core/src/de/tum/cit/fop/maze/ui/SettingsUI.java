@@ -38,7 +38,8 @@ public class SettingsUI {
 
     // 关键！标签列宽度要足够大，避免被控件覆盖
     private static final float LABEL_WIDTH = 230f;
-    private static final float SLIDER_WIDTH = 160f;
+    private static final float SLIDER_WIDTH = 200f;
+    private static final float SLIDER_HEIGHT = 36f; // 增加高度使触摸区域更大
     private static final float VALUE_WIDTH = 50f;
     private static final float BTN_WIDTH = 100f;
     private static final float KEY_LABEL_WIDTH = 90f;
@@ -170,7 +171,7 @@ public class SettingsUI {
                 AudioManager.getInstance().setVolume(slider.getValue());
             }
         });
-        contentTable.add(slider).width(SLIDER_WIDTH).height(12).colspan(2).left();
+        contentTable.add(slider).width(SLIDER_WIDTH).height(SLIDER_HEIGHT).colspan(2).left();
         contentTable.row().padBottom(10);
     }
 
@@ -214,7 +215,7 @@ public class SettingsUI {
                 valueLabel.setText(String.format("%.1f", v));
             }
         });
-        contentTable.add(slider).width(SLIDER_WIDTH).height(12);
+        contentTable.add(slider).width(SLIDER_WIDTH).height(SLIDER_HEIGHT);
         contentTable.add(valueLabel).width(VALUE_WIDTH).padLeft(10);
         contentTable.row().padBottom(10);
     }
@@ -237,7 +238,7 @@ public class SettingsUI {
                 valueLabel.setText(String.format("%.1f", v));
             }
         });
-        contentTable.add(slider).width(SLIDER_WIDTH).height(12);
+        contentTable.add(slider).width(SLIDER_WIDTH).height(SLIDER_HEIGHT);
         contentTable.add(valueLabel).width(VALUE_WIDTH).padLeft(10);
         contentTable.row().padBottom(10);
     }
@@ -260,7 +261,7 @@ public class SettingsUI {
                 valueLabel.setText(String.format("%.2f", v));
             }
         });
-        contentTable.add(slider).width(SLIDER_WIDTH).height(12);
+        contentTable.add(slider).width(SLIDER_WIDTH).height(SLIDER_HEIGHT);
         contentTable.add(valueLabel).width(VALUE_WIDTH).padLeft(10);
         contentTable.row().padBottom(10);
     }
@@ -407,8 +408,8 @@ public class SettingsUI {
                 break;
             case "LEFT":
                 code = GameSettings.KEY_LEFT;
-                break;
             case "RIGHT":
+
                 code = GameSettings.KEY_RIGHT;
                 break;
             case "ATTACK":
