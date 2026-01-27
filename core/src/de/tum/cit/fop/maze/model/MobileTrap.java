@@ -69,4 +69,12 @@ public class MobileTrap extends GameObject {
         }
         return false;
     }
+
+    public float getMoveX() {
+        return moveX;
+    }
+
+    public float getMoveY() {
+        return moveY;
+    }
 }

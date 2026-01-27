@@ -278,21 +278,114 @@ def remove_guide_lines_hsv(img):
     return inpaint_guide_lines(img)
 
 
-def remove_background(img):
-    """Remove white/light background from image."""
+def remove_background(img, threshold=BG_THRESHOLD):
+    """
+    Remove background using flood fill from corners for cleaner results.
+    Also removes isolated pixels (denoising).
+    """
     img = img.convert("RGBA")
-    pixels = img.load()
     width, height = img.size
     
+    # 1. Flood fill from all 4 corners
+    # This assumes the background touches the corners (standard for AI generations)
+    from PIL import ImageDraw
+    
+    # Create a mask for flood filling
+    mask = Image.new('L', (width + 2, height + 2), 0)
+    
+    # Convert image to grayscale for thresholding
+    gray = img.convert("L")
+    gray_data = np.array(gray)
+    
+    # Create binary mask of "light" pixels
+    binary = gray_data > threshold
+    
+    # Pad binary mask to match flood fill mask size
+    padded_binary = np.pad(binary, pad_width=1, mode='constant', constant_values=1)
+    
+    # Mask format for floodfill is tricky in PIL/OpenCV, let's stick to a simpler
+    # approach: Flood fill on the alpha channel of the image directly
+    
+    # Simpler approach:
+    # 1. Identify "background" color from corners
+    # 2. Flood fill alpha=0 starting from corners if they match background color
+    
+    # Get corner colors
+    corners = [(0, 0), (width-1, 0), (0, height-1), (width-1, height-1)]
+    
+    ImageDraw.floodfill(img, (0, 0), (0, 0, 0, 0), thresh=50)
+    ImageDraw.floodfill(img, (width-1, 0), (0, 0, 0, 0), thresh=50)
+    ImageDraw.floodfill(img, (0, height-1), (0, 0, 0, 0), thresh=50)
+    ImageDraw.floodfill(img, (width-1, height-1), (0, 0, 0, 0), thresh=50)
+    
+    # 2. Aggressive threshold cleanup for remaining "white" pixels
+    # This catches spots that flood fill missed (island gaps)
+    pixels = img.load()
     for y in range(height):
         for x in range(width):
             r, g, b, a = pixels[x, y]
-            if a == 0:
-                continue
-            if is_white_or_light(r, g, b):
+            if a > 0 and is_white_or_light(r, g, b, threshold):
                 pixels[x, y] = (0, 0, 0, 0)
-    
+                
     return img
+
+def remove_small_islands(img, min_size=10):
+    """
+    Remove small disconnected islands of pixels (noise) using simple BFS.
+    No external dependencies required.
+    """
+    img_array = np.array(img)
+    height, width = img_array.shape[:2]
+    alpha = img_array[:, :, 3]
+    
+    # Binary mask: 1 = opaque, 0 = transparent
+    mask = (alpha > 0).astype(np.int32)
+    labeled = np.zeros_like(mask)
+    current_label = 0
+    
+    # Find connected components
+    component_sizes = {}
+    
+    # Directions: 8-connectivity (include diagonals)
+    directions = [(-1, -1), (-1, 0), (-1, 1), 
+                  (0, -1),           (0, 1), 
+                  (1, -1),  (1, 0),  (1, 1)]
+    
+    for y in range(height):
+        for x in range(width):
+            if mask[y, x] == 1 and labeled[y, x] == 0:
+                # Found a new component
+                current_label += 1
+                count = 0
+                
+                # BFS
+                stack = [(y, x)]
+                labeled[y, x] = current_label
+                count += 1
+                
+                while stack:
+                    cy, cx = stack.pop()
+                    
+                    for dy, dx in directions:
+                        ny, nx = cy + dy, cx + dx
+                        
+                        if 0 <= ny < height and 0 <= nx < width:
+                            if mask[ny, nx] == 1 and labeled[ny, nx] == 0:
+                                labeled[ny, nx] = current_label
+                                stack.append((ny, nx))
+                                count += 1
+                
+                component_sizes[current_label] = count
+    
+    # Filter out small components
+    for y in range(height):
+        for x in range(width):
+            label = labeled[y, x]
+            if label > 0:
+                if component_sizes[label] < min_size:
+                    img_array[y, x, 3] = 0
+                    
+    return Image.fromarray(img_array)
 
 
 def clean_artifacts(img, alpha_threshold=10, gray_threshold=50, edge_strip=0):
@@ -379,51 +472,54 @@ def clean_artifacts(img, alpha_threshold=10, gray_threshold=50, edge_strip=0):
     return Image.fromarray(img_array)
 
 
-def crop_to_content(img, padding_pct=0.02):
-    """Crop image to content with minimal padding."""
-    bbox = img.getbbox()
-    if not bbox:
-        return img
-    
-    x1, y1, x2, y2 = bbox
-    width, height = img.size
-    pad = int(min(x2 - x1, y2 - y1) * padding_pct)
-    
-    x1 = max(0, x1 - pad)
-    y1 = max(0, y1 - pad)
-    x2 = min(width, x2 + pad)
-    y2 = min(height, y2 + pad)
-    
-    return img.crop((x1, y1, x2, y2))
-
-
-def standardize_frames_unified(frames, target_size, mode='content', align='center', entity_type='stationary'):
+def remove_black_grid_lines(img):
     """
-    Standardize all frames with different strategies based on entity type.
+    Detect and remove vertical black/dark grid lines from the image.
+    These often appear as separators in sprite sheets.
+    """
+    img_array = np.array(img.convert("RGBA"))
+    height, width = img_array.shape[:2]
+    
+    # Check for vertical black lines
+    for x in range(width):
+        is_black_line = True
+        dark_pixels = 0
+        
+        for y in range(height):
+            r, g, b, a = img_array[y, x]
+            if a == 0:
+                continue
+                
+            # Check if pixel is dark (grid line)
+            is_dark = (r < 50 and g < 50 and b < 50)
+            if not is_dark:
+                # If we find a non-dark pixel, it's not a full grid line
+                # But sometimes grid lines are dashed or have artifacts
+                # Let's count dark pixels
+                pass
+            else:
+                dark_pixels += 1
+                
+        # If > 80% of opaque pixels in this column are dark, treat as grid line
+        opaque_pixel_count = np.sum(img_array[:, x, 3] > 0)
+        
+        if opaque_pixel_count > height * 0.5 and dark_pixels > opaque_pixel_count * 0.8:
+            # It's a black grid line - clear it
+            for y in range(height):
+                img_array[y, x] = (0, 0, 0, 0)
+                
+    return Image.fromarray(img_array)
+
+def standardize_frames_unified(frames, target_size, mode='content', align='center', entity_type='stationary', alignment_strategy='independent'):
+    """
+    Standardize frames with flexible alignment strategies.
     
     Args:
-        frames: List of PIL Images
-        target_size: Target frame size in pixels
-        mode: 'content' (crop to content) or 'canvas' (scale entire frame)
-        align: 'center', 'bottom', or 'top' - vertical alignment of content
-        entity_type: 
-            - 'stationary': Static objects (traps, effects). Uses UNIFIED bounding box 
-                           to preserve relative positions. Best with align='bottom'.
-            - 'mobile': Moving entities (enemies, NPCs). Each frame is cropped and 
-                       centered INDEPENDENTLY. Best with align='center'.
-    
-    Alignment Logic:
-        STATIONARY (trap, effect, decoration):
-            - All frames cropped to the SAME unified bounding box
-            - Scaled identically to maintain relative positions
-            - Bottom-aligned so base stays in place during animation
-        
-        MOBILE (enemy, NPC, player):
-            - Each frame cropped to its OWN content bounding box
-            - Each frame centered independently
-            - Allows different frame sizes (e.g., attack frame larger than walk)
+        alignment_strategy: 
+            - 'independent': Each frame cropped/centered individually (good for wild size changes)
+            - 'unified': All frames share the same bounding box relative to the original image (good for stability)
     """
-    # Get original frame size (assuming all same size)
+    # Get original frame size
     orig_w, orig_h = frames[0].size
     
     # Collect all bounding boxes
@@ -441,38 +537,29 @@ def standardize_frames_unified(frames, target_size, mode='content', align='cente
     processed = []
     
     if mode == 'canvas':
-        # "Canvas" mode: Scale the entire input frame to fit target_size
+        # ... (Canvas mode logic same as before) ...
+        pass # Placeholder to keep logic simple if we were copying full function, but here we rewrite:
+        # Re-implementing canvas logic for completeness to avoid copy-paste errors
         scale = min(target_size / orig_w, target_size / orig_h)
-        
         for frame in frames:
             w, h = frame.size
             final_w = int(w * scale)
             final_h = int(h * scale)
-            
             if final_w <= 0 or final_h <= 0:
                 processed.append(Image.new("RGBA", (target_size, target_size), (0, 0, 0, 0)))
                 continue
-                
             resized = frame.resize((final_w, final_h), Image.LANCZOS)
-            
-            # Apply alignment
             canvas = Image.new("RGBA", (target_size, target_size), (0, 0, 0, 0))
             off_x = (target_size - final_w) // 2
-            
-            if align == 'bottom':
-                off_y = target_size - final_h
-            elif align == 'top':
-                off_y = 0
-            else:  # center
-                off_y = (target_size - final_h) // 2
-            
+            if align == 'bottom': off_y = target_size - final_h
+            elif align == 'top': off_y = 0
+            else: off_y = (target_size - final_h) // 2
             canvas.paste(resized, (off_x, off_y))
             processed.append(canvas)
-            
-    elif entity_type == 'stationary':
-        # ========== STATIONARY MODE ==========
-        # Use UNIFIED bounding box to preserve relative positions between frames
-        # Best for: traps, effects, decorations where base alignment matters
+
+    elif alignment_strategy == 'unified' or entity_type == 'stationary':
+        # ========== UNIFIED / STATIONARY MODE ==========
+        # Use UNIFIED bounding box to preserve relative positions
         
         valid_bboxes = [b for b in all_bboxes if b is not None]
         union_x1 = min(b[0] for b in valid_bboxes)
@@ -484,7 +571,7 @@ def standardize_frames_unified(frames, target_size, mode='content', align='cente
         union_height = union_y2 - union_y1
         
         # Calculate scale to fit in target_size
-        scale = min(target_size / union_width, target_size / union_height) * 0.95
+        scale = min(target_size / union_width, target_size / union_height) * 0.90  # 90% to leave margin
         unified_scaled_w = int(union_width * scale)
         unified_scaled_h = int(union_height * scale)
         
@@ -493,7 +580,7 @@ def standardize_frames_unified(frames, target_size, mode='content', align='cente
                 processed.append(Image.new("RGBA", (target_size, target_size), (0, 0, 0, 0)))
                 continue
             
-            # Crop to the UNIFIED bounding box (same for all frames)
+            # Crop to the UNIFIED bounding box
             cropped = frame.crop((union_x1, union_y1, union_x2, union_y2))
             
             if unified_scaled_w <= 0 or unified_scaled_h <= 0:
@@ -517,9 +604,8 @@ def standardize_frames_unified(frames, target_size, mode='content', align='cente
             processed.append(canvas)
     
     else:
-        # ========== MOBILE MODE ==========
+        # ========== INDEPENDENT / MOBILE MODE ==========
         # Each frame cropped and centered INDEPENDENTLY
-        # Best for: enemies, NPCs, player characters
         
         # First pass: find the MAX content size across all frames for uniform scaling
         max_content_w = 0
@@ -529,8 +615,7 @@ def standardize_frames_unified(frames, target_size, mode='content', align='cente
                 max_content_w = max(max_content_w, bbox[2] - bbox[0])
                 max_content_h = max(max_content_h, bbox[3] - bbox[1])
         
-        # Calculate scale based on largest content
-        scale = min(target_size / max_content_w, target_size / max_content_h) * 0.95
+        scale = min(target_size / max_content_w, target_size / max_content_h) * 0.90
         
         for i, frame in enumerate(frames):
             bbox = all_bboxes[i]
@@ -538,11 +623,9 @@ def standardize_frames_unified(frames, target_size, mode='content', align='cente
                 processed.append(Image.new("RGBA", (target_size, target_size), (0, 0, 0, 0)))
                 continue
             
-            # Crop to THIS frame's individual bounding box
             cropped = frame.crop(bbox)
             content_w, content_h = cropped.size
             
-            # Scale using the unified scale factor (consistent size across frames)
             scaled_w = int(content_w * scale)
             scaled_h = int(content_h * scale)
             
@@ -552,10 +635,9 @@ def standardize_frames_unified(frames, target_size, mode='content', align='cente
             
             resized = cropped.resize((scaled_w, scaled_h), Image.LANCZOS)
             
-            # CENTER each frame independently (crucial for mobile entities)
             canvas = Image.new("RGBA", (target_size, target_size), (0, 0, 0, 0))
             x_offset = (target_size - scaled_w) // 2
-            y_offset = (target_size - scaled_h) // 2  # Always center for mobile
+            y_offset = (target_size - scaled_h) // 2
             
             canvas.paste(resized, (x_offset, y_offset))
             processed.append(canvas)
@@ -636,7 +718,7 @@ def pixelate_frame(frame, factor):
     return pixelated
 
 
-def process_image_strip(input_path, num_frames, guide_color, target_size, name, scale_mode='content', align='bottom', entity_type='stationary', pixelate_factor=None):
+def process_image_strip(input_path, num_frames, guide_color, target_size, name, scale_mode='content', align='bottom', entity_type='stationary', pixelate_factor=None, min_island_size=10, gray_threshold=50, alignment_strategy='independent'):
     """
     Process a 4-frame image strip into a game-ready sprite sheet.
     
@@ -650,6 +732,10 @@ def process_image_strip(input_path, num_frames, guide_color, target_size, name, 
         align: 'center', 'bottom', or 'top' - vertical alignment of content
         entity_type: 'stationary' (traps, effects) or 'mobile' (enemies, NPCs)
         pixelate_factor: If set, apply pixel art stylization with this factor
+        min_island_size: Minimum size for island removal (speckle cleaning)
+        min_island_size: Minimum size for island removal (speckle cleaning)
+        gray_threshold: Threshold for cleaning gray artifacts
+        alignment_strategy: 'independent' (center each frame) or 'unified' (preserve relative positions)
     
     Returns:
         Output file path
@@ -674,6 +760,10 @@ def process_image_strip(input_path, num_frames, guide_color, target_size, name, 
             print(f"  Warning: Guide detection failed: {e}")
     
     # Split into frames FIRST (before any pixel manipulation)
+    
+    # 0. Remove black grid lines if present (common in sprite sheets)
+    img = remove_black_grid_lines(img)
+    
     if guide_lines:
         frames = split_strip_by_guides(img, guide_lines, num_frames)
     else:
@@ -694,13 +784,16 @@ def process_image_strip(input_path, num_frames, guide_color, target_size, name, 
         if guide_color:
             frame, count = inpaint_guide_lines(frame)
         
+        # Step 2.5: Remove small islands (de-speckle)
+        frame = remove_small_islands(frame, min_size=min_island_size)
+
         # Step 3: Clean artifacts (always run)
-        frame = clean_artifacts(frame)
+        frame = clean_artifacts(frame, gray_threshold=gray_threshold)
         
         processed_frames_step1.append(frame)
     
     # Standardize ALL frames with appropriate strategy
-    processed_frames = standardize_frames_unified(processed_frames_step1, target_size, scale_mode, align, entity_type)
+    processed_frames = standardize_frames_unified(processed_frames_step1, target_size, scale_mode, align, entity_type, alignment_strategy)
     
     # Report content coverage
     for i, frame in enumerate(processed_frames):
@@ -804,6 +897,12 @@ def main():
                         help='Do not copy to final asset directories')
     parser.add_argument('--pixelate', '-p', nargs='?', const=DEFAULT_PIXEL_SIZE, type=int, default=None,
                         help=f'Apply pixel art stylization (optional factor, default: {DEFAULT_PIXEL_SIZE}). Higher = blockier.')
+    parser.add_argument('--min-island-size', type=int, default=20,
+                        help='Minimum size of isolated pixel islands to keep (default: 20). Reduce for delicate details.')
+    parser.add_argument('--gray-threshold', type=int, default=50,
+                        help='Brightness threshold for gray artifact cleanup (default: 50). Reduce to 0 to keep gray objects.')
+    parser.add_argument('--alignment-strategy', default='independent', choices=['independent', 'unified'],
+                        help='Alignment strategy: "independent" (center each frame) or "unified" (preserve relative positions, good for avoiding jitter)')
     
     args = parser.parse_args()
     
@@ -899,7 +998,8 @@ def main():
             # Process this row
             output_path, output_name = process_image_strip(
                 temp_path, args.frames, args.guide_color,
-                args.output_size, row_name, args.scale_mode, args.align, args.entity_type, args.pixelate
+                args.output_size, row_name, args.scale_mode, args.align, args.entity_type, args.pixelate,
+                args.min_island_size, args.gray_threshold, args.alignment_strategy
             )
             generated_files.append((row_suffix, output_path, output_name))
         
@@ -925,7 +1025,8 @@ def main():
         # Single row - original behavior
         output_path, output_name = process_image_strip(
             args.input, args.frames, args.guide_color,
-            args.output_size, args.name, args.scale_mode, args.align, args.entity_type, args.pixelate
+            args.output_size, args.name, args.scale_mode, args.align, args.entity_type, args.pixelate,
+            args.min_island_size, args.gray_threshold, args.alignment_strategy
         )
         
         # Copy to final directory

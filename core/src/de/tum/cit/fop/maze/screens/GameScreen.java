@@ -828,10 +828,36 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
 
         }
 
-        // 4. Mobile Traps (use legacy slime animation)
+        // 4. Mobile Traps
         for (MobileTrap trap : gameWorld.getMobileTraps()) {
-            TextureRegion trapFrame = textureManager.enemyWalk.getKeyFrame(stateTime, true);
-            game.getSpriteBatch().draw(trapFrame, trap.getX() * UNIT_SCALE, trap.getY() * UNIT_SCALE);
+            String currentTheme = gameMap.getTheme();
+            com.badlogic.gdx.graphics.g2d.Animation<TextureRegion> trapAnim = textureManager
+                    .getMobileTrapAnimation(currentTheme);
+            TextureRegion currentFrame;
+
+            if (trapAnim != null) {
+                currentFrame = trapAnim.getKeyFrame(stateTime, true);
+            } else {
+                currentFrame = textureManager.enemyWalk.getKeyFrame(stateTime, true); // Fallback
+            }
+
+            if (currentFrame != null) {
+                float x = trap.getX() * UNIT_SCALE;
+                float y = trap.getY() * UNIT_SCALE;
+                float drawSize = UNIT_SCALE;
+
+                // Flip if moving left
+                boolean flipX = trap.getMoveX() < 0;
+                boolean isFlipped = currentFrame.isFlipX();
+
+                if (flipX != isFlipped) {
+                    currentFrame.flip(true, false);
+                    game.getSpriteBatch().draw(currentFrame, x, y, drawSize, drawSize);
+                    currentFrame.flip(true, false); // Restore
+                } else {
+                    game.getSpriteBatch().draw(currentFrame, x, y, drawSize, drawSize);
+                }
+            }
         }
 
         // 6. Render Player

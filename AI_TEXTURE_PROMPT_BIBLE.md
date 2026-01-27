@@ -233,3 +233,16 @@ Details: [State Specific Details].
 **Example (Golden Chest)**:
 > "Golden Royal Treasure Chest with jewels, half-open state. Top-down game sprite. Hand-painted stylized art. Lid raised 45 degrees, blinding golden light leaking out. Shiny gold metal, rich wood texture. Solid White Background. --no cut off, multiple items, complex background"
 
+
+### 🏃 Type F: Animation Strips (Move/Attack)
+**Design Goal**: Perfect alignment, 4 distinct frames, NO CLIPPING.
+**Meta-Prompt Template**:
+```
+Sprite Sheet of [Entity Name] [Action], 4 frames, side view, facing right.
+Layout: 2x2 Grid (Four Quadrants). 2 rows, 2 columns.
+Composition: Ample whitespace between sprites. NO OVERLAPPING. Each sprite small and centered in its imaginary box.
+Style: Pixel art, high contrast, clean edges.
+--no grid lines, black dividers, touching edges, cropped
+```
+**Example**:
+> "Sprite Sheet of Giant Hornet flying, 4 frames. 2x2 Grid layout (Four Quadrants). Pure white background. Insects are spaced far apart with wide white gaps. No overlapping wings. Pixel art style. --no grid lines, touching"

@@ -60,6 +60,13 @@ public class TextureManager implements Disposable {
         public TextureRegion arrowRegion;
         public TextureRegion bagIconRegion;
 
+        // Mobile Trap Animations
+        public Animation<TextureRegion> mobileTrapGrassland;
+        public Animation<TextureRegion> mobileTrapDesert;
+        public Animation<TextureRegion> mobileTrapIce;
+        public Animation<TextureRegion> mobileTrapJungle;
+        public Animation<TextureRegion> mobileTrapSpace;
+
         // Dropped Item Textures (金币和爱心掉落物)
         public TextureRegion coinRegion;
         public TextureRegion heartDropRegion;
@@ -333,6 +340,16 @@ public class TextureManager implements Disposable {
                 exitDesert = loadTextureSafe("images/exits/exit_desert_1f.png");
                 exitIce = loadTextureSafe("images/exits/exit_ice_1f.png");
                 exitSpace = loadTextureSafe("images/exits/exit_space_1f.png");
+
+                // 12. Load Mobile Trap Animations
+                mobileTrapGrassland = loadSpriteSheetAnimation("images/animations/mobile_trap_grassland_4f.png", 4, 128,
+                                0.1f);
+                mobileTrapDesert = loadSpriteSheetAnimation("images/animations/mobile_trap_desert_4f.png", 4, 128,
+                                0.1f);
+                mobileTrapIce = loadSpriteSheetAnimation("images/animations/mobile_trap_ice_4f.png", 4, 128, 0.1f);
+                mobileTrapJungle = loadSpriteSheetAnimation("images/animations/mobile_trap_jungle_4f.png", 4, 128,
+                                0.1f);
+                mobileTrapSpace = loadSpriteSheetAnimation("images/animations/mobile_trap_space_4f.png", 4, 128, 0.1f);
         }
 
         /**
@@ -625,6 +642,28 @@ public class TextureManager implements Disposable {
                                 return trapSpaceAnim;
                         default:
                                 return null;
+                }
+        }
+
+        /**
+         * Returns the mobile trap animation for the given theme.
+         */
+        public Animation<TextureRegion> getMobileTrapAnimation(String theme) {
+                if (theme == null)
+                        return null;
+                switch (theme) {
+                        case "Grassland":
+                                return mobileTrapGrassland;
+                        case "Desert":
+                                return mobileTrapDesert;
+                        case "Ice":
+                                return mobileTrapIce;
+                        case "Jungle":
+                                return mobileTrapJungle;
+                        case "Space":
+                                return mobileTrapSpace;
+                        default:
+                                return mobileTrapGrassland; // Fallback
                 }
         }
 
