@@ -642,7 +642,7 @@ public class HelpScreen implements Screen {
         chestTitle.setColor(Color.GOLD);
         chestCard.add(chestTitle).left().padBottom(8).row();
         chestCard.add(new Label("Found in corners of the map. Walk close to open.", skin)).left().padBottom(5).row();
-        chestCard.add(new Label("Contains: Coins, Potions, Weapons, or Armor.", skin)).left().padBottom(15).row();
+        chestCard.add(new Label("Contains: Gold, Potions, Weapons, or Armor.", skin)).left().padBottom(15).row();
 
         Label puzzleTitle = new Label("Puzzle Chests (Rare)", skin);
         puzzleTitle.setColor(UIConstants.RARITY_LEGENDARY);

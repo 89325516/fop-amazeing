@@ -36,16 +36,11 @@ public class EntityFactory {
         register(GameConfig.OBJECT_ID_WALL_3X3, (x, y) -> new Wall(x, y, 3, 3));
         register(GameConfig.OBJECT_ID_WALL_4X4, (x, y) -> new Wall(x, y, 4, 4));
 
-        // 注册宝箱 (Treasure Chest)
+        // 注册宝箱 (Treasure Chest - Simple touch-to-open)
         register(GameConfig.OBJECT_ID_CHEST, (x, y) -> {
             java.util.Random random = new java.util.Random();
-            TreasureChest chest = TreasureChest.createRandom(x, y, random, GameConfig.CHEST_PUZZLE_PROBABILITY);
-            // 设置奖励
+            TreasureChest chest = TreasureChest.createRandom(x, y, random);
             chest.setReward(ChestRewardGenerator.generateLevelModeReward(random));
-            // 如果是谜题宝箱，设置谜题
-            if (chest.getType() == TreasureChest.ChestType.PUZZLE) {
-                chest.setPuzzle(PuzzleGenerator.generateRandom(random));
-            }
             return chest;
         });
 

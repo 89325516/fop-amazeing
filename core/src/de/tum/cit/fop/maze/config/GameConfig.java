@@ -66,7 +66,6 @@ public class GameConfig {
     public static final int OBJECT_ID_CHEST = 20;
 
     /** 谜题宝箱概率 (30%) */
-    public static final float CHEST_PUZZLE_PROBABILITY = 0.3f;
 
     /** 宝箱密度：约陷阱数量的 1/20 */
     public static final float CHEST_DENSITY_RATIO = 0.05f;

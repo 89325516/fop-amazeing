@@ -48,7 +48,7 @@ public class ChestRewardGenerator {
         if (roll < LEVEL_WEIGHT_COIN) {
             // 金币奖励：50-200
             int coinAmount = 50 + random.nextInt(151);
-            return ChestReward.coins(coinAmount);
+            return ChestReward.gold(coinAmount);
         }
         roll -= LEVEL_WEIGHT_COIN;
 

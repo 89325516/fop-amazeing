@@ -6,7 +6,7 @@ import java.util.Random;
  * 宝箱实体类 (Treasure Chest)
  * 
  * 可交互的游戏对象，占地 1x1。
- * 支持普通宝箱和谜题宝箱两种类型。
+ * 支持触碰开启的普通宝箱。
  * 
  * 动画状态流程：
  * CLOSED -> OPENING -> OPEN
@@ -29,14 +29,10 @@ public class TreasureChest extends GameObject {
      * 宝箱类型
      */
     public enum ChestType {
-        NORMAL, // 普通宝箱：直接打开
-        PUZZLE // 谜题宝箱：需要解谜
+        NORMAL // 普通宝箱：触碰开启
     }
 
     // ========== 配置常量 ==========
-
-    /** 谜题宝箱的默认概率 (30%) */
-    public static final float DEFAULT_PUZZLE_PROBABILITY = 0.3f;
 
     /** 动画每帧持续时间（秒） */
     public static final float FRAME_DURATION = 0.2f;
@@ -48,7 +44,6 @@ public class TreasureChest extends GameObject {
 
     private ChestState state;
     private ChestType type;
-    private Puzzle puzzle; // 谜题（仅 PUZZLE 类型有效）
     private ChestReward reward; // 奖励
     private float animationTimer; // 动画计时器
     private boolean interacted; // 是否已交互（防止重复触发）
@@ -64,7 +59,6 @@ public class TreasureChest extends GameObject {
         super(x, y);
         this.state = ChestState.CLOSED;
         this.type = ChestType.NORMAL;
-        this.puzzle = null;
         this.reward = null;
         this.animationTimer = 0f;
         this.interacted = false;
@@ -89,7 +83,7 @@ public class TreasureChest extends GameObject {
     // ========== 静态工厂方法 ==========
 
     /**
-     * 根据概率随机创建普通或谜题宝箱
+     * 创建随机宝箱
      * 
      * @param x      X坐标
      * @param y      Y坐标
@@ -97,20 +91,6 @@ public class TreasureChest extends GameObject {
      * @return 新创建的宝箱
      */
     public static TreasureChest createRandom(float x, float y, Random random) {
-        return createRandom(x, y, random, DEFAULT_PUZZLE_PROBABILITY);
-    }
-
-    /**
-     * 根据指定概率创建宝箱
-     * 
-     * @param x                 X坐标
-     * @param y                 Y坐标
-     * @param random            随机数生成器
-     * @param puzzleProbability 谜题宝箱概率 (0.0 - 1.0)
-     * @return 新创建的宝箱
-     */
-    public static TreasureChest createRandom(float x, float y, Random random, float puzzleProbability) {
-        // 强制所有宝箱为普通类型 (User Request: Simplify to touch-to-open)
         return new TreasureChest(x, y, ChestType.NORMAL);
     }
 
@@ -191,19 +171,6 @@ public class TreasureChest extends GameObject {
         return success;
     }
 
-    /**
-     * 验证谜题答案
-     * 
-     * @param answer 玩家输入的答案
-     * @return true 如果答案正确
-     */
-    public boolean verifyAnswer(String answer) {
-        if (type != ChestType.PUZZLE || puzzle == null) {
-            return true; // 非谜题宝箱默认通过
-        }
-        return puzzle.checkAnswer(answer);
-    }
-
     // ========== 动画相关 ==========
 
     /**
@@ -247,14 +214,6 @@ public class TreasureChest extends GameObject {
 
     public void setType(ChestType type) {
         this.type = type;
-    }
-
-    public Puzzle getPuzzle() {
-        return puzzle;
-    }
-
-    public void setPuzzle(Puzzle puzzle) {
-        this.puzzle = puzzle;
     }
 
     public ChestReward getReward() {

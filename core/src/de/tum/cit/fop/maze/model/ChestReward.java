@@ -43,9 +43,9 @@ public class ChestReward {
     }
 
     /**
-     * 创建金币奖励
+     * 创建金币奖励 (Gold Reward)
      */
-    public static ChestReward coins(int amount) {
+    public static ChestReward gold(int amount) {
         return new ChestReward(RewardType.COIN, amount, null);
     }
 
@@ -197,7 +197,7 @@ public class ChestReward {
             case WEAPON:
                 return payload instanceof Weapon ? ((Weapon) payload).getName() : "Mystery Weapon";
             case COIN:
-                return "Coins " + value;
+                return "Gold +" + value;
             case HEALTH:
                 return "Health " + value;
             case INVINCIBILITY:
