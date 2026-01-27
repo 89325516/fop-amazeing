@@ -214,6 +214,16 @@ Objects with large **white or very pale colored areas** get incorrectly cropped 
 
 *This document serves as the single source of truth for all AI generation tasks. Adhere to these prompts to maintain World-Class quality.*
 
+### 🌈 Background Color Strategy (背景颜色策略 - CRITICAL FIX)
+
+**Problem**: White objects (bones, ice, silver) on White Background get cropped.
+**Solution**: Use **Solid Bright Green Background (RGB #00FF00)** or **Solid Dark Grey Background** for these specific cases.
+
+**Prompt Override**:
+> "Isolated on Solid Bright Green Background (Green Screen)" or "Isolated on Solid Dark Grey Background"
+
+---
+
 ### 🔒 Type E: Treasure Chests (宝箱)
 **Design Goal**: High contrast state difference (Closed vs Open). Premium look.
 **Meta-Prompt Template**:

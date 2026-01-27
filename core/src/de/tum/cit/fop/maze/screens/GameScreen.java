@@ -626,13 +626,8 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
                 reg = textureManager.keyRegion;
             else if (obj instanceof Potion) {
                 Potion potion = (Potion) obj;
-                // 生命药水使用爱心贴图，其他类型使用默认药水贴图
-                if (potion.getType() == Potion.PotionType.HEALTH) {
-                    reg = textureManager.heartDropRegion != null ? textureManager.heartDropRegion
-                            : textureManager.potionRegion;
-                } else {
-                    reg = textureManager.potionRegion;
-                }
+                // Use specific potion texture
+                reg = textureManager.getPotionTexture(potion.getTextureKey());
             } else if (obj instanceof Weapon) {
                 reg = textureManager.keyRegion;
                 game.getSpriteBatch().setColor(Color.CYAN);
@@ -647,7 +642,9 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         }
 
         // 2.5 Render Treasure Chests (底部对齐)
-        for (TreasureChest chest : gameMap.getTreasureChests()) {
+        for (
+
+        TreasureChest chest : gameMap.getTreasureChests()) {
             TextureRegion chestTex = textureManager.getChestFrame(chest.getState());
             if (chestTex != null) {
                 // 底部对齐渲染：宝箱底边与格子底边对齐
@@ -688,7 +685,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
                         itemTex = textureManager.coinRegion; // 回退（避免使用钥匙纹理）
                     break;
                 case POTION:
-                    itemTex = textureManager.potionRegion;
+                    itemTex = textureManager.getPotionTexture(item.getTextureKey());
                     break;
             }
 
@@ -1443,6 +1440,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         // Auto-focus scroll on hover so user doesn't need to click
         final ScrollPane sp = scrollPane;
         scrollPane.addListener(new com.badlogic.gdx.scenes.scene2d.InputListener() {
+
             @Override
             public void enter(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y, int pointer,
                     Actor fromActor) {

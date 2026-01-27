@@ -857,6 +857,35 @@ public class TextureManager implements Disposable {
                 }
         }
 
+        // Cache for potion textures
+        private com.badlogic.gdx.utils.ObjectMap<String, TextureRegion> potionCache = new com.badlogic.gdx.utils.ObjectMap<>();
+
+        /**
+         * Get texture for a specific potion type.
+         * Loads from assets/images/items/potion_{type}.png
+         */
+        public TextureRegion getPotionTexture(String potionKey) {
+                if (potionCache.containsKey(potionKey)) {
+                        return potionCache.get(potionKey);
+                }
+
+                // Try to load specific texture
+                String path = "images/items/" + potionKey + ".png";
+                TextureRegion region;
+                try {
+                        if (com.badlogic.gdx.Gdx.files.internal(path).exists()) {
+                                region = loadTextureSafe(path);
+                        } else {
+                                region = potionRegion; // Fallback to generic potion
+                        }
+                } catch (Exception e) {
+                        region = potionRegion;
+                }
+
+                potionCache.put(potionKey, region);
+                return region;
+        }
+
         /**
          * 加载墙体底砖纹理，若不存在则回退到指定的默认纹理
          * 

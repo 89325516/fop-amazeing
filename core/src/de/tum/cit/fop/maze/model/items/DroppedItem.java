@@ -58,6 +58,15 @@ public class DroppedItem extends GameObject {
         return item;
     }
 
+    /**
+     * 创建药水掉落物
+     */
+    public static DroppedItem createPotionDrop(float x, float y, de.tum.cit.fop.maze.model.items.Potion potion) {
+        DroppedItem item = new DroppedItem(x, y, ItemType.POTION, potion);
+        item.textureKey = potion.getTextureKey();
+        return item;
+    }
+
     private DroppedItem(float x, float y, ItemType type, Object payload) {
         super(x, y);
         this.type = type;

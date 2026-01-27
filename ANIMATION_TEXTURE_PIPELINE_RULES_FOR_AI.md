@@ -59,18 +59,17 @@
 |--------|--------|------|
 | **单帧尺寸** | 128×128 px | 源图每帧尺寸 |
 | **目标尺寸** | 64×64 px | 游戏内最终尺寸 |
-| **⭐4帧条** | 512×128 px | **单行**4帧水平排列 ⚠️ 最常用！|
+| **⭐4帧条** | 512×128 px | **单行**4帧水平排列 (旧标准) |
+| **⭐2x2网格**| 256×256 px | **四象限**布局 (推荐新标准，更稳定) |
 | **8帧网格** | 512×256 px | 4帧×2行 (仅用于多方向合成) |
-| **16帧网格** | 512×512 px | 4帧×4行 (仅用于多方向合成) |
+| **16帧网格**| 512×512 px | 4帧×4行 (仅用于多方向合成) |
 
 #### 1.3.2 辅助线规格
 
 | 规格项 | 标准值 |
 |--------|--------|
-| **颜色** | 品红 #FF00FF (RGB 255,0,255) |
-| **宽度** | 1-2 像素 |
-| **位置** | 每帧正中心十字交叉 |
-| **用途** | 确保物体居中对齐 |
+| **颜色** | **无 (None)** |
+| **策略** | **不再使用辅助线**。利用 2x2 网格的自然分割和脚本自动居中。 |
 
 #### 1.3.3 背景规格
 
@@ -192,30 +191,26 @@ CAMERA POSITION: The camera is at the BOTTOM of the screen (South), looking UP (
 
 ---
 
-#### 1.3.7 ⚠️ 单行强制约束 (Single Row Requirement) ⭐⭐⭐
+#### 1.3.7 ⭐ 2x2 四象限生成规范 (2x2 Grid Requirement) ⭐⭐⭐
 
-> [!CAUTION]
-> **这是最常见的生成错误！外部AI生成时经常生成多行图片！**
+> [!TIP]
+> **新标准：使用 2x2 网格布局比单行更稳定！**
+> AI 在生成方形 (1:1) 图片时构图最稳定。
 
 **强制规则**：
 
 | 规则 | 描述 |
 |------|------|
-| **单一动作只能单行** | 生成 `walk_down` 等单个动作时，图片**必须只有1行** |
-| **尺寸必须是 512×128** | 绝对不允许 512×256 或 512×512 等多行尺寸 |
-| **只有4帧** | 图片中有且仅有 4 个帧，不能是 8 个或 16 个 |
-| **不要复制角色** | 4帧应该是同一角色的4个动画阶段，不是2个角色 |
+| **布局** | **2x2 网格 (Grid Layout)** - 左上, 右上, 左下, 右下 |
+| **内容** | 4个连续的动画帧 (不是4个不同角度) |
+| **无辅助线**| **不要生成任何分割线或辅助线** |
+| **背景** | 纯白背景 |
 
-**Prompt 中必须明确声明**：
+**Prompt 推荐**：
 ```
-SINGLE ROW ONLY - Image MUST be exactly 512×128 pixels (4 columns × 1 row)
-DO NOT create 2 rows, 8 frames, or any grid layout!
-There should be EXACTLY 4 frames of the SAME character in different animation poses.
-```
-
-**在负面 Prompt (--no) 中添加**：
-```
-DO NOT: grid layout, 2 rows, 8 frames, 16 frames, multiple rows, duplicated character
+Spritesheet of [Subject], 4 frames arranged in a 2x2 GRID (Two rows, Two columns).
+Frames 1,2,3,4 arranged in quadrants: Top-Left, Top-Right, Bottom-Left, Bottom-Right.
+Pure White Background. NO Guide lines.
 ```
 ---
 
@@ -592,55 +587,31 @@ python3 scripts/process_image_strip.py \
 > [!TIP]
 > **推荐使用图片生成**：比视频生成省额度、质量更可控！
 
-### 4.1 输入格式
+### 4.1 输入格式 (Input Format)
 
-**单张图片包含4帧**，水平排列：
+**推荐格式：2x2 网格**
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│  Frame 1  │  Frame 2  │  Frame 3  │  Frame 4  │
-│  128×128  │  128×128  │  128×128  │  128×128  │
-└─────────────────────────────────────────────────────────┘
-总尺寸: 512×128 px
+┌─────────────┐
+│  F1  │  F2  │
+│──────┼──────│
+│  F3  │  F4  │
+└─────────────┘
+适合 AI 生成，构图更稳定。
+生成后使用 `scripts/stitch_2x2.py` 转换为长条。
 ```
 
 **放置位置**:
 ```
 raw_assets/images/{entity}_{animation}.png
-例: raw_assets/images/boar_walk_down.png
 ```
 
 ---
 
-### 4.2 品红辅助线系统 ⭐关键
+### 4.2 辅助线系统 (已弃用)
 
-> [!IMPORTANT]
-> **辅助线用于确保4帧物体中心对齐！**
-
-**规格**：
-- 颜色：**品红 #FF00FF** (与任何游戏主题色差异最大)
-- 宽度：1-2像素
-- 位置：每帧正中心的十字线
-
-```
-┌─────────┬─────────┬─────────┬─────────┐
-│    │    │    │    │    │    │    │    │
-│ ───┼─── │ ───┼─── │ ───┼─── │ ───┼─── │  ← 品红十字线
-│    │    │    │    │    │    │    │    │
-│   🐗    │   🐗    │   🐗    │   🐗    │  ← 物体居中
-└─────────┴─────────┴─────────┴─────────┘
-```
-
-**Prompt关键词**：
-```
-The creature must be CENTERED in every frame, same position across all 4 frames.
-Fill about 80% of each frame (10% padding each side).
-```
-
-**处理脚本**会自动：
-1. 按等分切割帧
-2. 移除白色背景
-3. 对齐物体中心
+**注意**：新流水线不再依赖紫色辅助线。脚本将使用自动居中算法。
+Prompt 中请明确：`NO Guide lines`。
 
 ---
 
