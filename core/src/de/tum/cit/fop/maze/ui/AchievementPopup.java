@@ -94,7 +94,7 @@ public class AchievementPopup {
         popupTable.add(rewardLabel).expandX().fillX().padTop(5).padBottom(10);
 
         // 初始位置（右侧屏幕外）
-        popupTable.setPosition(stage.getWidth(), stage.getHeight() - POPUP_HEIGHT - 20);
+        popupTable.setPosition(stage.getWidth(), stage.getHeight() - POPUP_HEIGHT - 320);
         popupTable.setVisible(false);
 
         stage.addActor(popupTable);
@@ -133,7 +133,7 @@ public class AchievementPopup {
         popupTable.setBackground(skin.newDrawable("white", getRarityBackgroundColor(info.rarity)));
 
         // 重置位置
-        popupTable.setPosition(stage.getWidth(), stage.getHeight() - POPUP_HEIGHT - 20);
+        popupTable.setPosition(stage.getWidth(), stage.getHeight() - POPUP_HEIGHT - 320);
         popupTable.setVisible(true);
         popupTable.getColor().a = 1.0f;
 
@@ -144,7 +144,7 @@ public class AchievementPopup {
         popupTable.clearActions();
         popupTable.addAction(Actions.sequence(
                 // 滑入
-                Actions.moveTo(stage.getWidth() - POPUP_WIDTH - 20, stage.getHeight() - POPUP_HEIGHT - 20,
+                Actions.moveTo(stage.getWidth() - POPUP_WIDTH - 20, stage.getHeight() - POPUP_HEIGHT - 320,
                         SLIDE_IN_DURATION, Interpolation.exp5Out),
                 // 停留
                 Actions.delay(DISPLAY_DURATION),
