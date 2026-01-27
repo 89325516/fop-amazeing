@@ -307,18 +307,17 @@ public class AchievementManager {
 
     /**
      * Check achievements for coin milestones.
+     * NOTE: This method ONLY checks achievements, it does NOT accumulate coins.
+     * Use addCoinsToTotal() to accumulate coins at level end.
      * 
-     * @param coinsEarned Coins earned in current session
+     * @param ignored This parameter is ignored (kept for backward compatibility)
      * @return List of newly unlocked achievements
      */
-    public static List<String> checkCoinMilestone(int coinsEarned) {
+    public static List<String> checkCoinMilestone(int ignored) {
         List<String> newUnlocks = new ArrayList<>();
 
-        // Update total coins
-        Preferences prefs = Gdx.app.getPreferences(PREFS_NAME);
-        int totalCoins = prefs.getInteger(TOTAL_COINS_KEY, 0) + coinsEarned;
-        prefs.putInteger(TOTAL_COINS_KEY, totalCoins);
-        prefs.flush();
+        // Only check achievements based on current total, do NOT accumulate here
+        int totalCoins = getTotalCoinsEarned();
 
         if (totalCoins >= 1) {
             if (unlockCard("First Coin"))
@@ -739,6 +738,22 @@ public class AchievementManager {
     public static int getTotalCoinsEarned() {
         Preferences prefs = Gdx.app.getPreferences(PREFS_NAME);
         return prefs.getInteger(TOTAL_COINS_KEY, 0);
+    }
+
+    /**
+     * Add coins to total coins earned (for achievement tracking).
+     * Should be called ONCE at level end, not per-coin pick-up.
+     * 
+     * @param amount Amount of coins to add
+     */
+    public static void addCoinsToTotal(int amount) {
+        if (amount <= 0)
+            return;
+        Preferences prefs = Gdx.app.getPreferences(PREFS_NAME);
+        int total = prefs.getInteger(TOTAL_COINS_KEY, 0) + amount;
+        prefs.putInteger(TOTAL_COINS_KEY, total);
+        prefs.flush();
+        GameLogger.info("AchievementManager", "Added " + amount + " coins to total. New total: " + total);
     }
 
     /**

@@ -78,7 +78,7 @@ public class VictoryScreen implements Screen {
             }
 
             if (coinsCollected > 0) {
-                Label coinLabel = new Label("Coins Collected: " + coinsCollected, game.getSkin());
+                Label coinLabel = new Label("Gold Collected: " + coinsCollected, game.getSkin());
                 coinLabel.setColor(Color.GOLD);
                 statsTable.add(coinLabel);
             }

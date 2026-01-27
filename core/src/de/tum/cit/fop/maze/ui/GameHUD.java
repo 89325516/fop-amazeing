@@ -164,7 +164,7 @@ public class GameHUD implements Disposable {
 
         // === Row 4: Coins ===
         Label.LabelStyle coinStyle = new Label.LabelStyle(skin.getFont("font"), Color.GOLD);
-        coinLabel = new Label("Coins: 0", coinStyle);
+        coinLabel = new Label("Gold: 0", coinStyle);
         coinLabel.setAlignment(Align.right);
         rightTable.add(coinLabel).right().padBottom(2).row();
 
@@ -305,7 +305,7 @@ public class GameHUD implements Disposable {
         }
 
         // === 5. Update Coin Display (NEW) ===
-        coinLabel.setText("Coins: " + player.getCoins());
+        coinLabel.setText("Gold: " + player.getCoins());
 
         // === 6. Update Armor Status Display (NEW) ===
         Armor armor = player.getEquippedArmor();

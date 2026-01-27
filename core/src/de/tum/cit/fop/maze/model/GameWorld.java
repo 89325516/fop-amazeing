@@ -1255,8 +1255,9 @@ public class GameWorld {
                             int amount = (Integer) item.getPayload();
                             coinsCollected += amount;
                             floatingTexts.add(new FloatingText(player.getX(), player.getY() + 0.5f,
-                                    "+" + amount + " coins", Color.GOLD));
-                            newAchievements.addAll(AchievementManager.checkCoinMilestone(amount));
+                                    "+" + amount + " gold", Color.GOLD));
+                            // NOTE: Coin achievement check moved to LevelSummaryScreen to avoid duplicate
+                            // accumulation
                             break;
                         default:
                             break;

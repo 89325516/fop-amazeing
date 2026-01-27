@@ -152,19 +152,28 @@ public class MenuScreen implements Screen {
             }
         });
 
-        // Element Manager Button (Developer Feature)
-        TextButton elementCreatorButton = new TextButton("Element Manager", game.getSkin());
-        UIUtils.addMenuClickSound(elementCreatorButton);
-        elementCreatorButton.setColor(0.6f, 0.8f, 1f, 1f); // Light blue to indicate dev feature
-        table.add(elementCreatorButton).width(300).height(60).padBottom(20).row();
-
-        elementCreatorButton.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                GameLogger.info("MenuScreen", "Element Creator clicked");
-                game.setScreen(new ElementCreatorScreen(game));
-            }
-        });
+        // ============================================================
+        // Element Manager Button - DISABLED FOR PRODUCTION
+        // This is a developer-only feature for uploading assets.
+        // Uncomment the code below to re-enable for development use.
+        // ============================================================
+        /*
+         * TextButton elementCreatorButton = new TextButton("Element Manager",
+         * game.getSkin());
+         * UIUtils.addMenuClickSound(elementCreatorButton);
+         * elementCreatorButton.setColor(0.6f, 0.8f, 1f, 1f); // Light blue to indicate
+         * dev feature
+         * table.add(elementCreatorButton).width(300).height(60).padBottom(20).row();
+         * 
+         * elementCreatorButton.addListener(new ChangeListener() {
+         * 
+         * @Override
+         * public void changed(ChangeEvent event, Actor actor) {
+         * GameLogger.info("MenuScreen", "Element Creator clicked");
+         * game.setScreen(new ElementCreatorScreen(game));
+         * }
+         * });
+         */
 
         // Player skins are now managed through Element Manager with PLAYER type
 

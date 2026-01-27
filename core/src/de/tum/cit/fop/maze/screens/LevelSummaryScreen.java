@@ -53,6 +53,16 @@ public class LevelSummaryScreen implements Screen {
         // 将本关卡收集的金币持久化到 Preferences，供商店使用
         de.tum.cit.fop.maze.shop.ShopManager.syncCoinsFromGame(data.getCoinsCollected());
 
+        // === 金币累加到成就系统并检查成就 ===
+        // 在关卡结束时统一处理，避免逐个金币累加导致的重复计数
+        if (data.getCoinsCollected() > 0) {
+            AchievementManager.addCoinsToTotal(data.getCoinsCollected());
+            java.util.List<String> coinAchievements = AchievementManager.checkCoinMilestone(0);
+            if (coinAchievements != null && !coinAchievements.isEmpty()) {
+                data.getNewAchievements().addAll(coinAchievements);
+            }
+        }
+
         loadBackground();
         buildUI();
     }
@@ -293,7 +303,7 @@ public class LevelSummaryScreen implements Screen {
 
         // Stat Rows
         addModernStatRow(table, "Enemies Defeated", String.valueOf(data.getKillCount()), "icon_skull");
-        addModernStatRow(table, "Coins Collected", String.valueOf(data.getCoinsCollected()), "icon_coin");
+        addModernStatRow(table, "Gold Collected", String.valueOf(data.getCoinsCollected()), "icon_coin");
         addModernStatRow(table, "Time Taken", data.getFormattedTime(), "icon_time");
 
         if (data.isVictory()) {
