@@ -1253,6 +1253,10 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
             pauseTable.setVisible(false);
             showSettingsOverlay();
         });
+        addMenuButton("Skills", () -> {
+            // 打开技能树界面（游戏内访问模式）
+            game.setScreen(new SkillScreen(game, currentLevelPath, false, true));
+        });
         addMenuButton("Save Game", () -> {
             pauseTable.setVisible(false);
             showSaveDialog();

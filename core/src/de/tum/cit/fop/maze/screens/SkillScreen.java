@@ -19,6 +19,7 @@ public class SkillScreen implements Screen {
     private final MazeRunnerGame game;
     private final String currentLevel;
     private final boolean isVictory; // 追踪玩家是胜利还是失败进入的
+    private final boolean isInGameAccess; // 是否从游戏内暂停菜单进入
     private Stage stage;
     private GameState gameState;
 
@@ -30,14 +31,34 @@ public class SkillScreen implements Screen {
      * @param isVictory    true=胜利后进入, false=失败后进入
      */
     public SkillScreen(MazeRunnerGame game, String currentLevel, boolean isVictory) {
+        this(game, currentLevel, isVictory, false);
+    }
+
+    /**
+     * 游戏内访问构造函数 - 从暂停菜单访问时使用
+     * 
+     * @param game           游戏实例
+     * @param currentLevel   当前关卡路径
+     * @param isVictory      是否胜利模式（游戏内访问时忽略）
+     * @param isInGameAccess true=从暂停菜单进入，返回时回到游戏
+     */
+    public SkillScreen(MazeRunnerGame game, String currentLevel, boolean isVictory, boolean isInGameAccess) {
         this.game = game;
         this.currentLevel = currentLevel;
         this.isVictory = isVictory;
+        this.isInGameAccess = isInGameAccess;
 
-        // Load the victory state
-        this.gameState = SaveManager.loadGame("auto_save_victory.json");
+        // Priority: Load from active save slot first (same logic as GameScreen)
+        String activeSave = game.getCurrentSaveFilePath();
+        if (activeSave != null) {
+            this.gameState = SaveManager.loadGame(activeSave);
+        }
+
+        // Fallback: Legacy auto-save files
         if (this.gameState == null) {
-            // Fallback if no victory save found
+            this.gameState = SaveManager.loadGame("auto_save_victory.json");
+        }
+        if (this.gameState == null) {
             this.gameState = SaveManager.loadGame("auto_save.json");
         }
         if (this.gameState == null) {
@@ -167,17 +188,28 @@ public class SkillScreen implements Screen {
 
         rootTable.add(scrollPane).expand().fill().pad(40).row();
 
-        // 4. Done Button - 根据isVictory返回正确界面
+        // 4. Done Button - 根据进入模式返回正确界面
         TextButton doneBtn = new TextButton("Done / Continue", skin);
         de.tum.cit.fop.maze.utils.UIUtils.addGameClickSound(doneBtn);
         doneBtn.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
+                // Save to all relevant save slots to ensure sync
                 SaveManager.saveGame(gameState, "auto_save_victory");
                 SaveManager.saveGame(gameState, "auto_save");
 
+                // Also save to active save slot if it exists
+                String activeSave = game.getCurrentSaveFilePath();
+                if (activeSave != null && !activeSave.isEmpty()) {
+                    SaveManager.saveGame(gameState, activeSave);
+                }
+
                 // 根据进入时的状态返回正确界面
-                if (isVictory) {
+                if (isInGameAccess) {
+                    // 从暂停菜单进入，返回游戏并应用新技能
+                    // 使用 loadPersistentStats=true 确保技能数值被加载
+                    game.setScreen(new GameScreen(game, currentLevel, true));
+                } else if (isVictory) {
                     // 胜利后返回 VictoryScreen
                     game.setScreen(new VictoryScreen(game, currentLevel));
                 } else {
