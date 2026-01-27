@@ -48,8 +48,8 @@ public class HelpScreen implements Screen {
     private static final float CONTENT_WIDTH = 1200f;
 
     // Navigation sections
-    private static final String[] NAV_ITEMS = { "Controls", "Game Modes", "Combat", "Equipment", "World", "Console",
-            "Tips" };
+    private static final String[] NAV_ITEMS = { "Controls", "Game Modes", "Combat", "Equipment", "Skills", "World",
+            "Console", "Tips" };
 
     // Weapon data
     private static final String[][] WEAPONS = {
@@ -270,12 +270,15 @@ public class HelpScreen implements Screen {
                 buildEquipmentContent();
                 break;
             case 4:
-                buildWorldContent();
+                buildSkillsContent();
                 break;
             case 5:
-                buildConsoleContent();
+                buildWorldContent();
                 break;
             case 6:
+                buildConsoleContent();
+                break;
+            case 7:
                 buildTipsContent();
                 break;
         }
@@ -325,7 +328,17 @@ public class HelpScreen implements Screen {
         addKeyRow(otherCard, "ESC", "Pause Menu");
         addKeyRow(otherCard, "`", "Dev Console (Cheat Mode)");
 
-        contentTable.add(otherCard).width(CONTENT_WIDTH).row();
+        contentTable.add(otherCard).width(CONTENT_WIDTH).padBottom(20).row();
+
+        // Mouse Aiming (New)
+        addSubTitle("Aiming Modes");
+        Table aimCard = createCard();
+        aimCard.add(new Label("Keyboard Aim: Auto-aims in movement direction.", skin)).left().padBottom(5).row();
+        aimCard.add(new Label("Mouse Aim: Aim with cursor (Enable in Settings).", skin)).left().padBottom(5).row();
+        Label mouseTip = new Label("TIP: Mouse aiming allows precise ranged attacks while moving!", skin);
+        mouseTip.setColor(Color.YELLOW);
+        aimCard.add(mouseTip).left();
+        contentTable.add(aimCard).width(CONTENT_WIDTH).row();
     }
 
     private void addKeyRow(Table card, String key, String desc) {
@@ -488,6 +501,41 @@ public class HelpScreen implements Screen {
         }
     }
 
+    // ==================== Skills Section (New) ====================
+
+    private void buildSkillsContent() {
+        addSectionTitle("CHARACTER PROGRESSION");
+
+        // Intro
+        Table introCard = createCard();
+        introCard.add(new Label("Kill enemies to earn Skill Points (SP). Stronger enemies give more SP.", skin)).left()
+                .padBottom(5).row();
+        introCard.add(new Label("Spend SP in the Skill Menu (via Pause Menu or between levels).", skin)).left();
+        contentTable.add(introCard).width(CONTENT_WIDTH).padBottom(20).row();
+
+        // Upgrades
+        addSubTitle("Available Upgrades");
+        String[][] upgrades = {
+                { "Max Health", "Increase total hearts. Essential for survival." },
+                { "Damage Bonus", "Deal more damage with ALL weapons." },
+                { "Move Speed", "Run and Walk faster. Good for dodging." },
+                { "Attack Speed", "Reduce weapon cooldowns." },
+                { "Knockback", "Push enemies further away. Great for crowd control." },
+                { "Invincibility", "Longer invulnerability after taking damage." }
+        };
+
+        for (String[] up : upgrades) {
+            Table card = createCard();
+            Label name = new Label(up[0], skin);
+            name.setColor(UIConstants.HELP_TITLE_GOLD);
+            card.add(name).width(250).left();
+            card.add(new Label(up[1], skin)).expandX().left();
+            contentTable.add(card).width(CONTENT_WIDTH).padBottom(10).row();
+        }
+
+        addTip("TIP: You can reset your skills in the Skill Menu if you want to try a new build!");
+    }
+
     // ==================== World Section ====================
 
     private void buildWorldContent() {
@@ -572,12 +620,36 @@ public class HelpScreen implements Screen {
             nameL.setColor(UIConstants.HELP_WARN);
             r.add(nameL).width(200).left();
             r.add(new Label(h[1], skin)).width(150).left();
-            r.add(new Label(h[2], skin)).width(150).left();
+
+            // Special handling to mark interaction as Magic damage or Armor ignore
+            String dmgText = h[2];
+            if (h[0].contains("Trap") || h[0].contains("Electric")) {
+                dmgText += " (Magic)";
+            }
+            r.add(new Label(dmgText, skin)).width(150).left();
+
             r.add(new Label(h[3], skin)).expandX().left();
 
             row.add(r).expandX().fillX();
             contentTable.add(row).width(CONTENT_WIDTH).padBottom(5).row();
         }
+
+        // Exploration (Chests)
+        addSubTitle("Exploration");
+        Table chestCard = createCard();
+
+        Label chestTitle = new Label("Treasure Chests", skin);
+        chestTitle.setColor(Color.GOLD);
+        chestCard.add(chestTitle).left().padBottom(8).row();
+        chestCard.add(new Label("Found in corners of the map. Walk close to open.", skin)).left().padBottom(5).row();
+        chestCard.add(new Label("Contains: Coins, Potions, Weapons, or Armor.", skin)).left().padBottom(15).row();
+
+        Label puzzleTitle = new Label("Puzzle Chests (Rare)", skin);
+        puzzleTitle.setColor(UIConstants.RARITY_LEGENDARY);
+        chestCard.add(puzzleTitle).left().padBottom(8).row();
+        chestCard.add(new Label("Requires solving a puzzle to open. Contains high-tier loot!", skin)).left();
+
+        contentTable.add(chestCard).width(CONTENT_WIDTH).padBottom(20).row();
 
         // Bestiary (Enemies)
         addSubTitle("Bestiary (Threats)");
