@@ -705,7 +705,7 @@ public class GameWorld {
         for (MobileTrap trap : mobileTraps) {
             trap.update(delta, collisionManager);
             if (Vector2.dst(player.getX(), player.getY(), trap.getX(), trap.getY()) < 0.8f) {
-                if (player.damage(1)) {
+                if (player.damage(1, DamageType.MAGICAL)) {
                     playerTookDamage = true; // Track for flawless victory
                     player.knockback(trap.getX(), trap.getY(), 0.5f);
                 }
@@ -744,7 +744,7 @@ public class GameWorld {
                             listener.onVictory(currentLevelPath);
                     }
                 } else if (obj instanceof Trap) {
-                    if (player.damage(1)) {
+                    if (player.damage(1, DamageType.MAGICAL)) {
                         AudioManager.getInstance().playSound("hit");
                         player.knockback(obj.getX(), obj.getY(), 0.5f);
                     }

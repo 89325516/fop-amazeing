@@ -405,7 +405,7 @@ public class Player extends GameObject {
             int absorbed = amount - remainingDamage;
 
             // === NEW: Track armor absorbed for achievements ===
-            if (absorbed > 0) {
+            if (absorbed > 0 && com.badlogic.gdx.Gdx.app != null) {
                 de.tum.cit.fop.maze.utils.AchievementManager.recordArmorAbsorbed(
                         equippedArmor.getResistType().name(), absorbed);
                 GameLogger.debug("Player", "Armor absorbed " + absorbed + " " + type + " damage");
@@ -423,7 +423,9 @@ public class Player extends GameObject {
                         (float) Math.cos(angle), (float) Math.sin(angle), 1.0f);
             }
             // Play player hurt sound effect
-            de.tum.cit.fop.maze.utils.AudioManager.getInstance().playSound("player_hurt");
+            if (com.badlogic.gdx.Gdx.app != null) {
+                de.tum.cit.fop.maze.utils.AudioManager.getInstance().playSound("player_hurt");
+            }
         }
 
         // Trigger death animation if lives reach 0

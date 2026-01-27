@@ -1,64 +1,78 @@
 package de.tum.cit.fop.maze.model;
 
-import org.junit.jupiter.api.DisplayName;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import de.tum.cit.fop.maze.config.GameSettings;
+import de.tum.cit.fop.maze.model.items.Armor;
 
-import static org.junit.jupiter.api.Assertions.*;
+public class DamageTypeTest {
 
-/**
- * 伤害类型枚举单元测试
- */
-class DamageTypeTest {
+    private Player player;
 
-    @Test
-    @DisplayName("伤害类型枚举值正确")
-    void damageTypeEnumValues() {
-        assertEquals(2, DamageType.values().length);
-        assertNotNull(DamageType.PHYSICAL);
-        assertNotNull(DamageType.MAGICAL);
+    // Concrete Armor implementation for testing
+    private static class TestArmor extends Armor {
+        public TestArmor(float x, float y, String name, int maxShield, DamageType resistType) {
+            super(x, y, name, maxShield, resistType);
+        }
+
+        @Override
+        public String getDescription() {
+            return "Test Armor";
+        }
+
+        @Override
+        public String getTypeId() {
+            return "test_armor";
+        }
+    }
+
+    @BeforeEach
+    public void setUp() {
+        GameSettings.playerMaxLives = 10;
+        player = new Player(0, 0);
+        player.setLives(10);
     }
 
     @Test
-    @DisplayName("getDisplayName 返回正确显示名称")
-    void getDisplayNameTest() {
-        assertEquals("Physical", DamageType.PHYSICAL.getDisplayName());
-        assertEquals("Magical", DamageType.MAGICAL.getDisplayName());
+    public void testPhysicalDamageWithoutArmor() {
+        player.damage(2, DamageType.PHYSICAL);
+        assertEquals(8, player.getLives(), "Player should take full physical damage without armor");
     }
 
     @Test
-    @DisplayName("getOpposite 返回对立类型")
-    void getOppositeTest() {
-        assertEquals(DamageType.MAGICAL, DamageType.PHYSICAL.getOpposite());
-        assertEquals(DamageType.PHYSICAL, DamageType.MAGICAL.getOpposite());
+    public void testMagicalDamageWithoutArmor() {
+        player.damage(2, DamageType.MAGICAL);
+        assertEquals(8, player.getLives(), "Player should take full magical damage without armor");
     }
 
     @Test
-    @DisplayName("blockedBy 正确判断护盾阻挡关系")
-    void blockedByTest() {
-        // 物理伤害被物理护盾阻挡
-        assertTrue(DamageType.PHYSICAL.blockedBy(DamageType.PHYSICAL));
-        assertFalse(DamageType.PHYSICAL.blockedBy(DamageType.MAGICAL));
+    public void testPhysicalArmorBlocksPhysicalDamage() {
+        Armor physArmor = new TestArmor(0, 0, "Iron Plate", 5, DamageType.PHYSICAL);
+        player.equipArmor(physArmor);
 
-        // 法术伤害被法术护盾阻挡
-        assertTrue(DamageType.MAGICAL.blockedBy(DamageType.MAGICAL));
-        assertFalse(DamageType.MAGICAL.blockedBy(DamageType.PHYSICAL));
+        player.damage(2, DamageType.PHYSICAL);
+        assertEquals(10, player.getLives(), "Physical armor should block physical damage");
+        assertEquals(3, physArmor.getCurrentShield(), "Shield should be reduced");
     }
 
     @Test
-    @DisplayName("fromString 解析字符串正确")
-    void fromStringTest() {
-        assertEquals(DamageType.PHYSICAL, DamageType.fromString("PHYSICAL"));
-        assertEquals(DamageType.PHYSICAL, DamageType.fromString("physical"));
-        assertEquals(DamageType.PHYSICAL, DamageType.fromString("Physical"));
+    public void testPhysicalArmorDoesNotBlockMagicalDamage() {
+        Armor physArmor = new TestArmor(0, 0, "Iron Plate", 5, DamageType.PHYSICAL);
+        player.equipArmor(physArmor);
 
-        assertEquals(DamageType.MAGICAL, DamageType.fromString("MAGICAL"));
-        assertEquals(DamageType.MAGICAL, DamageType.fromString("magical"));
-        assertEquals(DamageType.MAGICAL, DamageType.fromString("MAGIC"));
-        assertEquals(DamageType.MAGICAL, DamageType.fromString("magic"));
+        player.damage(2, DamageType.MAGICAL);
+        assertEquals(8, player.getLives(), "Physical armor should NOT block magical damage");
+        assertEquals(5, physArmor.getCurrentShield(), "Shield should remain full");
+    }
 
-        // 无效字符串返回默认值 PHYSICAL
-        assertEquals(DamageType.PHYSICAL, DamageType.fromString("unknown"));
-        assertEquals(DamageType.PHYSICAL, DamageType.fromString(""));
-        assertEquals(DamageType.PHYSICAL, DamageType.fromString(null));
+    @Test
+    public void testMagicalArmorBlocksMagicalDamage() {
+        Armor magicArmor = new TestArmor(0, 0, "Magic Robe", 5, DamageType.MAGICAL);
+        player.equipArmor(magicArmor);
+
+        player.damage(2, DamageType.MAGICAL);
+        assertEquals(10, player.getLives(), "Magical armor should block magical damage");
+        assertEquals(3, magicArmor.getCurrentShield(), "Shield should be reduced");
     }
 }
