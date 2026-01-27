@@ -1696,6 +1696,34 @@ public class EndlessGameScreen implements Screen {
                 currentScore,
                 EndlessModeConfig.getThemeForPosition((int) player.getX(), (int) player.getY()));
 
+        // === 持久化数据 (Persistence) ===
+
+        // 1. 提交成绩到排行榜 (使用 "endless" 作为 levelPath 标识)
+        LeaderboardManager.getInstance().submitScore(
+                "Player", // 默认玩家名称
+                currentScore, // 分数
+                "endless", // 无尽模式标识
+                totalKills, // 击杀数
+                waveSystem.getSurvivalTime() // 生存时间
+        );
+
+        // 2. 累加金币到全局账户 (供商店/技能树使用)
+        int collectedCoins = player.getCoins();
+        if (collectedCoins > 0) {
+            AchievementManager.addCoinsToTotal(collectedCoins);
+            // 检查金币相关成就
+            AchievementManager.checkCoinMilestone(0);
+        }
+
+        // 3. 检查击杀相关成就
+        AchievementManager.checkAchievements(totalKills);
+
+        GameLogger.info("EndlessGameScreen",
+                "Game Over - Score: " + currentScore +
+                        ", Kills: " + totalKills +
+                        ", Coins: " + collectedCoins +
+                        ", Wave: " + (waveSystem.getCurrentWave() + 1));
+
         game.setScreen(new EndlessGameOverScreen(game, finalState));
     }
 
