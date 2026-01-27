@@ -10,6 +10,8 @@ import de.tum.cit.fop.maze.model.weapons.Wand;
 import de.tum.cit.fop.maze.utils.BloodParticleSystem;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 
 /*
  * ╔═══════════════════════════════════════════════════════════════════════════╗
@@ -84,6 +86,9 @@ public class Player extends GameObject {
     private String justSwitchedWeaponName = null;
     private float switchNameTimer = 0f;
 
+    // Unlocked Skills
+    private Set<Skill> unlockedSkills;
+
     // Skill System Fields
     private int skillPoints;
     private int maxHealthBonus;
@@ -139,6 +144,8 @@ public class Player extends GameObject {
         this.knockbackMultiplier = 1.0f;
         this.cooldownReduction = 0.0f;
         this.speedBonus = 0.0f;
+
+        this.unlockedSkills = new HashSet<>();
     }
 
     public void update(float delta, CollisionManager cm) {
@@ -596,6 +603,37 @@ public class Player extends GameObject {
 
     public int getSkillPoints() {
         return skillPoints;
+    }
+
+    public boolean unlockSkill(Skill skill) {
+        if (unlockedSkills.contains(skill)) {
+            return false;
+        }
+
+        if (!spendSkillPoints(skill.getCost())) {
+            return false;
+        }
+
+        unlockedSkills.add(skill);
+
+        switch (skill) {
+            case SPEED_BOOST_1:
+                speedBonus += 0.1f;
+                break;
+            case SPEED_BOOST_2:
+                speedBonus += 0.2f;
+                break;
+            case DAMAGE_UP_1:
+                upgradeDamageBonus(1);
+                break;
+            case HEALTH_UP_1:
+                upgradeMaxHealth(1);
+                break;
+            case HEALTH_UP_2:
+                upgradeMaxHealth(2);
+                break;
+        }
+        return true;
     }
 
     public void upgradeMaxHealth(int amount) {
