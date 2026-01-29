@@ -99,7 +99,7 @@ public class LeaderboardScreen extends BaseScreen {
                 refreshLeaderboard();
             }
         });
-        filterTable.add(endlessBtn).width(filterBtnWidth).height(filterBtnHeight);
+        filterTable.add(endlessBtn).width(130).height(filterBtnHeight);
 
         rootTable.add(filterTable).padBottom(15).row();
 
@@ -161,7 +161,7 @@ public class LeaderboardScreen extends BaseScreen {
                 game.goToMenu();
             }
         });
-        buttonTable.add(backBtn).width(200);
+        buttonTable.add(backBtn).width(250);
 
         rootTable.add(buttonTable).padTop(15).padBottom(30);
 

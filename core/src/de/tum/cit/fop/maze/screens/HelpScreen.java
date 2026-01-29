@@ -182,7 +182,7 @@ public class HelpScreen implements Screen {
                 }
             });
             navButtons[i] = btn;
-            navPanel.add(btn).width(180).height(50).padBottom(10).row();
+            navPanel.add(btn).width(220).height(50).padBottom(10).row();
         }
 
         // Spacer to push buttons to top
