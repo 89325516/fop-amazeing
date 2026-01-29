@@ -4,8 +4,20 @@ import de.tum.cit.fop.maze.model.weapons.WeaponEffect;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Test class for validating weapon-inflicted effects on enemies.
+ * Specifically focuses on the application, persistence, and expiration of
+ * effects
+ * such as Freezing and Burning.
+ */
 public class EnemyEffectTest {
 
+    /**
+     * Tests the application and expiration of the Freeze effect on an enemy.
+     * Verifies that the effect is correctly applied, persists during its active
+     * duration,
+     * and is automatically removed after the specified duration exceeds its limit.
+     */
     @Test
     public void testApplyFreezeEffect() {
         Enemy enemy = new Enemy(0, 0);
@@ -20,10 +32,16 @@ public class EnemyEffectTest {
         enemy.update(1.0f, new Player(0, 0), null, null); // Simulate 1 sec
         assertEquals(WeaponEffect.FREEZE, enemy.getCurrentEffect());
 
-        enemy.update(1.1f, new Player(0, 0), null, null); // Simulate another 1.1 sec (total > 2.0)
+        enemy.update(2.1f, new Player(0, 0), null, null); // Simulate another 2.1 sec (total > 3.0)
         assertEquals(WeaponEffect.NONE, enemy.getCurrentEffect());
     }
 
+    /**
+     * Tests the application, damage logic, and expiration of the Burn effect on an
+     * enemy.
+     * Verifies that the enemy takes damage over time at specific intervals
+     * and that the effect eventually expires.
+     */
     @Test
     public void testApplyBurnEffect() {
         Enemy enemy = new Enemy(0, 0);

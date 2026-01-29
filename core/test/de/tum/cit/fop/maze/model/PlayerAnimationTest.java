@@ -3,8 +3,19 @@ package de.tum.cit.fop.maze.model;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Test class for validating player animation states and transitions.
+ * Specifically focuses on attack animation durations and state changes over
+ * time.
+ */
 class PlayerAnimationTest {
 
+    /**
+     * Tests the transition of the player's attack animation state.
+     * Verifies that the player is in an attacking state during the animation
+     * duration
+     * and returns to a normal state once the duration has expired.
+     */
     @Test
     void testAttackAnimationState() {
         Player player = new Player(0, 0);

@@ -15,16 +15,21 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Disabled;
 
 /**
- * 测试类：使用修复后的 MapGenerator 重新生成所有 20 个关卡地图。
+ * Test class for generating map files using the {@link MapGenerator}.
+ * This tool regenerates all 20 level maps with specific theme and difficulty
+ * configurations.
  * 
- * 关卡主题分配：
- * - Levels 1-4: Grassland
- * - Levels 5-8: Desert
- * - Levels 9-12: Ice
- * - Levels 13-16: Jungle
- * - Levels 17-20: Space
+ * Theme Distribution:
+ * <ul>
+ * <li>Levels 1-4: Grassland</li>
+ * <li>Levels 5-8: Desert</li>
+ * <li>Levels 9-12: Ice</li>
+ * <li>Levels 13-16: Jungle</li>
+ * <li>Levels 17-20: Space</li>
+ * </ul>
  * 
- * 运行方式：./gradlew :core:test --tests "LevelMapGeneratorTest.generateAllLevels"
+ * Usage:
+ * {@code ./gradlew :core:test --tests "LevelMapGeneratorTest.generateAllLevels"}
  */
 @Disabled("Manual tool for map generation - do not run in CI/CD")
 public class LevelMapGeneratorTest {
@@ -32,6 +37,10 @@ public class LevelMapGeneratorTest {
     private static final String OUTPUT_DIR = "assets/maps/";
     private static final String[] THEMES = { "Grassland", "Desert", "Ice", "Jungle", "Space" };
 
+    /**
+     * Initializes the testing environment for map generation.
+     * Mocks the Gdx application and file system to allow for headless generation.
+     */
     @BeforeAll
     static void setup() {
         // Mock Gdx.files
@@ -39,6 +48,11 @@ public class LevelMapGeneratorTest {
         Gdx.app = new MockApplication();
     }
 
+    /**
+     * Generates all 20 level maps sequentially.
+     * Iterates through each level, applies specific configurations, and saves the
+     * output.
+     */
     @Test
     void generateAllLevels() {
         System.out.println("=== Level Map Generator ===");
@@ -59,6 +73,12 @@ public class LevelMapGeneratorTest {
         assertEquals(20, successCount, "All 20 levels should be generated successfully");
     }
 
+    /**
+     * Internal helper to generate a specific level based on its index.
+     * Determines theme, difficulty, dimensions, and density settings for the level.
+     * 
+     * @param level The level number to generate (1-20)
+     */
     private void generateLevel(int level) {
         // 确定主题 (每4关一个主题)
         int themeIndex = (level - 1) / 4;
@@ -106,6 +126,10 @@ public class LevelMapGeneratorTest {
 
     // === Mock implementations ===
 
+    /**
+     * Mock implementation of the LibGDX {@link Files} interface for file operations
+     * during tests.
+     */
     private static class MockFiles implements Files {
         @Override
         public FileHandle getFileHandle(String path, FileType type) {
@@ -158,6 +182,10 @@ public class LevelMapGeneratorTest {
         }
     }
 
+    /**
+     * Mock implementation of the LibGDX {@link Application} interface to handle
+     * logging and Lifecycle tasks.
+     */
     private static class MockApplication implements Application {
         @Override
         public void log(String tag, String message) {

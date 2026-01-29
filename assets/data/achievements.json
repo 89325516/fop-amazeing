@@ -1,0 +1,400 @@
+{
+    "achievements": [
+        {
+            "id": "sword_collector",
+            "name": "Sword Collector",
+            "description": "Pick up your first sword",
+            "rarity": "COMMON",
+            "category": "WEAPON",
+            "requiredCount": 0,
+            "isHidden": false
+        },
+        {
+            "id": "bow_hunter",
+            "name": "Bow Hunter",
+            "description": "Pick up your first bow",
+            "rarity": "COMMON",
+            "category": "WEAPON",
+            "requiredCount": 0,
+            "isHidden": false
+        },
+        {
+            "id": "staff_wielder",
+            "name": "Staff Wielder",
+            "description": "Pick up your first staff",
+            "rarity": "COMMON",
+            "category": "WEAPON",
+            "requiredCount": 0,
+            "isHidden": false
+        },
+        {
+            "id": "crossbow_expert",
+            "name": "Crossbow Expert",
+            "description": "Pick up your first crossbow",
+            "rarity": "COMMON",
+            "category": "WEAPON",
+            "requiredCount": 0,
+            "isHidden": false
+        },
+        {
+            "id": "wand_master",
+            "name": "Wand Master",
+            "description": "Pick up your first wand",
+            "rarity": "COMMON",
+            "category": "WEAPON",
+            "requiredCount": 0,
+            "isHidden": false
+        },
+        {
+            "id": "arsenal_complete",
+            "name": "Arsenal Complete",
+            "description": "Collect all 5 weapon types",
+            "rarity": "EPIC",
+            "category": "WEAPON",
+            "requiredCount": 0,
+            "isHidden": false
+        },
+        {
+            "id": "blade_dancer",
+            "name": "Blade Dancer",
+            "description": "Kill 25 enemies with Sword",
+            "rarity": "RARE",
+            "category": "WEAPON",
+            "requiredCount": 25,
+            "isHidden": false
+        },
+        {
+            "id": "sword_saint",
+            "name": "Sword Saint",
+            "description": "Kill 100 enemies with Sword",
+            "rarity": "EPIC",
+            "category": "WEAPON",
+            "requiredCount": 100,
+            "isHidden": false
+        },
+        {
+            "id": "frozen_heart",
+            "name": "Frozen Heart",
+            "description": "Apply freeze effect 50 times with Ice Bow",
+            "rarity": "RARE",
+            "category": "WEAPON",
+            "requiredCount": 50,
+            "isHidden": false
+        },
+        {
+            "id": "pyromaniac",
+            "name": "Pyromaniac",
+            "description": "Apply burn effect 50 times",
+            "rarity": "RARE",
+            "category": "WEAPON",
+            "requiredCount": 50,
+            "isHidden": false
+        },
+        {
+            "id": "sharpshooter",
+            "name": "Sharpshooter",
+            "description": "Kill 50 enemies with Crossbow",
+            "rarity": "RARE",
+            "category": "WEAPON",
+            "requiredCount": 50,
+            "isHidden": false
+        },
+        {
+            "id": "arcane_apprentice",
+            "name": "Arcane Apprentice",
+            "description": "Kill 50 enemies with Magic Wand",
+            "rarity": "RARE",
+            "category": "WEAPON",
+            "requiredCount": 50,
+            "isHidden": false
+        },
+        {
+            "id": "master_of_arms",
+            "name": "Master of Arms",
+            "description": "Unlock all weapon achievements",
+            "rarity": "LEGENDARY",
+            "category": "WEAPON",
+            "requiredCount": 0,
+            "isHidden": false
+        },
+        {
+            "id": "iron_clad",
+            "name": "Iron Clad",
+            "description": "Equip your first physical armor",
+            "rarity": "COMMON",
+            "category": "ARMOR",
+            "requiredCount": 0,
+            "isHidden": false
+        },
+        {
+            "id": "arcane_protected",
+            "name": "Arcane Protected",
+            "description": "Equip your first magical armor",
+            "rarity": "COMMON",
+            "category": "ARMOR",
+            "requiredCount": 0,
+            "isHidden": false
+        },
+        {
+            "id": "heavy_defender",
+            "name": "Heavy Defender",
+            "description": "Equip Knight's Plate",
+            "rarity": "RARE",
+            "category": "ARMOR",
+            "requiredCount": 0,
+            "isHidden": false
+        },
+        {
+            "id": "grand_wizard",
+            "name": "Grand Wizard",
+            "description": "Equip Wizard's Cloak",
+            "rarity": "RARE",
+            "category": "ARMOR",
+            "requiredCount": 0,
+            "isHidden": false
+        },
+        {
+            "id": "tank_mode",
+            "name": "Tank Mode",
+            "description": "Absorb 50 damage with armor",
+            "rarity": "RARE",
+            "category": "ARMOR",
+            "requiredCount": 50,
+            "isHidden": false
+        },
+        {
+            "id": "indestructible",
+            "name": "Indestructible",
+            "description": "Absorb 200 damage with armor",
+            "rarity": "EPIC",
+            "category": "ARMOR",
+            "requiredCount": 200,
+            "isHidden": false
+        },
+        {
+            "id": "first_blood",
+            "name": "First Blood",
+            "description": "Kill your first enemy",
+            "rarity": "COMMON",
+            "category": "COMBAT",
+            "requiredCount": 0,
+            "isHidden": false
+        },
+        {
+            "id": "novice_hunter",
+            "name": "Novice Hunter",
+            "description": "Kill 1 enemy",
+            "rarity": "COMMON",
+            "category": "COMBAT",
+            "requiredCount": 1,
+            "isHidden": false
+        },
+        {
+            "id": "veteran_slayer",
+            "name": "Veteran Slayer",
+            "description": "Kill 5 enemies",
+            "rarity": "COMMON",
+            "category": "COMBAT",
+            "requiredCount": 5,
+            "isHidden": false
+        },
+        {
+            "id": "maze_master",
+            "name": "Maze Master",
+            "description": "Kill 10 enemies",
+            "rarity": "COMMON",
+            "category": "COMBAT",
+            "requiredCount": 10,
+            "isHidden": false
+        },
+        {
+            "id": "monster_slayer",
+            "name": "Monster Slayer",
+            "description": "Kill 25 enemies",
+            "rarity": "RARE",
+            "category": "COMBAT",
+            "requiredCount": 25,
+            "isHidden": false
+        },
+        {
+            "id": "legendary_hero",
+            "name": "Legendary Hero",
+            "description": "Kill 50 enemies",
+            "rarity": "RARE",
+            "category": "COMBAT",
+            "requiredCount": 50,
+            "isHidden": false
+        },
+        {
+            "id": "century_slayer",
+            "name": "Century Slayer",
+            "description": "Kill 100 enemies",
+            "rarity": "EPIC",
+            "category": "COMBAT",
+            "requiredCount": 100,
+            "isHidden": false
+        },
+        {
+            "id": "death_incarnate",
+            "name": "Death Incarnate",
+            "description": "Kill 500 enemies",
+            "rarity": "LEGENDARY",
+            "category": "COMBAT",
+            "requiredCount": 500,
+            "isHidden": false
+        },
+        {
+            "id": "rampage",
+            "name": "Rampage",
+            "description": "Kill 3 enemies within 5 seconds",
+            "rarity": "RARE",
+            "category": "COMBAT",
+            "requiredCount": 0,
+            "isHidden": false
+        },
+        {
+            "id": "overkill",
+            "name": "Overkill",
+            "description": "Kill 5 enemies within 10 seconds",
+            "rarity": "EPIC",
+            "category": "COMBAT",
+            "requiredCount": 0,
+            "isHidden": false
+        },
+        {
+            "id": "first_coin",
+            "name": "First Coin",
+            "description": "Collect your first coin",
+            "rarity": "COMMON",
+            "category": "ECONOMY",
+            "requiredCount": 0,
+            "isHidden": false
+        },
+        {
+            "id": "coin_collector",
+            "name": "Coin Collector",
+            "description": "Collect 50 coins",
+            "rarity": "COMMON",
+            "category": "ECONOMY",
+            "requiredCount": 50,
+            "isHidden": false
+        },
+        {
+            "id": "wealthy_explorer",
+            "name": "Wealthy Explorer",
+            "description": "Collect 100 coins",
+            "rarity": "RARE",
+            "category": "ECONOMY",
+            "requiredCount": 100,
+            "isHidden": false
+        },
+        {
+            "id": "rich_adventurer",
+            "name": "Rich Adventurer",
+            "description": "Collect 500 coins",
+            "rarity": "EPIC",
+            "category": "ECONOMY",
+            "requiredCount": 500,
+            "isHidden": false
+        },
+        {
+            "id": "treasure_hunter",
+            "name": "Treasure Hunter",
+            "description": "Collect 1000 coins",
+            "rarity": "LEGENDARY",
+            "category": "ECONOMY",
+            "requiredCount": 1000,
+            "isHidden": false
+        },
+        {
+            "id": "grassland_explorer",
+            "name": "Grassland Explorer",
+            "description": "Complete all Grassland levels (1-4)",
+            "rarity": "COMMON",
+            "category": "EXPLORATION",
+            "requiredCount": 0,
+            "isHidden": false
+        },
+        {
+            "id": "desert_survivor",
+            "name": "Desert Survivor",
+            "description": "Complete all Desert levels (5-8)",
+            "rarity": "COMMON",
+            "category": "EXPLORATION",
+            "requiredCount": 0,
+            "isHidden": false
+        },
+        {
+            "id": "ice_conqueror",
+            "name": "Ice Conqueror",
+            "description": "Complete all Ice levels (9-12)",
+            "rarity": "RARE",
+            "category": "EXPLORATION",
+            "requiredCount": 0,
+            "isHidden": false
+        },
+        {
+            "id": "jungle_master",
+            "name": "Jungle Master",
+            "description": "Complete all Jungle levels (13-16)",
+            "rarity": "RARE",
+            "category": "EXPLORATION",
+            "requiredCount": 0,
+            "isHidden": false
+        },
+        {
+            "id": "space_commander",
+            "name": "Space Commander",
+            "description": "Complete all Spaceship levels (17-20)",
+            "rarity": "EPIC",
+            "category": "EXPLORATION",
+            "requiredCount": 0,
+            "isHidden": false
+        },
+        {
+            "id": "world_champion",
+            "name": "World Champion",
+            "description": "Complete all 20 levels",
+            "rarity": "LEGENDARY",
+            "category": "EXPLORATION",
+            "requiredCount": 0,
+            "isHidden": false
+        },
+        {
+            "id": "flawless_victory",
+            "name": "Flawless Victory",
+            "description": "Complete a level without taking damage",
+            "rarity": "EPIC",
+            "category": "CHALLENGE",
+            "requiredCount": 0,
+            "isHidden": false
+        },
+        {
+            "id": "speedrunner",
+            "name": "Speedrunner",
+            "description": "Complete a level in under 60 seconds",
+            "rarity": "EPIC",
+            "category": "CHALLENGE",
+            "requiredCount": 0,
+            "isHidden": false
+        },
+        {
+            "id": "near_death",
+            "name": "Near Death",
+            "description": "Kill an enemy while at 1 HP",
+            "rarity": "RARE",
+            "category": "CHALLENGE",
+            "requiredCount": 0,
+            "isHidden": false
+        },
+        {
+            "id": "comeback",
+            "name": "Comeback",
+            "description": "Complete a level with only 1 HP remaining",
+            "rarity": "EPIC",
+            "category": "CHALLENGE",
+            "requiredCount": 0,
+            "isHidden": false
+        }
+    ]
+}

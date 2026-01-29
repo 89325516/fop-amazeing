@@ -11,7 +11,6 @@ import com.badlogic.gdx.utils.Array;
 import de.tum.cit.fop.maze.screens.GameScreen;
 import de.tum.cit.fop.maze.screens.MenuScreen;
 import de.tum.cit.fop.maze.config.GameSettings;
-import games.spooky.gdx.nativefilechooser.NativeFileChooser;
 
 public class MazeRunnerGame extends Game {
     private MenuScreen menuScreen;
@@ -22,7 +21,7 @@ public class MazeRunnerGame extends Game {
 
     private TextureAtlas atlas;
 
-    public MazeRunnerGame(NativeFileChooser fileChooser) {
+    public MazeRunnerGame() {
         super();
     }
 

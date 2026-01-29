@@ -2,6 +2,8 @@ package de.tum.cit.fop.maze.utils;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Preferences;
+import com.badlogic.gdx.files.FileHandle;
+import com.badlogic.gdx.utils.Json;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,17 +37,72 @@ public class AchievementManager {
     private static final String MAX_COMBO_KEY = "max_combo_kills";
     private static final String ACHIEVEMENT_PROGRESS_PREFIX = "progress_";
 
-    // === NEW: Achievement Definitions ===
+    // === Achievement Definitions ===
+    private static final String ACHIEVEMENTS_FILE = "data/achievements.json";
     private static Map<String, Achievement> allAchievements;
+    private static boolean loadedFromFile = false;
 
     static {
-        initializeAchievements();
+        allAchievements = new HashMap<>();
+        if (!loadFromExternalFile()) {
+            GameLogger.warn("AchievementManager",
+                    "Failed to load achievements from external file, using hardcoded fallback");
+            initializeHardcodedAchievements();
+        }
     }
 
     /**
-     * Initialize all achievement definitions
+     * Load achievement definitions from external JSON file.
+     * 
+     * @return true if loading succeeded, false otherwise
      */
-    private static void initializeAchievements() {
+    private static boolean loadFromExternalFile() {
+        try {
+            // Use internal file path (assets folder)
+            FileHandle file = Gdx.files.internal(ACHIEVEMENTS_FILE);
+            if (file == null || !file.exists()) {
+                GameLogger.warn("AchievementManager",
+                        "Achievement file not found: " + ACHIEVEMENTS_FILE);
+                return false;
+            }
+
+            Json json = new Json();
+            String content = file.readString();
+            AchievementDefinitions defs = json.fromJson(AchievementDefinitions.class, content);
+
+            if (defs == null || defs.achievements == null || defs.achievements.isEmpty()) {
+                GameLogger.warn("AchievementManager",
+                        "Achievement file is empty or invalid");
+                return false;
+            }
+
+            for (AchievementDefinition def : defs.achievements) {
+                try {
+                    Achievement a = def.toAchievement();
+                    registerAchievement(a);
+                } catch (Exception e) {
+                    GameLogger.error("AchievementManager",
+                            "Failed to parse achievement: " + def.id + " - " + e.getMessage());
+                }
+            }
+
+            loadedFromFile = true;
+            GameLogger.info("AchievementManager",
+                    "Loaded " + allAchievements.size() + " achievements from external file");
+            return !allAchievements.isEmpty();
+
+        } catch (Exception e) {
+            GameLogger.error("AchievementManager",
+                    "Error loading achievements from file: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Hardcoded achievement definitions as fallback.
+     * Used when external file loading fails.
+     */
+    private static void initializeHardcodedAchievements() {
         allAchievements = new HashMap<>();
 
         // === Weapon Collection Achievements (COMMON) ===
@@ -778,6 +835,16 @@ public class AchievementManager {
      */
     public static Map<String, Achievement> getAllAchievements() {
         return new HashMap<>(allAchievements);
+    }
+
+    /**
+     * Check if achievements were loaded from external file.
+     * Returns false if using hardcoded fallback.
+     * 
+     * @return true if loaded from assets/data/achievements.json
+     */
+    public static boolean isLoadedFromExternalFile() {
+        return loadedFromFile;
     }
 
     /**

@@ -14,8 +14,20 @@ import java.io.File;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Test class for validating the structure and loading of game maps.
+ * This class ensures that different map files are correctly loaded and their
+ * properties
+ * (like dimensions and boundaries) match expectations.
+ */
 public class MapStructureTest {
 
+    /**
+     * Sets up the testing environment before each test case.
+     * This method mocks the necessary Gdx environment components, specifically the
+     * application logger and file handling, to allow for headless map loading
+     * tests.
+     */
     @BeforeEach
     public void setup() {
         // Mock Gdx environment just enough for MapLoader
@@ -213,6 +225,12 @@ public class MapStructureTest {
         };
     }
 
+    /**
+     * Tests the properties and structure of the Level 1 map.
+     * Validates that the map loads correctly, has the expected dimensions, and
+     * contains
+     * the necessary border boundaries.
+     */
     @Test
     public void testLevel1Map() {
         System.out.println("Testing Level 1 Map...");
@@ -232,6 +250,12 @@ public class MapStructureTest {
         assertTrue(map.isOccupied(0, 0), "Should have wall at 0,0 (border)");
     }
 
+    /**
+     * Tests the properties and structure of the Level 20 map.
+     * Validates that the map loads correctly, has the expected large-scale
+     * dimensions,
+     * and specifically checks for the existence of multi-tile wall entities.
+     */
     @Test
     public void testLevel20Map() {
         GameMap map = MapLoader.loadMap("maps/level-20.properties");

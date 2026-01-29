@@ -4,8 +4,19 @@ import de.tum.cit.fop.maze.model.weapons.*;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Test class for validating the weapon system functionality.
+ * This includes checking inventory limits, weapon switching mechanisms,
+ * and individual weapon statistics.
+ */
 public class WeaponSystemTest {
 
+    /**
+     * Tests that the player's weapon inventory correctly enforces the maximum
+     * limit.
+     * Player should be able to hold up to 4 weapons and fail to pick up any beyond
+     * that.
+     */
     @Test
     public void testInventoryLimit() {
         Player player = new Player(0, 0);
@@ -24,6 +35,11 @@ public class WeaponSystemTest {
         assertFalse(pickedUp5th, "Should not pick up 5th weapon (Limit is 4)");
     }
 
+    /**
+     * Tests the weapon switching mechanism.
+     * Ensures that the player can cycle through their inventory and correctly
+     * retrieve the current weapon's name.
+     */
     @Test
     public void testSwitching() {
         Player player = new Player(0, 0);
@@ -42,6 +58,11 @@ public class WeaponSystemTest {
         assertEquals("Iron Sword", player.getCurrentWeapon().getName(), "Should switch back to Sword");
     }
 
+    /**
+     * Tests the base statistics of different weapon types.
+     * Verifies that each weapon has the correct damage values and associated
+     * effects.
+     */
     @Test
     public void testWeaponStats() {
         Weapon sword = new Sword(0, 0);
