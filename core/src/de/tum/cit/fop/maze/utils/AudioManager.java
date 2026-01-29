@@ -47,6 +47,8 @@ public class AudioManager implements Disposable {
     public static final String BGM_SPACE = "space";
     public static final String BGM_BOSS = "boss";
     public static final String BGM_PAUSE = "pause";
+    public static final String BGM_VICTORY = "victory_bgm";
+    public static final String BGM_GAMEOVER = "gameover_bgm";
 
     private AudioManager() {
         soundEffects = new HashMap<>();
@@ -73,6 +75,8 @@ public class AudioManager implements Disposable {
         loadBgm(BGM_SPACE, "audio/bgm/space_bgm.mp3");
         loadBgm(BGM_BOSS, "audio/bgm/boss_bgm.mp3");
         loadBgm(BGM_PAUSE, "audio/bgm/pause_bgm.mp3");
+        loadBgm(BGM_VICTORY, "audio/bgm/Victory.mp3");
+        loadBgm(BGM_GAMEOVER, "audio/bgm/GameOver.mp3");
 
         // === Load Sound Effects ===
         loadSound("walk", "audio/walk.ogg");

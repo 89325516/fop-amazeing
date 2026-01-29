@@ -678,6 +678,14 @@ public class LevelSummaryScreen implements Screen {
         Gdx.input.setInputProcessor(stage);
         // 🔊 全局按钮音效
         de.tum.cit.fop.maze.utils.UIUtils.enableGameButtonSound(stage);
+
+        // 🎵 根据胜负状态播放对应的背景音乐
+        de.tum.cit.fop.maze.utils.AudioManager audio = de.tum.cit.fop.maze.utils.AudioManager.getInstance();
+        if (data.isVictory()) {
+            audio.playBgm(de.tum.cit.fop.maze.utils.AudioManager.BGM_VICTORY);
+        } else {
+            audio.playBgm(de.tum.cit.fop.maze.utils.AudioManager.BGM_GAMEOVER);
+        }
     }
 
     @Override
