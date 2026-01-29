@@ -76,7 +76,7 @@ public class GameConfig {
     // ==================== 实时渲染优化配置 ====================
 
     /** 实体渲染半径（格子单位）- 只渲染玩家附近的实体 */
-    public static final float ENTITY_RENDER_RADIUS = 8f;
+    public static final float ENTITY_RENDER_RADIUS = 12f;
 
     /** 敌人更新距离阈值平方 - 超过此距离跳过更新 (40^2 = 1600) */
     public static final float ENEMY_UPDATE_DISTANCE_SQUARED = 1600f;
