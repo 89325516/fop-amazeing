@@ -99,7 +99,7 @@ public class LeaderboardScreen extends BaseScreen {
                 refreshLeaderboard();
             }
         });
-        filterTable.add(endlessBtn).width(130).height(filterBtnHeight);
+        filterTable.add(endlessBtn).width(filterBtnWidth).height(filterBtnHeight);
 
         rootTable.add(filterTable).padBottom(15).row();
 
