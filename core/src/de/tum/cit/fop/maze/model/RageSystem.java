@@ -3,33 +3,33 @@ package de.tum.cit.fop.maze.model;
 import de.tum.cit.fop.maze.config.EndlessModeConfig;
 
 /**
- * 敌人RAGE仇恨系统 (Enemy Rage System)
+ * Enemy Rage System.
  * 
- * 管理无尽模式中敌人的全局仇恨值。
+ * Manages the global enemy rage value in Endless Mode.
  * 
- * 机制:
- * - Rage = (总击杀数 / 生存时间) × 100
- * - 杀得越快，Rage越高，敌人越强
- * - 慢杀慢打可以控制难度
+ * Mechanics:
+ * - Rage = (Total Kills / Survival Time) × 100
+ * - Faster kills lead to higher Rage, making enemies stronger.
+ * - Killing slowly helps control difficulty.
  * 
- * 遵循单一职责原则：仅处理RAGE逻辑。
+ * Follows Single Responsibility Principle: handles only RAGE-related logic.
  */
 public class RageSystem {
 
-    /** 当前RAGE值 (0-100) */
+    /** Current RAGE value (0-100) */
     private float rageLevel;
 
-    /** 当前RAGE等级索引 (0-4) */
+    /** Current RAGE level index (0-4) */
     private int rageLevelIndex;
 
-    /** 监听器：RAGE变化时回调 */
+    /** Listener: callback when RAGE changes */
     private RageListener listener;
 
     /**
-     * RAGE变化监听器接口
+     * RAGE change listener interface
      */
     public interface RageListener {
-        /** RAGE等级变化时调用 */
+        /** Called when RAGE level changes */
         void onRageLevelChanged(int newLevel, String levelName);
     }
 
@@ -38,34 +38,34 @@ public class RageSystem {
     }
 
     /**
-     * 设置RAGE变化监听器
+     * Sets the RAGE change listener.
      */
     public void setListener(RageListener listener) {
         this.listener = listener;
     }
 
     /**
-     * 更新RAGE值
+     * Updates RAGE value.
      * 
-     * @param totalKills   总击杀数
-     * @param survivalTime 生存时间（秒）
+     * @param totalKills   Total kills
+     * @param survivalTime Survival time (seconds)
      */
     public void update(int totalKills, float survivalTime) {
-        // 避免除以零
+        // Avoid division by zero
         if (survivalTime < 1f) {
             survivalTime = 1f;
         }
 
-        // 计算RAGE值: (杀敌数 / 时间) × 100
-        // 例如: 30杀/60秒 = 50 RAGE
+        // Calculate RAGE value: (Kills / Time) × 100
+        // e.g., 30 kills / 60 seconds = 50 RAGE
         float newRage = (totalKills / survivalTime) * 100f;
 
-        // 限制在0-100范围
+        // Clamp to 0-100 range
         newRage = Math.max(0, Math.min(100, newRage));
 
         this.rageLevel = newRage;
 
-        // 检查等级变化
+        // Check for level change
         int newLevelIndex = EndlessModeConfig.getRageLevel(rageLevel);
         if (newLevelIndex != rageLevelIndex) {
             rageLevelIndex = newLevelIndex;
@@ -78,49 +78,49 @@ public class RageSystem {
     }
 
     /**
-     * 获取敌人速度倍率
+     * Gets enemy speed multiplier.
      */
     public float getEnemySpeedMultiplier() {
         return EndlessModeConfig.RAGE_SPEED_MULTIPLIERS[rageLevelIndex];
     }
 
     /**
-     * 获取敌人伤害倍率
+     * Gets enemy damage multiplier.
      */
     public float getEnemyDamageMultiplier() {
         return EndlessModeConfig.RAGE_DAMAGE_MULTIPLIERS[rageLevelIndex];
     }
 
     /**
-     * 获取当前RAGE等级名称
+     * Gets current RAGE level name.
      */
     public String getRageLevelName() {
         return EndlessModeConfig.RAGE_NAMES[rageLevelIndex];
     }
 
     /**
-     * 获取RAGE百分比 (用于UI显示, 0-100)
+     * Gets RAGE percentage (for UI display, 0-100).
      */
     public float getRagePercentage() {
         return rageLevel;
     }
 
     /**
-     * 获取标准化的RAGE值 (0-1, 用于进度条)
+     * Gets normalized RAGE value (0-1, for progress bars).
      */
     public float getNormalizedRage() {
         return rageLevel / 100f;
     }
 
     /**
-     * 判断是否处于Berserk状态 (最高等级)
+     * Checks if in Berserk state (maximum level).
      */
     public boolean isBerserk() {
         return rageLevelIndex == EndlessModeConfig.RAGE_THRESHOLDS.length - 1;
     }
 
     /**
-     * 强制重置RAGE
+     * Force reset RAGE.
      */
     public void reset() {
         rageLevel = 0;
@@ -137,7 +137,7 @@ public class RageSystem {
         return rageLevelIndex;
     }
 
-    // ========== Setters (用于存档恢复) ==========
+    // ========== Setters (for save restoration) ==========
 
     public void setRageLevel(float rageLevel) {
         this.rageLevel = Math.max(0, Math.min(100, rageLevel));
@@ -147,28 +147,28 @@ public class RageSystem {
     // ========== Console Command Support ==========
 
     /**
-     * 获取RAGE进度 (0-1, 用于控制台)
+     * Gets RAGE progress (0-1, for console).
      */
     public float getProgress() {
         return rageLevel / 100f;
     }
 
     /**
-     * 设置RAGE进度 (0-1)
+     * Sets RAGE progress (0-1).
      */
     public void setProgress(float progress) {
         setRageLevel(progress * 100f);
     }
 
     /**
-     * 最大化RAGE (直接设置到100)
+     * Maxes out RAGE (directly set to 100).
      */
     public void maxOut() {
         setRageLevel(100f);
     }
 
     /**
-     * 获取当前RAGE等级索引 (用于控制台显示)
+     * Gets current RAGE level index (for console display).
      */
     public int getCurrentLevel() {
         return rageLevelIndex;

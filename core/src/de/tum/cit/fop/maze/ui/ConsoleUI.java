@@ -19,11 +19,11 @@ import de.tum.cit.fop.maze.config.GameSettings;
 import java.util.List;
 
 /**
- * 控制台 UI 组件 (Console UI Component)
+ * Console UI Component.
  * 
- * 在游戏中显示开发者控制台界面。
- * 占据屏幕 70% 高度，从顶部延伸。
- * 包含输入框、输出历史显示区域。
+ * Displays the developer console interface in-game.
+ * Occupies 70% of screen height, extending from the top.
+ * Contains input field and output history display area.
  */
 public class ConsoleUI {
 
@@ -38,28 +38,28 @@ public class ConsoleUI {
     private boolean visible = false;
     private Runnable closeCallback;
 
-    /** 控制台高度占屏幕比例 - 100%全屏 */
+    /** Console height as screen ratio - 100% fullscreen */
     private static final float CONSOLE_HEIGHT_RATIO = 1.0f;
 
     /**
-     * 创建控制台 UI
+     * Create console UI.
      */
     public ConsoleUI(Stage stage, Skin skin) {
         this.stage = stage;
 
-        // 创建半透明背景
+        // Create semi-transparent background
         Pixmap pm = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
         pm.setColor(0, 0, 0, 0.92f);
         pm.fill();
         bgTexture = new Texture(pm);
         pm.dispose();
 
-        // 根容器 - 显式控制位置和尺寸
+        // Root container - explicitly control position and size
         rootTable = new Table();
         rootTable.top().left();
         rootTable.setBackground(new TextureRegionDrawable(new TextureRegion(bgTexture)));
 
-        // === 标题栏 ===
+        // === Title Bar ===
         Table headerTable = new Table();
         headerTable.setBackground(createColorDrawable(new Color(0.1f, 0.15f, 0.1f, 1f)));
 
@@ -73,7 +73,7 @@ public class ConsoleUI {
 
         rootTable.add(headerTable).growX().height(35).row();
 
-        // === 输出区域 (主体) ===
+        // === Output Area (main body) ===
         outputLabel = new Label("", skin);
         outputLabel.setColor(Color.WHITE);
         outputLabel.setWrap(true);
@@ -88,7 +88,7 @@ public class ConsoleUI {
         scrollPane.setScrollingDisabled(true, false);
         scrollPane.setOverscroll(false, false);
 
-        // 悬浮自动获取滚动焦点
+        // Hover auto-focus scroll
         scrollPane.addListener(new InputListener() {
             @Override
             public void enter(InputEvent event, float x, float y, int pointer, Actor fromActor) {
@@ -98,12 +98,12 @@ public class ConsoleUI {
 
         rootTable.add(scrollPane).grow().pad(5, 10, 5, 10).row();
 
-        // === 分隔线 ===
+        // === Separator Line ===
         Table separator = new Table();
         separator.setBackground(createColorDrawable(new Color(0.3f, 0.5f, 0.3f, 1f)));
         rootTable.add(separator).growX().height(2).padLeft(10).padRight(10).row();
 
-        // === 输入区域 ===
+        // === Input Area ===
         Table inputTable = new Table();
         inputTable.setBackground(createColorDrawable(new Color(0.05f, 0.08f, 0.05f, 1f)));
         inputTable.pad(8, 10, 8, 10);
@@ -118,7 +118,7 @@ public class ConsoleUI {
 
         rootTable.add(inputTable).growX().height(45);
 
-        // === 输入监听器 ===
+        // === Input Listener ===
         inputField.addListener(new InputListener() {
             @Override
             public boolean keyDown(InputEvent event, int keycode) {
@@ -138,7 +138,7 @@ public class ConsoleUI {
                     }
                     return true;
                 } else if (keycode == GameSettings.KEY_CONSOLE) {
-                    // 使用回调通知 GameScreen 关闭，以保持状态同步
+                    // Use callback to notify GameScreen to close, to maintain state sync
                     if (closeCallback != null) {
                         closeCallback.run();
                     } else {
@@ -188,7 +188,7 @@ public class ConsoleUI {
         List<String> history = console.getOutputHistory();
         StringBuilder sb = new StringBuilder();
 
-        // 显示最后 100 行
+        // Display last 100 lines
         int start = Math.max(0, history.size() - 100);
         for (int i = start; i < history.size(); i++) {
             sb.append(history.get(i)).append("\n");
@@ -207,19 +207,19 @@ public class ConsoleUI {
         rootTable.setVisible(true);
         updateOutput();
 
-        // 设置全宽，高度为屏幕的 70%
+        // Set full width, height as 70% of screen
         float width = stage.getWidth();
         float height = stage.getHeight() * CONSOLE_HEIGHT_RATIO;
         rootTable.setSize(width, height);
 
-        // 固定在屏幕顶部
+        // Fixed at top of screen
         rootTable.setPosition(0, stage.getHeight() - height);
 
-        // 聚焦输入框
+        // Focus input field
         stage.setKeyboardFocus(inputField);
         inputField.setText("");
 
-        // 确保布局正确
+        // Ensure layout is correct
         rootTable.invalidate();
         rootTable.validate();
 
@@ -242,7 +242,7 @@ public class ConsoleUI {
     }
 
     public void update(float delta) {
-        // 可用于动画效果
+        // Can be used for animation effects
     }
 
     public boolean isVisible() {

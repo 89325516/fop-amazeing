@@ -3,45 +3,45 @@ package de.tum.cit.fop.maze.model;
 import de.tum.cit.fop.maze.config.EndlessModeConfig;
 
 /**
- * 时间波次系统 (Wave System)
+ * Time Wave System.
  * 
- * 管理无尽模式中的时间压力和难度递增。
+ * Manages the time pressure and difficulty escalation in Endless Mode.
  * 
- * 机制:
- * - 根据生存时间划分波次
- * - 每个波次有不同的敌人刷新率和血量倍率
- * - 12分钟后开始出现BOSS级敌人
+ * Mechanics:
+ * - Divides waves based on survival time.
+ * - Each wave has different enemy spawn rates and health multipliers.
+ * - BOSS-level enemies start appearing after 12 minutes.
  * 
- * 遵循单一职责原则：仅处理波次逻辑。
+ * Follows Single Responsibility Principle: handles only wave-related logic.
  */
 public class WaveSystem {
 
-    /** 当前生存时间（秒） */
+    /** Current survival time (seconds) */
     private float survivalTime;
 
-    /** 当前波次索引 (0-5) */
+    /** Current wave index (0-5) */
     private int currentWaveIndex;
 
-    /** 下一次敌人刷新时间 */
+    /** Next enemy spawn time */
     private float nextSpawnTime;
 
-    /** 下一次BOSS刷新时间 */
+    /** Next BOSS spawn time */
     private float nextBossTime;
 
-    /** 监听器：波次变化时回调 */
+    /** Listener: callback when wave changes */
     private WaveListener listener;
 
     /**
-     * 波次变化监听器接口
+     * Wave change listener interface
      */
     public interface WaveListener {
-        /** 波次变化时调用 */
+        /** Called when wave changes */
         void onWaveChanged(int newWave, float spawnInterval, float healthMultiplier);
 
-        /** 需要刷新敌人时调用 */
+        /** Called when an enemy needs to be spawned */
         void onSpawnEnemy();
 
-        /** 需要刷新BOSS时调用 */
+        /** Called when a BOSS needs to be spawned */
         void onSpawnBoss();
     }
 
@@ -50,21 +50,21 @@ public class WaveSystem {
     }
 
     /**
-     * 设置波次变化监听器
+     * Sets the wave change listener.
      */
     public void setListener(WaveListener listener) {
         this.listener = listener;
     }
 
     /**
-     * 每帧更新
+     * Update per frame.
      * 
-     * @param delta 帧间隔时间（秒）
+     * @param delta Frame interval time (seconds)
      */
     public void update(float delta) {
         survivalTime += delta;
 
-        // 检查波次变化
+        // Check for wave change
         int newWaveIndex = EndlessModeConfig.getWaveIndex(survivalTime);
         if (newWaveIndex != currentWaveIndex) {
             currentWaveIndex = newWaveIndex;
@@ -77,7 +77,7 @@ public class WaveSystem {
             }
         }
 
-        // 检查敌人刷新（安全期内不刷新）
+        // Check for enemy spawn (no spawn within safe period)
         if (survivalTime >= EndlessModeConfig.SAFE_PERIOD_DURATION &&
                 survivalTime >= nextSpawnTime) {
             nextSpawnTime = survivalTime + getSpawnInterval();
@@ -87,7 +87,7 @@ public class WaveSystem {
             }
         }
 
-        // 检查BOSS刷新 (12分钟后每2分钟一个)
+        // Check for BOSS spawn (one every 2 minutes after 12 minutes)
         if (survivalTime >= EndlessModeConfig.FIRST_BOSS_TIME &&
                 survivalTime >= nextBossTime) {
             nextBossTime = survivalTime + EndlessModeConfig.BOSS_SPAWN_INTERVAL;
@@ -99,37 +99,37 @@ public class WaveSystem {
     }
 
     /**
-     * 获取当前敌人刷新间隔（秒）
+     * Gets current enemy spawn interval (seconds).
      */
     public float getSpawnInterval() {
         return EndlessModeConfig.WAVE_SPAWN_INTERVALS[currentWaveIndex];
     }
 
     /**
-     * 获取当前敌人血量倍率
+     * Gets current enemy health multiplier.
      */
     public float getEnemyHealthMultiplier() {
         return EndlessModeConfig.WAVE_HEALTH_MULTIPLIERS[currentWaveIndex];
     }
 
     /**
-     * 获取当前波次索引 (0-5)
+     * Gets current wave index (0-5).
      */
     public int getCurrentWave() {
         return currentWaveIndex;
     }
 
     /**
-     * 获取当前波次显示名称 (Wave 1-6)
+     * Gets current wave display name (Wave 1-6).
      */
     public String getWaveName() {
         return "Wave " + (currentWaveIndex + 1);
     }
 
     /**
-     * 获取下一波次开始时间（秒）
+     * Gets start time of the next wave (seconds).
      * 
-     * @return 下一波次时间，如果已是最后波次返回-1
+     * @return Next wave time, or -1 if already at the last wave
      */
     public float getNextWaveTime() {
         if (currentWaveIndex >= EndlessModeConfig.WAVE_TIME_THRESHOLDS.length - 1) {
@@ -139,7 +139,7 @@ public class WaveSystem {
     }
 
     /**
-     * 获取到下一波次的剩余时间（秒）
+     * Gets remaining time until the next wave (seconds).
      */
     public float getTimeToNextWave() {
         float nextTime = getNextWaveTime();
@@ -150,14 +150,14 @@ public class WaveSystem {
     }
 
     /**
-     * 是否已进入BOSS刷新阶段
+     * Whether the BOSS spawn phase has started.
      */
     public boolean isBossPhase() {
         return survivalTime >= EndlessModeConfig.FIRST_BOSS_TIME;
     }
 
     /**
-     * 获取到下一次BOSS的剩余时间（秒）
+     * Gets remaining time until the next BOSS (seconds).
      */
     public float getTimeToNextBoss() {
         if (!isBossPhase()) {
@@ -167,7 +167,7 @@ public class WaveSystem {
     }
 
     /**
-     * 获取格式化的生存时间 (MM:SS)
+     * Gets formatted survival time (MM:SS).
      */
     public String getFormattedTime() {
         int minutes = (int) (survivalTime / 60);
@@ -176,7 +176,7 @@ public class WaveSystem {
     }
 
     /**
-     * 强制重置
+     * Force reset.
      */
     public void reset() {
         survivalTime = 0;
@@ -191,14 +191,14 @@ public class WaveSystem {
         return survivalTime;
     }
 
-    // ========== Setters (用于存档恢复) ==========
+    // ========== Setters (for save restoration) ==========
 
     public void setSurvivalTime(float time) {
         this.survivalTime = time;
         this.currentWaveIndex = EndlessModeConfig.getWaveIndex(time);
         this.nextSpawnTime = time + getSpawnInterval();
 
-        // 计算下一次BOSS时间
+        // Calculate next BOSS time
         if (time >= EndlessModeConfig.FIRST_BOSS_TIME) {
             float timeSinceFirstBoss = time - EndlessModeConfig.FIRST_BOSS_TIME;
             int bossesSpawned = (int) (timeSinceFirstBoss / EndlessModeConfig.BOSS_SPAWN_INTERVAL);

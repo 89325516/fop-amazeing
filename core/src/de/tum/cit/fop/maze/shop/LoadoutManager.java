@@ -8,10 +8,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 装备管理器 (Loadout Manager)
+ * Loadout Manager
  * 
- * 管理玩家进入关卡前选择的武器装备配置。
- * 最多可选择4个已购买的武器带入关卡。
+ * Manages the weapon loadout configuration selected by the player before
+ * entering a level.
+ * Up to 4 purchased weapons can be selected to bring into the level.
  */
 public class LoadoutManager {
 
@@ -22,7 +23,7 @@ public class LoadoutManager {
     private static LoadoutManager instance;
     private List<String> selectedWeaponIds;
 
-    // 标记是否是新游戏开始（从 LoadoutScreen 进入的）
+    // Flag for new game start (entering from LoadoutScreen)
     private boolean freshStart = false;
 
     private LoadoutManager() {
@@ -38,7 +39,7 @@ public class LoadoutManager {
     }
 
     /**
-     * 获取已购买的武器列表 (可用于选择)
+     * Get list of purchased weapons (available for selection).
      */
     public List<ShopItem> getPurchasedWeapons() {
         List<ShopItem> weapons = new ArrayList<>();
@@ -53,23 +54,23 @@ public class LoadoutManager {
     }
 
     /**
-     * 获取当前选中的武器ID列表
+     * Get currently selected weapon ID list.
      */
     public List<String> getSelectedWeaponIds() {
         return new ArrayList<>(selectedWeaponIds);
     }
 
     /**
-     * 检查武器是否已选中
+     * Check if weapon is selected.
      */
     public boolean isWeaponSelected(String weaponId) {
         return selectedWeaponIds.contains(weaponId);
     }
 
     /**
-     * 添加武器到装备栏
+     * Add weapon to loadout.
      * 
-     * @return true 如果添加成功
+     * @return true if added successfully
      */
     public boolean addWeapon(String weaponId) {
         if (selectedWeaponIds.size() >= MAX_LOADOUT_SIZE) {
@@ -92,7 +93,7 @@ public class LoadoutManager {
     }
 
     /**
-     * 从装备栏移除武器
+     * Remove weapon from loadout.
      */
     public boolean removeWeapon(String weaponId) {
         boolean removed = selectedWeaponIds.remove(weaponId);
@@ -104,7 +105,7 @@ public class LoadoutManager {
     }
 
     /**
-     * 清空装备栏
+     * Clear loadout.
      */
     public void clearLoadout() {
         selectedWeaponIds.clear();
@@ -113,21 +114,21 @@ public class LoadoutManager {
     }
 
     /**
-     * 获取装备栏剩余空位
+     * Get remaining loadout slots.
      */
     public int getRemainingSlots() {
         return MAX_LOADOUT_SIZE - selectedWeaponIds.size();
     }
 
     /**
-     * 获取装备栏最大容量
+     * Get maximum loadout capacity.
      */
     public int getMaxLoadoutSize() {
         return MAX_LOADOUT_SIZE;
     }
 
     /**
-     * 将武器ID转换为武器名称
+     * Convert weapon ID to weapon name.
      */
     public String getWeaponName(String weaponId) {
         List<ShopItem> allWeapons = ShopManager.getItemsByCategory(ShopItem.ItemCategory.WEAPON);
@@ -140,7 +141,7 @@ public class LoadoutManager {
     }
 
     /**
-     * 加载装备配置
+     * Load loadout configuration.
      */
     private void loadLoadout() {
         Preferences prefs = Gdx.app.getPreferences(PREFS_NAME);
@@ -150,7 +151,7 @@ public class LoadoutManager {
         if (!data.isEmpty()) {
             for (String id : data.split(";")) {
                 if (!id.trim().isEmpty()) {
-                    // 验证武器是否仍然已购买
+                    // Verify weapon is still purchased
                     if (ShopManager.isItemPurchased(id)) {
                         selectedWeaponIds.add(id);
                     }
@@ -161,7 +162,7 @@ public class LoadoutManager {
     }
 
     /**
-     * 保存装备配置
+     * Save loadout configuration
      */
     private void saveLoadout() {
         StringBuilder sb = new StringBuilder();
@@ -175,21 +176,21 @@ public class LoadoutManager {
     }
 
     /**
-     * 检查是否是新游戏开始（从 LoadoutScreen 进入的）
+     * Check if it's a fresh start (entering from LoadoutScreen)
      */
     public boolean isFreshStart() {
         return freshStart;
     }
 
     /**
-     * 设置是否是新游戏开始
+     * Set whether it is a fresh game start
      */
     public void setFreshStart(boolean freshStart) {
         this.freshStart = freshStart;
     }
 
     /**
-     * 消费 freshStart 标志（获取后自动重置）
+     * Consume the freshStart flag (automatically reset after retrieval)
      */
     public boolean consumeFreshStart() {
         boolean result = freshStart;

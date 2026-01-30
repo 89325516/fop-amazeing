@@ -10,7 +10,7 @@ import de.tum.cit.fop.maze.model.GameMap;
 import de.tum.cit.fop.maze.model.Wall;
 
 /**
- * Handles the rendering of "Grout" (美缝) between tiles.
+ * Handles the rendering of "Grout" between tiles.
  * Supports adaptive coloring and different styles for Wall-Floor vs
  * Floor-Floor.
  */

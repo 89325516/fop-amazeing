@@ -18,29 +18,31 @@ public class SkillScreen implements Screen {
 
     private final MazeRunnerGame game;
     private final String currentLevel;
-    private final boolean isVictory; // 追踪玩家是胜利还是失败进入的
-    private final boolean isInGameAccess; // 是否从游戏内暂停菜单进入
+    private final boolean isVictory; // Tracks if the player entered after victory or defeat
+    private final boolean isInGameAccess; // Whether accessed from in-game pause menu
     private Stage stage;
     private GameState gameState;
 
     /**
-     * 构造函数 - 需要知道玩家是胜利还是失败进入 Skill Tree
+     * Constructor - Requires knowing if the player entered the Skill Tree after
+     * victory or defeat.
      * 
-     * @param game         游戏实例
-     * @param currentLevel 当前关卡路径
-     * @param isVictory    true=胜利后进入, false=失败后进入
+     * @param game         Game instance
+     * @param currentLevel Current level path
+     * @param isVictory    true if entered after victory, false if after defeat
      */
     public SkillScreen(MazeRunnerGame game, String currentLevel, boolean isVictory) {
         this(game, currentLevel, isVictory, false);
     }
 
     /**
-     * 游戏内访问构造函数 - 从暂停菜单访问时使用
+     * In-game access constructor - Used when accessing from the pause menu.
      * 
-     * @param game           游戏实例
-     * @param currentLevel   当前关卡路径
-     * @param isVictory      是否胜利模式（游戏内访问时忽略）
-     * @param isInGameAccess true=从暂停菜单进入，返回时回到游戏
+     * @param game           Game instance
+     * @param currentLevel   Current level path
+     * @param isVictory      Victory mode (ignored for in-game access)
+     * @param isInGameAccess true if accessed from pause menu, returns to game on
+     *                       exit
      */
     public SkillScreen(MazeRunnerGame game, String currentLevel, boolean isVictory, boolean isInGameAccess) {
         this.game = game;
@@ -78,7 +80,7 @@ public class SkillScreen implements Screen {
     public void show() {
         stage = new Stage(new FitViewport(1920, 1080), game.getSpriteBatch());
         Gdx.input.setInputProcessor(stage);
-        // 🔊 全局按钮音效
+        // 🔊 Global button sound effect
         de.tum.cit.fop.maze.utils.UIUtils.enableGameButtonSound(stage);
 
         Table rootTable = new Table();
@@ -188,7 +190,7 @@ public class SkillScreen implements Screen {
 
         rootTable.add(scrollPane).expand().fill().pad(40).row();
 
-        // 4. Done Button - 根据进入模式返回正确界面
+        // 4. Done Button - Return to correct screen depending on entry mode
         TextButton doneBtn = new TextButton("Done / Continue", skin);
         de.tum.cit.fop.maze.utils.UIUtils.addGameClickSound(doneBtn);
         doneBtn.addListener(new ChangeListener() {
@@ -204,16 +206,16 @@ public class SkillScreen implements Screen {
                     SaveManager.saveGame(gameState, activeSave);
                 }
 
-                // 根据进入时的状态返回正确界面
+                // Return to the correct screen based on the entry state
                 if (isInGameAccess) {
-                    // 从暂停菜单进入，返回游戏并应用新技能
-                    // 使用 loadPersistentStats=true 确保技能数值被加载
+                    // Accessed from pause menu, return to game and apply new skills
+                    // Use loadPersistentStats=true to ensure skill stats are loaded
                     game.setScreen(new GameScreen(game, currentLevel, true));
                 } else if (isVictory) {
-                    // 胜利后返回 VictoryScreen
+                    // Return to VictoryScreen after victory
                     game.setScreen(new VictoryScreen(game, currentLevel));
                 } else {
-                    // 失败后返回 LevelSummaryScreen (Defeat 模式)
+                    // Return to LevelSummaryScreen (Defeat mode) after failure
                     de.tum.cit.fop.maze.model.LevelSummaryData defeatData = new de.tum.cit.fop.maze.model.LevelSummaryData(
                             de.tum.cit.fop.maze.model.LevelSummaryData.Result.DEFEAT,
                             currentLevel);
@@ -240,7 +242,7 @@ public class SkillScreen implements Screen {
                 onBuy.run();
             }
         });
-        table.add(buyBtn).width(260).height(60).padBottom(40); // 增加宽度确保文字不超出
+        table.add(buyBtn).width(260).height(60).padBottom(40); // Increase width to ensure text doesn't overflow
         table.row();
     }
 

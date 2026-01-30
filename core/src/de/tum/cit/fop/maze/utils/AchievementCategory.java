@@ -1,47 +1,47 @@
 package de.tum.cit.fop.maze.utils;
 
 /**
- * 成就分类枚举 (Achievement Category Enum)
+ * Achievement Category Enum
  * 
- * 定义成就的类别，用于：
- * - 在成就列表 UI 中进行分类筛选
- * - 统计各类别成就的解锁进度
- * - 帮助玩家理解成就的获取方式
+ * Defines achievement categories for:
+ * - Filtering in the achievement list UI
+ * - Tracking unlock progress per category
+ * - Helping players understand how to earn achievements
  */
 public enum AchievementCategory {
     /**
-     * 武器相关成就
-     * 包括：武器拾取、武器精通、武器收集
+     * Weapon related achievements
+     * Includes: Weapon pickups, mastery, collection
      */
     WEAPON("Weapons", "[W]", "Achievements related to weapon acquisition and usage"),
 
     /**
-     * 护甲相关成就
-     * 包括：护甲装备、防御里程碑、护盾策略
+     * Armor related achievements
+     * Includes: Armor equipment, defense milestones, shield strategies
      */
     ARMOR("Armor", "[A]", "Achievements related to armor equipment and defense"),
 
     /**
-     * 战斗相关成就
-     * 包括：击杀里程碑、连杀、首杀
+     * Combat related achievements
+     * Includes: Kill milestones, kill streaks, first kills
      */
     COMBAT("Combat", "[C]", "Achievements related to combat and killing enemies"),
 
     /**
-     * 探索/关卡相关成就
-     * 包括：区域通关、全图探索、发现隐藏区域
+     * Exploration/Level related achievements
+     * Includes: Zone completion, full map exploration, discovering hidden areas
      */
     EXPLORATION("Exploration", "[E]", "Achievements related to level exploration and completion"),
 
     /**
-     * 经济相关成就
-     * 包括：金币收集、商店购买、财富积累
+     * Economy related achievements
+     * Includes: Coin collection, shop purchases, wealth accumulation
      */
     ECONOMY("Economy", "[$]", "Achievements related to coins and shop spending"),
 
     /**
-     * 挑战类成就
-     * 包括：无伤通关、速通、极限挑战
+     * Challenge achievements
+     * Includes: Damageless runs, speedruns, extreme challenges
      */
     CHALLENGE("Challenge", "[!]", "High difficulty challenge achievements");
 
@@ -56,21 +56,21 @@ public enum AchievementCategory {
     }
 
     /**
-     * 获取分类的显示名称
+     * Get display name of the category
      */
     public String getDisplayName() {
         return displayName;
     }
 
     /**
-     * 获取分类的图标（用于 UI 显示）
+     * Get category icon (for UI display)
      */
     public String getIcon() {
         return icon;
     }
 
     /**
-     * 获取分类的描述
+     * Get category description
      */
     public String getDescription() {
         return description;

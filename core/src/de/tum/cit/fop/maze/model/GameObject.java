@@ -1,15 +1,17 @@
 package de.tum.cit.fop.maze.model;
 
 /**
- * 所有游戏实体的基类
- * 对应文档要求：Inheriting from at least one common superclass
+ * Base class for all game entities.
+ * In accordance with documentation requirements: Inheriting from at least one
+ * common superclass.
  */
 public abstract class GameObject implements Positioned {
-    // 坐标使用 float，方便平滑移动，但地图解析时通常是整数
+    // Coordinates use float for smooth movement, though usually integers during map
+    // parsing.
     protected float x;
     protected float y;
 
-    // 这种逻辑上的宽和高通常是 1 (代表 1 个格子)
+    // Logical width and height, typically 1 (representing 1 tile).
     protected float width = 1;
     protected float height = 1;
 
@@ -35,7 +37,7 @@ public abstract class GameObject implements Positioned {
         return height;
     }
 
-    // Setters (用于移动)
+    // Setters (used for movement)
     public void setPosition(float x, float y) {
         this.x = x;
         this.y = y;

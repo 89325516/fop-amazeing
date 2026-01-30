@@ -10,17 +10,18 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 开发者控制台 (Developer Console)
+ * Developer Console
  * 
- * 允许玩家在游戏中输入命令修改游戏状态。
- * 使用 HashMap 存储动态变量，支持多种内置命令和别名。
+ * Allows players to input commands to modify the game state during gameplay.
+ * Uses HashMap to store dynamic variables, supports multiple built-in commands
+ * and aliases.
  * 
- * 使用方法:
- * - 在 GameScreen 中按 ~ 或 F3 键打开控制台
- * - 输入命令并按 Enter 执行
- * - 按 ESC 关闭控制台
+ * Usage:
+ * - Press ~ or F3 in GameScreen to open console
+ * - Type command and press Enter to execute
+ * - Press ESC to close console
  * 
- * 命令分类:
+ * Command Categories:
  * - player: god, noclip, heal, give, set
  * - world: tp, spawn, kill, time
  * - level: level, restart, win, skip
@@ -29,45 +30,45 @@ import java.util.Map;
  */
 public class DeveloperConsole {
 
-    /** 存储动态变量的 HashMap */
+    /** HashMap to store dynamic variables */
     private final Map<String, Object> variables = new HashMap<>();
 
-    /** 命令别名映射 */
+    /** Command alias mapping */
     private final Map<String, String> aliases = new HashMap<>();
 
-    /** 控制台输出历史 */
+    /** Console output history */
     private final List<String> outputHistory = new ArrayList<>();
 
-    /** 命令输入历史 (用于上下键切换) */
+    /** Command input history (for arrow key switching) */
     private final List<String> commandHistory = new ArrayList<>();
     private int historyIndex = -1;
 
-    /** 游戏世界引用，用于执行命令 */
+    /** Game world reference for executing commands */
     private GameWorld gameWorld;
 
-    /** 关卡切换监听器 */
+    /** Level change listener */
     private LevelChangeListener levelChangeListener;
 
-    /** 控制台是否可见 */
+    /** Whether console is visible */
     private boolean visible = false;
 
-    /** 最大历史记录数 */
+    /** Max history records */
     private static final int MAX_HISTORY = 100;
 
-    /** 时间流速倍率 */
+    /** Time scale multiplier */
     private float timeScale = 1.0f;
 
-    /** FPS显示开关 */
+    /** FPS display toggle */
     private boolean showFps = false;
 
-    /** 无尽模式标志 - 启用后禁用level/skip/win命令 */
+    /** Endless mode flag - disables level/skip/win commands when enabled */
     private boolean endlessMode = false;
 
-    /** 无尽模式数据引用 */
+    /** Endless mode data reference */
     private EndlessModeData endlessModeData;
 
     /**
-     * 关卡切换监听器接口
+     * Level change listener interface
      */
     public interface LevelChangeListener {
         void onLevelChange(int levelNumber);
@@ -80,23 +81,23 @@ public class DeveloperConsole {
     }
 
     /**
-     * 创建开发者控制台实例
+     * Create developer console instance
      */
     public DeveloperConsole() {
-        // 初始化默认变量
+        // Initialize default variables
         variables.put("godmode", false);
         variables.put("noclip", false);
         variables.put("speed_multiplier", 1.0f);
         variables.put("debug", false);
 
-        // 初始化别名
+        // Initialize aliases
         initAliases();
 
         log("Developer Console initialized. Type 'help' for commands.");
     }
 
     /**
-     * 初始化命令别名
+     * Initialize command aliases
      */
     private void initAliases() {
         // Player commands
@@ -125,21 +126,21 @@ public class DeveloperConsole {
     }
 
     /**
-     * 设置游戏世界引用
+     * Set game world reference
      */
     public void setGameWorld(GameWorld world) {
         this.gameWorld = world;
     }
 
     /**
-     * 设置关卡切换监听器
+     * Set level change listener
      */
     public void setLevelChangeListener(LevelChangeListener listener) {
         this.levelChangeListener = listener;
     }
 
     /**
-     * 解析并执行命令
+     * Parse and execute command
      */
     public void executeCommand(String input) {
         if (input == null || input.trim().isEmpty()) {
@@ -148,17 +149,17 @@ public class DeveloperConsole {
 
         String trimmed = input.trim();
 
-        // 添加到命令历史
+        // Add to command history
         commandHistory.add(trimmed);
         if (commandHistory.size() > MAX_HISTORY) {
             commandHistory.remove(0);
         }
         historyIndex = commandHistory.size();
 
-        // 记录输入
+        // Log input
         log("> " + trimmed);
 
-        // 解析命令，处理别名
+        // Parse command, handle aliases
         String resolved = resolveAlias(trimmed);
         String[] parts = resolved.split("\\s+");
         String command = parts[0].toLowerCase();
@@ -264,7 +265,7 @@ public class DeveloperConsole {
     }
 
     /**
-     * 解析别名
+     * Resolve alias
      */
     private String resolveAlias(String input) {
         String[] parts = input.split("\\s+", 2);
@@ -561,7 +562,7 @@ public class DeveloperConsole {
             case "gold":
             case "money":
                 player.addCoins(count);
-                // 同时增加 coinsCollected，确保通关时会被保存
+                // Also increase coinsCollected to ensure it is saved upon level completion
                 gameWorld.addCoinsCollected(count);
                 log("[OK] Gave " + count + " coins. Total: " + player.getCoins());
                 break;
@@ -1052,7 +1053,7 @@ public class DeveloperConsole {
     // ==================== Endless Mode Support ====================
 
     /**
-     * 无尽模式数据接口 - 用于控制台交互
+     * Endless Mode Data Interface - for console interaction
      */
     public interface EndlessModeData {
         int getTotalKills();
@@ -1100,7 +1101,7 @@ public class DeveloperConsole {
     }
 
     /**
-     * 设置无尽模式
+     * Set Endless Mode
      */
     public void setEndlessMode(boolean enabled, EndlessModeData data) {
         this.endlessMode = enabled;
@@ -1115,7 +1116,7 @@ public class DeveloperConsole {
     }
 
     /**
-     * 处理无尽模式命令
+     * Handle Endless Mode commands
      */
     private void handleEndless(String[] parts) {
         if (!endlessMode) {
@@ -1236,27 +1237,27 @@ public class DeveloperConsole {
         log("║                  ENDLESS MODE COMMANDS                    ║");
         log("╚═══════════════════════════════════════════════════════════╝");
         log("");
-        log("【状态查看】");
+        log("【Status Viewer】");
         log("endless status        Show full endless mode stats");
         log("endless wave          View current wave info");
         log("endless zone          View current zone");
         log("endless enemies       View current enemy count");
         log("");
-        log("【分数系统】");
+        log("【Score System】");
         log("endless score [n]     View/Set current score");
         log("endless combo [n]     View/Set current combo");
         log("endless kill [n]      Add kills (debug)");
         log("");
-        log("【RAGE系统】");
+        log("【RAGE System】");
         log("endless rage [0-100]  View/Set rage progress");
         log("endless maxrage       Instantly max out rage");
         log("");
-        log("【敌人控制】");
+        log("【Enemy Control】");
         log("endless spawn [n]     Spawn n enemies (default 5)");
         log("endless spawn boss    Spawn a boss enemy");
         log("endless clear         Kill all enemies");
         log("");
-        log("【移动】");
+        log("【Movement】");
         log("endless tp <x> <y>    Teleport to coordinates");
         log("");
         log("NOTE: 'level', 'skip', 'win' are disabled in Endless Mode.");

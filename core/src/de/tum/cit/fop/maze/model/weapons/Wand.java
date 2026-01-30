@@ -3,14 +3,14 @@ package de.tum.cit.fop.maze.model.weapons;
 import de.tum.cit.fop.maze.model.DamageType;
 
 /**
- * 魔杖 (Wand) - 远程法术武器
+ * Magic Wand - Ranged magical weapon.
  * 
- * 特点：
- * - 法术伤害类型
- * - 较低伤害 (1)
- * - 中等射程 (5)
- * - 较短装填时间 (1.5秒)
- * - 带有燃烧效果
+ * Traits:
+ * - Magical damage type
+ * - Low damage (1)
+ * - Medium range (5)
+ * - Short reload time (1.5s)
+ * - Inflicts burn effect
  */
 public class Wand extends Weapon {
 

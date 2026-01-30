@@ -7,45 +7,46 @@ import de.tum.cit.fop.maze.model.WallEntity;
 import java.util.*;
 
 /**
- * 分块加载管理器 (Chunk Manager)
+ * Chunk Loading Manager
  * 
- * 管理无尽模式地图的分块加载和卸载。
+ * Manages dynamic loading and unloading of map chunks in Endless Mode.
  * 
- * 功能:
- * - 根据玩家位置动态加载周围区块
- * - 卸载远离玩家的区块以节省内存
- * - LRU缓存已生成的区块
+ * Features:
+ * - Dynamically load surrounding chunks based on player position
+ * - Unload chunks far from player to save memory
+ * - LRU cache for generated chunks
  * 
- * 遵循单一职责原则：仅处理区块的加载/卸载逻辑。
+ * Follows Single Responsibility Principle: handles only chunk loading/unloading
+ * logic.
  */
 public class ChunkManager {
 
-    /** 区块大小 */
+    /** Chunk size */
     private final int chunkSize;
 
-    /** 所有已生成的区块 (chunkId -> MapChunk) */
+    /** All generated chunks (chunkId -> MapChunk) */
     private final Map<String, MapChunk> allChunks;
 
-    /** 当前加载的区块ID集合 */
+    /** Set of currently loaded chunk IDs */
     private final Set<String> loadedChunkIds;
 
-    /** 地图生成器 */
+    /** Map generator */
     private final EndlessMapGenerator mapGenerator;
 
-    /** 最大缓存区块数 */
+    /** Maximum number of cached chunks */
     private static final int MAX_CACHED_CHUNKS = 100;
 
-    /** 监听器：区块加载/卸载时回调 */
+    /** Listener: callback for chunk load/unload events */
     private ChunkListener listener;
 
     /**
-     * 区块事件监听器接口
+     * Chunk event listener interface
      */
     public interface ChunkListener {
-        /** 区块加载时调用 */
+        /** Called when a chunk is loaded */
         void onChunkLoaded(MapChunk chunk);
 
-        /** 区块卸载时调用 */
+        /** Called when a chunk is unloaded */
         void onChunkUnloaded(MapChunk chunk);
     }
 
@@ -57,17 +58,17 @@ public class ChunkManager {
     }
 
     /**
-     * 设置区块事件监听器
+     * Set chunk event listener
      */
     public void setListener(ChunkListener listener) {
         this.listener = listener;
     }
 
     /**
-     * 根据玩家位置更新活跃区块
+     * Update active chunks based on player position
      * 
-     * @param playerX 玩家X坐标（格子单位）
-     * @param playerY 玩家Y坐标（格子单位）
+     * @param playerX Player X coordinate (grid units)
+     * @param playerY Player Y coordinate (grid units)
      */
     public void updateActiveChunks(float playerX, float playerY) {
         int centerChunkX = (int) (playerX / chunkSize);
@@ -75,7 +76,7 @@ public class ChunkManager {
 
         int radius = EndlessModeConfig.ACTIVE_CHUNK_RADIUS;
 
-        // 收集需要加载的区块
+        // Collect chunks that need to be loaded
         Set<String> neededChunkIds = new HashSet<>();
 
         for (int dx = -radius; dx <= radius; dx++) {
@@ -83,7 +84,7 @@ public class ChunkManager {
                 int chunkX = centerChunkX + dx;
                 int chunkY = centerChunkY + dy;
 
-                // 检查是否在地图范围内
+                // Check if within map boundaries
                 if (!isValidChunkPosition(chunkX, chunkY)) {
                     continue;
                 }
@@ -91,14 +92,14 @@ public class ChunkManager {
                 String chunkId = getChunkId(chunkX, chunkY);
                 neededChunkIds.add(chunkId);
 
-                // 如果区块未加载，加载它
+                // If chunk is not loaded, load it
                 if (!loadedChunkIds.contains(chunkId)) {
                     loadChunk(chunkX, chunkY);
                 }
             }
         }
 
-        // 卸载不再需要的区块
+        // Unload chunks no longer needed
         List<String> toUnload = new ArrayList<>();
         for (String loadedId : loadedChunkIds) {
             if (!neededChunkIds.contains(loadedId)) {
@@ -110,12 +111,12 @@ public class ChunkManager {
             unloadChunk(id);
         }
 
-        // 清理缓存
+        // Cleanup cache
         cleanupCache();
     }
 
     /**
-     * 加载指定区块
+     * Load specified chunk
      */
     private void loadChunk(int chunkX, int chunkY) {
         String chunkId = getChunkId(chunkX, chunkY);
@@ -123,7 +124,7 @@ public class ChunkManager {
         MapChunk chunk = allChunks.get(chunkId);
 
         if (chunk == null) {
-            // 区块未生成，生成它
+            // Chunk not generated, generate it
             chunk = mapGenerator.generateChunk(chunkX, chunkY);
             allChunks.put(chunkId, chunk);
         }
@@ -141,7 +142,7 @@ public class ChunkManager {
     }
 
     /**
-     * 卸载指定区块
+     * Unload specified chunk
      */
     private void unloadChunk(String chunkId) {
         MapChunk chunk = allChunks.get(chunkId);
@@ -157,14 +158,14 @@ public class ChunkManager {
     }
 
     /**
-     * 清理超出缓存限制的区块
+     * Clean up chunks exceeding cache limit
      */
     private void cleanupCache() {
         if (allChunks.size() <= MAX_CACHED_CHUNKS) {
             return;
         }
 
-        // LRU: LinkedHashMap 按访问顺序排列，最早访问的在前
+        // LRU: LinkedHashMap is ordered by access, oldest first
         Iterator<Map.Entry<String, MapChunk>> iterator = allChunks.entrySet().iterator();
         int toRemove = allChunks.size() - MAX_CACHED_CHUNKS;
 
@@ -172,7 +173,7 @@ public class ChunkManager {
             Map.Entry<String, MapChunk> entry = iterator.next();
             MapChunk chunk = entry.getValue();
 
-            // 不移除当前加载的区块
+            // Do not remove currently loaded chunks
             if (!chunk.isLoaded()) {
                 chunk.clear();
                 iterator.remove();
@@ -182,7 +183,7 @@ public class ChunkManager {
     }
 
     /**
-     * 检查区块位置是否有效
+     * Check if chunk position is valid
      */
     private boolean isValidChunkPosition(int chunkX, int chunkY) {
         int maxChunks = EndlessModeConfig.MAP_WIDTH / chunkSize;
@@ -191,16 +192,16 @@ public class ChunkManager {
     }
 
     /**
-     * 获取区块唯一标识符
+     * Get unique identifier for a chunk
      */
     private String getChunkId(int chunkX, int chunkY) {
         return chunkX + "_" + chunkY;
     }
 
     /**
-     * 获取指定位置的区块
+     * Get chunk at specified position
      * 
-     * @return 区块，如果不存在或未加载返回null
+     * @return MapChunk, or null if not found/not loaded
      */
     public MapChunk getChunk(int chunkX, int chunkY) {
         String chunkId = getChunkId(chunkX, chunkY);
@@ -212,7 +213,7 @@ public class ChunkManager {
     }
 
     /**
-     * 获取指定世界坐标所在的区块
+     * Get chunk containing specified world coordinates
      */
     public MapChunk getChunkAtWorld(float worldX, float worldY) {
         int chunkX = (int) (worldX / chunkSize);
@@ -221,7 +222,7 @@ public class ChunkManager {
     }
 
     /**
-     * 获取所有已加载区块的墙体
+     * Get walls from all currently loaded chunks
      */
     public List<WallEntity> getLoadedWalls() {
         List<WallEntity> walls = new ArrayList<>();
@@ -235,7 +236,7 @@ public class ChunkManager {
     }
 
     /**
-     * 获取所有已加载的区块
+     * Get all currently loaded chunks
      */
     public List<MapChunk> getLoadedChunks() {
         List<MapChunk> chunks = new ArrayList<>();
@@ -249,35 +250,35 @@ public class ChunkManager {
     }
 
     /**
-     * 检查指定区块是否已加载
+     * Check if specified chunk is loaded
      */
     public boolean isChunkLoaded(int chunkX, int chunkY) {
         return loadedChunkIds.contains(getChunkId(chunkX, chunkY));
     }
 
     /**
-     * 获取已加载区块数量
+     * Get number of loaded chunks
      */
     public int getLoadedChunkCount() {
         return loadedChunkIds.size();
     }
 
     /**
-     * 获取已缓存区块数量
+     * Get number of cached chunks
      */
     public int getCachedChunkCount() {
         return allChunks.size();
     }
 
     /**
-     * 获取中心区块坐标（用于玩家出生点）
+     * Get center chunk coordinate (for player spawn point)
      */
     public int getCenterChunkCoord() {
         return (EndlessModeConfig.MAP_WIDTH / chunkSize) / 2;
     }
 
     /**
-     * 强制重新生成所有区块
+     * Force regeneration of all chunks
      */
     public void regenerateAll() {
         allChunks.clear();
@@ -285,7 +286,7 @@ public class ChunkManager {
     }
 
     /**
-     * 释放所有资源
+     * Dispose all resources
      */
     public void dispose() {
         for (MapChunk chunk : allChunks.values()) {

@@ -4,41 +4,42 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * 墙体实体类 - 表示一个完整的多格墙体
+ * Wall Entity Class - Represents a complete multi-tile wall structure.
  * 
- * 设计原则：
- * 1. 一个墙体是一个整体，不是多个单独格子的集合
- * 2. 碰撞区域 = width × height 格子（精确）
- * 3. 渲染尺寸可以有视觉延伸（不影响碰撞）
+ * Design Principles:
+ * 1. A wall is a single entity, not a collection of individual tiles.
+ * 2. Collision area = width × height tiles (precise).
+ * 3. Render size can have visual extension (does not affect collision).
  */
 public class WallEntity extends GameObject {
 
-    // 墙体类型ID（对应贴图）
+    // Wall type ID (corresponding to texture)
     private final int typeId;
 
-    // 墙体逻辑尺寸（格子数）
+    // Wall logical dimensions (number of tiles)
     private final int gridWidth;
     private final int gridHeight;
 
-    // 墙体碰撞高度（格子数）
+    // Wall collision height (number of tiles)
     private final int collisionHeight;
 
-    // 是否是边界墙
+    // Whether it's a border wall
     private final boolean isBorderWall;
 
-    // 缓存：该墙体占用的所有格子坐标
+    // Cache: all grid coordinates occupied by this wall
     private final Set<Long> occupiedCells;
 
     /**
-     * 创建一个墙体实体
+     * Creates a wall entity.
      * 
-     * @param originX         左下角X坐标（格子坐标）
-     * @param originY         左下角Y坐标（格子坐标）
-     * @param gridWidth       宽度（格子数）
-     * @param gridHeight      高度（格子数）
-     * @param typeId          墙体类型ID
-     * @param isBorderWall    是否是边界墙
-     * @param collisionHeight 碰撞高度（通常等于gridHeight，但在某些主题下可能较小）
+     * @param originX         Bottom-left X coordinate (tile coordinate)
+     * @param originY         Bottom-left Y coordinate (tile coordinate)
+     * @param gridWidth       Width (number of tiles)
+     * @param gridHeight      Height (number of tiles)
+     * @param typeId          Wall type ID
+     * @param isBorderWall    Whether it's a border wall
+     * @param collisionHeight Collision height (usually equals gridHeight, but may
+     *                        be smaller in some themes)
      */
     public WallEntity(int originX, int originY, int gridWidth, int gridHeight, int typeId, boolean isBorderWall,
             int collisionHeight) {
@@ -51,12 +52,12 @@ public class WallEntity extends GameObject {
         this.isBorderWall = isBorderWall;
         this.collisionHeight = collisionHeight;
 
-        // 预计算占用的格子
+        // Pre-calculate occupied cells
         this.occupiedCells = new HashSet<>();
         for (int dx = 0; dx < gridWidth; dx++) {
-            // 使用 collisionHeight 而不是 gridHeight 确定碰撞区域
+            // Use collisionHeight instead of gridHeight to determine collision area
             for (int dy = 0; dy < collisionHeight; dy++) {
-                // 使用 x + (y << 16) 作为唯一key
+                // Use x + (y << 16) as unique key
                 long key = (originX + dx) + ((long) (originY + dy) << 16);
                 occupiedCells.add(key);
             }
@@ -64,21 +65,21 @@ public class WallEntity extends GameObject {
     }
 
     /**
-     * 创建一个墙体实体（默认碰撞高度 = 网格高度）
+     * Creates a wall entity (default collision height = grid height).
      */
     public WallEntity(int originX, int originY, int gridWidth, int gridHeight, int typeId, boolean isBorderWall) {
         this(originX, originY, gridWidth, gridHeight, typeId, isBorderWall, gridHeight);
     }
 
     /**
-     * 简化构造器（非边界墙）
+     * Simplified constructor (non-border wall).
      */
     public WallEntity(int originX, int originY, int gridWidth, int gridHeight, int typeId) {
         this(originX, originY, gridWidth, gridHeight, typeId, false);
     }
 
     /**
-     * 检查指定格子是否被该墙体占用
+     * Checks if the specified grid tile is occupied by this wall.
      */
     public boolean occupies(int x, int y) {
         long key = x + ((long) y << 16);
@@ -86,7 +87,7 @@ public class WallEntity extends GameObject {
     }
 
     /**
-     * 获取所有占用格子的坐标key集合
+     * Gets set of all occupied grid coordinate keys.
      */
     public Set<Long> getOccupiedCells() {
         return occupiedCells;

@@ -73,7 +73,7 @@ public class GameOverScreen implements Screen {
     @Override
     public void show() {
         Gdx.input.setInputProcessor(stage);
-        // 🔊 全局按钮音效
+        // 🔊 Global button sound effect
         de.tum.cit.fop.maze.utils.UIUtils.enableGameButtonSound(stage);
     }
 

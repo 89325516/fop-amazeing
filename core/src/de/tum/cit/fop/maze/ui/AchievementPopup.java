@@ -13,30 +13,30 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 /**
- * Achievement Popup Manager - 成就解锁弹窗管理器
+ * Achievement Popup Manager.
  * 
- * 功能：
- * - 队列管理多个成就解锁
- * - 滑入/淡出动画
- * - 根据稀有度显示不同颜色
- * - 显示金币奖励
+ * Features:
+ * - Queue management for multiple achievement unlocks.
+ * - Slide-in/fade-out animations.
+ * - Color-coded by rarity.
+ * - Displays gold rewards.
  */
 public class AchievementPopup {
 
     private final Stage stage;
     private final Skin skin;
 
-    // 弹窗容器
+    // Popup container
     private Table popupTable;
     private Label titleLabel;
     private Label nameLabel;
     private Label rewardLabel;
 
-    // 成就队列
+    // Achievement queue
     private final Queue<AchievementInfo> achievementQueue = new LinkedList<>();
     private boolean isShowing = false;
 
-    // 动画参数
+    // Animation parameters
     private static final float SLIDE_IN_DURATION = 0.5f;
     private static final float DISPLAY_DURATION = 3.0f;
     private static final float FADE_OUT_DURATION = 0.5f;
@@ -44,7 +44,7 @@ public class AchievementPopup {
     private static final float POPUP_HEIGHT = 100f;
 
     /**
-     * 成就信息内部类
+     * Achievement info inner class.
      */
     public static class AchievementInfo {
         public String name;
@@ -65,35 +65,35 @@ public class AchievementPopup {
     }
 
     private void createPopupUI() {
-        // 创建弹窗容器
+        // Create popup container
         popupTable = new Table();
         popupTable.setBackground(skin.newDrawable("white", new Color(0.1f, 0.1f, 0.15f, 0.95f)));
         popupTable.setSize(POPUP_WIDTH, POPUP_HEIGHT);
 
-        // 标题 "Achievement Unlocked!"
+        // Title "Achievement Unlocked!"
         Label.LabelStyle titleStyle = new Label.LabelStyle(skin.getFont("font"), Color.WHITE);
         titleLabel = new Label("🏆 Achievement Unlocked!", titleStyle);
         titleLabel.setFontScale(0.8f);
         titleLabel.setAlignment(Align.center);
 
-        // 成就名称（根据稀有度变色）
+        // Achievement name (color-coded by rarity)
         Label.LabelStyle nameStyle = new Label.LabelStyle(skin.getFont("font"), Color.GOLD);
         nameLabel = new Label("", nameStyle);
         nameLabel.setFontScale(1.0f);
         nameLabel.setAlignment(Align.center);
 
-        // 金币奖励
+        // Gold reward
         Label.LabelStyle rewardStyle = new Label.LabelStyle(skin.getFont("font"), Color.YELLOW);
         rewardLabel = new Label("", rewardStyle);
         rewardLabel.setFontScale(0.7f);
         rewardLabel.setAlignment(Align.center);
 
-        // 布局
+        // Layout
         popupTable.add(titleLabel).expandX().fillX().padTop(10).row();
         popupTable.add(nameLabel).expandX().fillX().padTop(5).row();
         popupTable.add(rewardLabel).expandX().fillX().padTop(5).padBottom(10);
 
-        // 初始位置（右侧屏幕外）
+        // Initial position (off-screen right)
         popupTable.setPosition(stage.getWidth(), stage.getHeight() - POPUP_HEIGHT - 320);
         popupTable.setVisible(false);
 
@@ -101,19 +101,19 @@ public class AchievementPopup {
     }
 
     /**
-     * 添加成就到队列
+     * Add achievement to queue.
      */
     public void queueAchievement(String name, AchievementRarity rarity, int goldReward) {
         achievementQueue.add(new AchievementInfo(name, rarity, goldReward));
 
-        // 如果当前没有显示，开始显示
+        // If nothing is currently showing, start showing
         if (!isShowing) {
             showNextAchievement();
         }
     }
 
     /**
-     * 显示下一个成就
+     * Show next achievement.
      */
     private void showNextAchievement() {
         if (achievementQueue.isEmpty()) {
@@ -124,33 +124,33 @@ public class AchievementPopup {
         isShowing = true;
         AchievementInfo info = achievementQueue.poll();
 
-        // 更新内容
+        // Update content
         nameLabel.setText(info.name);
         nameLabel.setColor(getRarityColor(info.rarity));
         rewardLabel.setText("+" + info.goldReward + " Gold 💰");
 
-        // 更新边框颜色
+        // Update border color
         popupTable.setBackground(skin.newDrawable("white", getRarityBackgroundColor(info.rarity)));
 
-        // 重置位置
+        // Reset position
         popupTable.setPosition(stage.getWidth(), stage.getHeight() - POPUP_HEIGHT - 320);
         popupTable.setVisible(true);
         popupTable.getColor().a = 1.0f;
 
-        // 播放音效
+        // Play sound effect
         AudioManager.getInstance().playSound("collect");
 
-        // 动画序列：滑入 -> 停留 -> 淡出 -> 显示下一个
+        // Animation sequence: slide in -> delay -> fade out -> show next
         popupTable.clearActions();
         popupTable.addAction(Actions.sequence(
-                // 滑入
+                // Slide in
                 Actions.moveTo(stage.getWidth() - POPUP_WIDTH - 20, stage.getHeight() - POPUP_HEIGHT - 320,
                         SLIDE_IN_DURATION, Interpolation.exp5Out),
-                // 停留
+                // Delay (display)
                 Actions.delay(DISPLAY_DURATION),
-                // 淡出
+                // Fade out
                 Actions.fadeOut(FADE_OUT_DURATION, Interpolation.exp5In),
-                // 隐藏并显示下一个
+                // Hide and show next
                 Actions.run(() -> {
                     popupTable.setVisible(false);
                     showNextAchievement();
@@ -158,25 +158,25 @@ public class AchievementPopup {
     }
 
     /**
-     * 获取稀有度对应的文字颜色
+     * Get text color for rarity.
      */
     private Color getRarityColor(AchievementRarity rarity) {
         switch (rarity) {
             case COMMON:
                 return Color.WHITE;
             case RARE:
-                return new Color(0.3f, 0.6f, 1.0f, 1.0f); // 蓝色
+                return new Color(0.3f, 0.6f, 1.0f, 1.0f); // Blue
             case EPIC:
-                return new Color(0.7f, 0.3f, 1.0f, 1.0f); // 紫色
+                return new Color(0.7f, 0.3f, 1.0f, 1.0f); // Purple
             case LEGENDARY:
-                return new Color(1.0f, 0.85f, 0.0f, 1.0f); // 金色
+                return new Color(1.0f, 0.85f, 0.0f, 1.0f); // Gold
             default:
                 return Color.WHITE;
         }
     }
 
     /**
-     * 获取稀有度对应的背景颜色
+     * Get background color for rarity.
      */
     private Color getRarityBackgroundColor(AchievementRarity rarity) {
         switch (rarity) {
@@ -194,14 +194,14 @@ public class AchievementPopup {
     }
 
     /**
-     * 检查是否有正在显示的弹窗
+     * Check if popup is currently showing.
      */
     public boolean isShowing() {
         return isShowing;
     }
 
     /**
-     * 清空队列
+     * Clear queue.
      */
     public void clearQueue() {
         achievementQueue.clear();
@@ -211,9 +211,9 @@ public class AchievementPopup {
     }
 
     /**
-     * 调整位置（窗口大小改变时调用）
+     * Adjust position (called when window size changes).
      */
     public void resize(int width, int height) {
-        // 弹窗位置会自动通过 Stage viewport 调整
+        // Popup position will automatically adjust via Stage viewport
     }
 }

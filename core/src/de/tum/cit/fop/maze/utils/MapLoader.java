@@ -9,17 +9,18 @@ import java.io.InputStream;
 import java.util.Properties;
 
 /**
- * 工具类：负责读取 .properties 文件并将其转换为 GameMap 对象。
+ * Utility Class: Responsible for reading .properties files and converting them
+ * into GameMap objects.
  * 
- * 支持的元数据配置键：
- * - damageType: PHYSICAL 或 MAGICAL（关卡敌人伤害类型）
- * - enemyShieldEnabled: true/false（敌人是否有护盾）
- * - levelDifficulty: 1-5（关卡难度）
- * - suggestedArmor: PHYSICAL 或 MAGICAL（推荐护甲类型）
+ * Supported metadata configuration keys:
+ * - damageType: PHYSICAL or MAGICAL (Level enemy damage type)
+ * - enemyShieldEnabled: true/false (Whether enemies have shields)
+ * - levelDifficulty: 1-5 (Level difficulty)
+ * - suggestedArmor: PHYSICAL or MAGICAL (Recommended armor type)
  */
 public class MapLoader {
 
-    // 元数据配置键
+    // Metadata configuration keys
     public static final String KEY_DAMAGE_TYPE = "damageType";
     public static final String KEY_ENEMY_SHIELD = "enemyShieldEnabled";
     public static final String KEY_DIFFICULTY = "levelDifficulty";
@@ -27,7 +28,7 @@ public class MapLoader {
     public static final String KEY_THEME = "theme";
 
     /**
-     * 关卡配置信息类
+     * Level configuration info class
      */
     public static class LevelConfig {
         public DamageType damageType = DamageType.PHYSICAL;
@@ -38,7 +39,7 @@ public class MapLoader {
     }
 
     /**
-     * 加载结果：包含地图和配置
+     * Loading result: includes map and config
      */
     public static class LoadResult {
         public GameMap map;
@@ -51,7 +52,7 @@ public class MapLoader {
     }
 
     /**
-     * 加载指定路径的地图文件（返回完整结果）
+     * Load map file from specified path (returns full result)
      */
     public static LoadResult loadMapWithConfig(String internalPath) {
         GameLogger.info("MapLoader", "Attempting to load map: " + internalPath);
@@ -72,20 +73,20 @@ public class MapLoader {
         try (InputStream input = file.read()) {
             props.load(input);
 
-            // 1. 解析元数据配置
+            // 1. Parse metadata config
             config = parseMetadata(props);
             // Set theme on map
             map.setTheme(config.theme);
 
-            // 2. 解析地图尺寸并初始化
+            // 2. Parse map dimensions and initialize
             int playableWidth = Integer.parseInt(props.getProperty("playableWidth", "50"));
             int playableHeight = Integer.parseInt(props.getProperty("playableHeight", "50"));
             map.initializeSize(playableWidth, playableHeight);
 
-            // 3. 遍历 Properties 中的每一个 Key
+            // 3. Iterate through each Key in Properties
             for (String key : props.stringPropertyNames()) {
 
-                // 过滤掉非坐标格式的行 (必须包含逗号)
+                // Filter out lines that are not in coordinate format (must contain a comma)
                 if (!key.contains(",")) {
                     continue;
                 }
@@ -103,17 +104,17 @@ public class MapLoader {
                     } else {
                         GameObject obj = EntityFactory.createEntity(typeId, (float) x, (float) y);
                         if (obj != null) {
-                            // 如果是敌人
+                            // If it's an enemy
                             if (obj instanceof Enemy) {
                                 Enemy enemy = (Enemy) obj;
 
-                                // 统一使用第一关的怪物素材 (BOAR)
+                                // Uniformly use Level 1 monster assets (BOAR) for older maps
                                 enemy.setType(Enemy.EnemyType.BOAR);
 
-                                // 2. 如果护盾启用，设置护盾和攻击属性
+                                // 2. If shield enabled, set shield and attack attributes
                                 if (config.enemyShieldEnabled) {
                                     enemy.setAttackDamageType(config.damageType);
-                                    enemy.setShield(config.damageType, 3); // 默认3点护盾
+                                    enemy.setShield(config.damageType, 3); // Default 3 point shield
                                 }
                             }
                             map.addGameObject(obj);
@@ -144,19 +145,19 @@ public class MapLoader {
     }
 
     /**
-     * 加载指定路径的地图文件（向后兼容，只返回 GameMap）
+     * Load map file from specified path (backward compatible, returns only GameMap)
      */
     public static GameMap loadMap(String internalPath) {
         return loadMapWithConfig(internalPath).map;
     }
 
     /**
-     * 解析元数据配置
+     * Parse metadata configuration
      */
     private static LevelConfig parseMetadata(Properties props) {
         LevelConfig config = new LevelConfig();
 
-        // 解析伤害类型
+        // Parse damage type
         String dmgType = props.getProperty(KEY_DAMAGE_TYPE, "PHYSICAL").toUpperCase().trim();
         if (dmgType.equals("MAGICAL") || dmgType.equals("MAGIC")) {
             config.damageType = DamageType.MAGICAL;
@@ -164,11 +165,11 @@ public class MapLoader {
             config.damageType = DamageType.PHYSICAL;
         }
 
-        // 解析敌人护盾
+        // Parse enemy shield
         String shieldEnabled = props.getProperty(KEY_ENEMY_SHIELD, "false").toLowerCase().trim();
         config.enemyShieldEnabled = shieldEnabled.equals("true") || shieldEnabled.equals("1");
 
-        // 解析难度
+        // Parse difficulty
         try {
             config.difficulty = Integer.parseInt(props.getProperty(KEY_DIFFICULTY, "1").trim());
             config.difficulty = Math.max(1, Math.min(5, config.difficulty));
@@ -176,7 +177,7 @@ public class MapLoader {
             config.difficulty = 1;
         }
 
-        // 解析推荐护甲
+        // Parse suggested armor
         String armorType = props.getProperty(KEY_SUGGESTED_ARMOR, "PHYSICAL").toUpperCase().trim();
         if (armorType.equals("MAGICAL") || armorType.equals("MAGIC")) {
             config.suggestedArmor = DamageType.MAGICAL;

@@ -157,8 +157,8 @@ public class LevelSelectScreen implements Screen {
                 @Override
                 public void enter(InputEvent event, float x, float y, int pointer, Actor fromActor) {
                     hoveredLevel = levelNum;
-                    // 只有在没有选中关卡时，悬浮才会更新面板和背景
-                    // 一旦点击选中了某个关卡，悬浮效果就不再改变背景
+                    // Update panel and background on hover only if no level is selected
+                    // Once a level is clicked/selected, hover effect no longer changes background
                     if (selectedLevel == -1) {
                         updatePanels(levelNum);
                     }
@@ -292,7 +292,7 @@ public class LevelSelectScreen implements Screen {
     }
 
     private void startGame(int level) {
-        // 先进入装备选择界面，再进入关卡
+        // Enter equipment selection screen before entering the level
         game.setScreen(new LoadoutScreen(game, level));
     }
 
@@ -346,7 +346,7 @@ public class LevelSelectScreen implements Screen {
     @Override
     public void show() {
         Gdx.input.setInputProcessor(stage);
-        // 🔊 全局按钮音效
+        // 🔊 Global button sound effect
         de.tum.cit.fop.maze.utils.UIUtils.enableMenuButtonSound(stage);
         // Play menu background music (same as main menu)
         de.tum.cit.fop.maze.utils.AudioManager.getInstance().playMenuBgm();

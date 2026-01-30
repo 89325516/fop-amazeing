@@ -1,8 +1,8 @@
 package de.tum.cit.fop.maze.model;
 
 /**
- * 这个类用于存储需要持久化的游戏状态。
- * 包括玩家坐标、当前关卡、生命值等。
+ * This class is used to store game state that needs to be persisted.
+ * Includes player coordinates, current level, lives, etc.
  */
 public class GameState {
     private float playerX;
@@ -11,7 +11,7 @@ public class GameState {
     private int lives;
     private boolean hasKey;
 
-    // 必须有一个无参构造函数供 JSON 反序列化使用
+    // A no-args constructor is required for JSON deserialization.
     public GameState() {
     }
 

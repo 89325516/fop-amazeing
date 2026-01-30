@@ -23,9 +23,10 @@ import de.tum.cit.fop.maze.utils.UIUtils;
 import java.util.List;
 
 /**
- * 商店界面 (Shop Screen)
+ * Shop Screen.
  * 
- * 显示可购买的武器和护甲，玩家可使用金币购买。
+ * Displays weapons and armor available for purchase; players use coins to buy
+ * them.
  */
 public class ShopScreen implements Screen {
 
@@ -161,11 +162,11 @@ public class ShopScreen implements Screen {
         Stack iconStack = new Stack();
         iconStack.setSize(50, 50);
 
-        // 黑色背景層
+        // Black background layer
         Image bgImage = new Image(skin.newDrawable("white", Color.BLACK));
         iconStack.add(bgImage);
 
-        // 加载物品图标贴图
+        // Load item icon texture
         String textureKey = item.getTextureKey();
         String iconPath;
         if (textureKey.startsWith("custom_images") || textureKey.contains("/")) {
@@ -177,12 +178,12 @@ public class ShopScreen implements Screen {
             Texture iconTexture = new Texture(Gdx.files.internal(iconPath));
             iconTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
             Image iconImage = new Image(iconTexture);
-            // 將圖標居中放置
+            // Center the icon
             Table iconWrapper = new Table();
             iconWrapper.add(iconImage).size(46, 46).center();
             iconStack.add(iconWrapper);
         } catch (Exception e) {
-            // 如果图标不存在，显示文字占位符
+            // If icon doesn't exist, show a text placeholder
             Label iconLabel = new Label(item.getCategory() == ShopItem.ItemCategory.WEAPON ? "⚔" : "🛡", skin);
             Table iconWrapper = new Table();
             iconWrapper.add(iconLabel).size(40, 40).center();
@@ -222,7 +223,7 @@ public class ShopScreen implements Screen {
             boolean canAfford = ShopManager.getPlayerCoins() >= item.getPrice();
             buyBtn.setColor(canAfford ? Color.WHITE : Color.DARK_GRAY);
 
-            // === 修复：始终添加监听器，余额不足时给出反馈 ===
+            // === Fix: always add listener; provide feedback if balance is insufficient ===
             final ShopItem itemToBuy = item;
             final int itemPrice = item.getPrice();
             buyBtn.addListener(new ChangeListener() {
@@ -235,7 +236,7 @@ public class ShopScreen implements Screen {
                             refreshUI();
                         }
                     } else {
-                        // 余额不足反馈
+                        // Insufficient funds feedback
                         AudioManager.getInstance().playSound("select");
                         showInsufficientFundsDialog(itemPrice, currentCoins);
                     }
@@ -255,7 +256,7 @@ public class ShopScreen implements Screen {
     }
 
     /**
-     * 显示余额不足提示对话框
+     * Displays a dialog indicating insufficient funds.
      */
     private void showInsufficientFundsDialog(int itemPrice, int currentCoins) {
         DialogFactory.showInsufficientFundsDialog(stage, skin, itemPrice, currentCoins);
@@ -265,7 +266,7 @@ public class ShopScreen implements Screen {
     public void show() {
         GameLogger.info("ShopScreen", "Showing Shop Screen");
         Gdx.input.setInputProcessor(stage);
-        // 🔊 全局按钮音效
+        // 🔊 Global button sound effect
         de.tum.cit.fop.maze.utils.UIUtils.enableMenuButtonSound(stage);
         // Initial scroll focus
         if (scrollPane != null) {
@@ -282,23 +283,23 @@ public class ShopScreen implements Screen {
         if (backgroundTexture != null) {
             SpriteBatch batch = game.getSpriteBatch();
 
-            // 获取实际屏幕尺寸 - 使用 backbuffer 尺寸以确保正确
+            // Get actual screen size - use backbuffer size to ensure correctness
             int screenWidth = Gdx.graphics.getBackBufferWidth();
             int screenHeight = Gdx.graphics.getBackBufferHeight();
 
-            // 重置 GL Viewport 到整个屏幕
+            // Reset GL Viewport to entire screen
             Gdx.gl.glViewport(0, 0, screenWidth, screenHeight);
 
-            // 设置投影矩阵到屏幕像素坐标系
+            // Set projection matrix to screen pixel coordinate system
             batch.getProjectionMatrix().setToOrtho2D(0, 0, screenWidth, screenHeight);
             batch.begin();
             batch.setColor(0.4f, 0.4f, 0.4f, 1f); // Dim
 
-            // 背景图片原始尺寸
+            // Background image original size
             float texWidth = backgroundTexture.getWidth();
             float texHeight = backgroundTexture.getHeight();
 
-            // 计算Cover模式的缩放比例
+            // Calculate scale ratio for Cover mode
             float screenRatio = (float) screenWidth / screenHeight;
             float textureRatio = texWidth / texHeight;
 
@@ -306,16 +307,16 @@ public class ShopScreen implements Screen {
             float drawX, drawY;
 
             if (screenRatio > textureRatio) {
-                // 屏幕更宽，以宽度为准，高度可能超出
+                // Screen is wider, base on width, height may overflow
                 drawWidth = screenWidth;
                 drawHeight = screenWidth / textureRatio;
                 drawX = 0;
-                drawY = (screenHeight - drawHeight) / 2; // 垂直居中
+                drawY = (screenHeight - drawHeight) / 2; // Vertical center
             } else {
-                // 屏幕更高，以高度为准，宽度可能超出
+                // Screen is taller, base on height, width may overflow
                 drawHeight = screenHeight;
                 drawWidth = screenHeight * textureRatio;
-                drawX = (screenWidth - drawWidth) / 2; // 水平居中
+                drawX = (screenWidth - drawWidth) / 2; // Horizontal center
                 drawY = 0;
             }
 
@@ -324,7 +325,7 @@ public class ShopScreen implements Screen {
             batch.end();
         }
 
-        // 恢复 Stage 的 Viewport（这会重新设置正确的 glViewport）
+        // Restore Stage's Viewport (this will reset the correct glViewport)
         stage.getViewport().apply();
         stage.act(delta);
         stage.draw();
@@ -345,32 +346,32 @@ public class ShopScreen implements Screen {
 
     @Override
     public void hide() {
-        // 离开商店时，同步购买信息到当前存档文件
+        // Sync purchase info to current save file when leaving shop
         syncPurchasesToSaveFile();
     }
 
     /**
-     * 将当前购买状态同步到存档文件
+     * Syncs current purchase status to save file.
      */
     private void syncPurchasesToSaveFile() {
         String saveFilePath = game.getCurrentSaveFilePath();
         if (saveFilePath == null) {
-            // 尝试使用默认存档
+            // Try using default save
             saveFilePath = "auto_save_victory";
         }
 
-        // 加载现有存档
+        // Load existing save
         de.tum.cit.fop.maze.model.GameState state = de.tum.cit.fop.maze.utils.SaveManager.loadGame(saveFilePath);
         if (state == null) {
-            // 如果没有存档，创建一个新的最小存档
+            // If no save exists, create a new minimal save
             state = new de.tum.cit.fop.maze.model.GameState();
         }
 
-        // 更新金币和购买信息
+        // Update coins and purchase info
         state.setCoins(ShopManager.getPlayerCoins());
         state.setPurchasedItemIds(ShopManager.getPurchasedItemIds());
 
-        // 保存回文件
+        // Save back to file
         de.tum.cit.fop.maze.utils.SaveManager.saveGame(state, saveFilePath);
         GameLogger.info("ShopScreen", "Synced purchases to save file: " + saveFilePath);
     }

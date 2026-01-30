@@ -24,8 +24,9 @@ import java.util.*;
 
 /**
  * GameWorld (Model/Logic Layer)
- * 负责管理游戏所有的实体状态、碰撞检测、AI 更新等核心逻辑。
- * 与渲染 (View) 分离，便于测试和维护。
+ * Responsible for managing all game entity states, collision detection, AI
+ * updates, etc.
+ * Separated from rendering (View) for easier testing and maintenance.
  */
 public class GameWorld {
 
@@ -50,14 +51,14 @@ public class GameWorld {
     private Vector2 aimDirection = new Vector2(0, -1); // Default Down to match playerDirection
 
     // === Mouse Aiming System ===
-    private float aimAngle = 270f; // 瞄准角度 (度数, 0=右, 90=上, 180=左, 270=下)
-    private Vector2 mouseWorldPos = new Vector2(); // 鼠标世界坐标
-    private static final float UNIT_SCALE = 16f; // 世界坐标缩放系数
+    private float aimAngle = 270f; // Aim angle (degrees, 0=Right, 90=Up, 180=Left, 270=Down)
+    private Vector2 mouseWorldPos = new Vector2(); // Mouse world position
+    private static final float UNIT_SCALE = 16f; // World coordinate scale factor
 
     // === Fire Event (for particle effects) ===
-    private float lastFireX, lastFireY; // 上次开火位置
-    private float lastFireDirX, lastFireDirY; // 上次开火方向
-    private boolean fireEventTriggered = false; // 开火事件标志
+    private float lastFireX, lastFireY; // Last fire position
+    private float lastFireDirX, lastFireDirY; // Last fire direction
+    private boolean fireEventTriggered = false; // Fire event flag
 
     // === Achievement Tracking ===
     private boolean playerTookDamage = false; // For flawless victory
@@ -75,9 +76,12 @@ public class GameWorld {
 
         void onVictory(String currentMapPath);
 
-        /** 当玩家接触谜题宝箱时调用，需要暂停游戏并显示谜题UI */
+        /**
+         * Called when player interacts with a puzzle chest, needs to pause game and
+         * show puzzle UI
+         */
         default void onPuzzleChestInteract(TreasureChest chest) {
-            // 默认实现：直接打开（向后兼容）
+            // Default implementation: open directly (backward compatible)
         }
     }
 
@@ -99,11 +103,13 @@ public class GameWorld {
         this.collisionManager = new CollisionManager(gameMap);
         this.player = new Player(gameMap.getPlayerStartX(), gameMap.getPlayerStartY());
 
-        // 只有在新游戏开始时（从 LoadoutScreen 进入）才使用 LoadoutManager 的武器选择
-        // 继续下一关时武器会从存档恢复（在 GameScreen 中处理）
+        // Only use LoadoutManager weapon selection when starting a new game (entering
+        // from LoadoutScreen)
+        // Weapons are restored from save when continuing to next level (handled in
+        // GameScreen)
         de.tum.cit.fop.maze.shop.LoadoutManager loadoutManager = de.tum.cit.fop.maze.shop.LoadoutManager.getInstance();
         if (loadoutManager.consumeFreshStart()) {
-            // 新游戏开始，使用 LoadoutManager 的武器选择
+            // New game start, use LoadoutManager weapon selection
             java.util.List<String> selectedWeapons = loadoutManager.getSelectedWeaponIds();
             for (String itemId : selectedWeapons) {
                 switch (itemId) {
@@ -130,7 +136,7 @@ public class GameWorld {
                 }
             }
         }
-        // 非 freshStart 时，武器会在 GameScreen 中从存档恢复
+        // When not freshStart, weapons are restored from save in GameScreen
         this.enemies = new ArrayList<>();
         this.mobileTraps = new ArrayList<>();
         this.floatingTexts = new ArrayList<>();
@@ -142,7 +148,7 @@ public class GameWorld {
             if (obj instanceof Enemy) {
                 // DISABLED: Do not load hardcoded enemies from map (User Request)
                 // Enemy enemy = (Enemy) obj;
-                // // 统一使用第一关的怪物素材 (BOAR)
+                // // Uniformly use level 1 monster assets (BOAR)
                 // enemy.setEnemyType(Enemy.EnemyType.BOAR);
                 // enemies.add(enemy);
             } else if (obj instanceof MobileTrap)
@@ -392,7 +398,7 @@ public class GameWorld {
 
         if (Gdx.input.isKeyPressed(GameSettings.KEY_LEFT)) {
             inputX -= 1;
-            // 非鼠标模式时，根据键盘输入更新朝向
+            // When not in mouse mode, update facing based on keyboard input
             if (!GameSettings.isUseMouseAiming()) {
                 playerDirection = 2;
             }
@@ -423,7 +429,7 @@ public class GameWorld {
             inputY /= length;
         }
 
-        // 非鼠标模式时，根据键盘输入更新瞄准方向
+        // When not in mouse mode, update aim direction based on keyboard input
         if (!GameSettings.isUseMouseAiming() && (inputX != 0 || inputY != 0)) {
             aimDirection.set(inputX, inputY).nor();
         }
@@ -478,12 +484,13 @@ public class GameWorld {
         // Step 6: Apply velocity to position with collision detection
         applyPhysicsMovement(delta);
 
-        // Step 7: 非鼠标模式时根据移动速度更新朝向
+        // Step 7: Update facing based on movement speed when not in mouse mode
         if (!GameSettings.isUseMouseAiming() && player.isMoving()) {
             updateDirectionFromVelocity();
         }
 
-        // Attack (每次按下攻击键触发一次攻击，与无尽模式一致)
+        // Attack (trigger one attack per attack key press, consistent with endless
+        // mode)
         if (Gdx.input.isKeyJustPressed(GameSettings.KEY_ATTACK)) {
             handleAttack();
         }
@@ -541,7 +548,7 @@ public class GameWorld {
      * This ensures the player always rests on a tile center, not between tiles.
      */
     private void snapPlayerToGrid(float delta) {
-        // 使用Player类中的统一实现，传入碰撞检测回调
+        // Use unified implementation in Player class, pass collision detection callback
         player.snapToGrid(delta, this::canMoveToPosition);
     }
 
@@ -623,18 +630,19 @@ public class GameWorld {
             }
 
             // Logic moved from GameScreen (Melee)
-            // === 新攻击范围逻辑 (New Attack Range Logic) ===
-            // 整个攻击范围内都使用武器的攻击扇形进行角度判定
+            // === New Attack Range Logic ===
+            // Use weapon attack arc for angle judgment within entire attack range
             float attackRange = currentWeapon.getRange();
-            float outerRadius = attackRange * 1.2f; // 攻击范围
-            float outerRadiusSq = outerRadius * outerRadius; // 用于快速预过滤
+            float outerRadius = attackRange * 1.2f; // Attack range
+            float outerRadiusSq = outerRadius * outerRadius; // For fast pre-filtering
             Iterator<Enemy> iter = enemies.iterator();
             while (iter.hasNext()) {
                 Enemy e = iter.next();
                 if (e.isDead())
                     continue;
 
-                // 快速预过滤：用平方距离跳过明显远的敌人 (使用外半径)
+                // Fast pre-filter: skip obviously distant enemies using squared distance (using
+                // outer radius)
                 float dx = e.getX() - player.getX();
                 float dy = e.getY() - player.getY();
                 if (dx * dx + dy * dy > outerRadiusSq)
@@ -642,20 +650,20 @@ public class GameWorld {
 
                 float dist = (float) Math.sqrt(dx * dx + dy * dy);
 
-                // === 新判定逻辑：阶梯式攻击范围 ===
-                // 正前方 ±45度 (90度): 全射程
-                // 侧面 ±45~±110度: 半射程
-                // 背后 ±110度以外: 无法攻击
+                // === New Judgment Logic: Stepped Attack Range ===
+                // Front ±45 degrees (90 degrees): Full range
+                // Side ±45~±110 degrees: Half range
+                // Behind ±110 degrees: Cannot attack
                 boolean canHit = false;
 
-                // 计算敌人相对于玩家的角度
+                // Calculate enemy angle relative to player
                 float enemyAngle = MathUtils.atan2(dy, dx) * MathUtils.radDeg;
                 if (enemyAngle < 0)
                     enemyAngle += 360;
 
-                // 获取攻击角度
+                // Get attack angle
                 float attackAngle;
-                float coneHalfAngle = currentWeapon.getAttackArc(); // 总半角 (如 Iron Sword = 110°)
+                float coneHalfAngle = currentWeapon.getAttackArc(); // Total half angle (e.g., Iron Sword = 110°)
                 if (GameSettings.isUseMouseAiming()) {
                     attackAngle = aimAngle;
                 } else {
@@ -672,13 +680,13 @@ public class GameWorld {
                     angleDiff += 360;
                 float absAngleDiff = Math.abs(angleDiff);
 
-                // 阶梯式范围判定
-                float frontHalfAngle = 45f; // 正前方区域半角
+                // Stepped range judgment
+                float frontHalfAngle = 45f; // Front area half angle
                 if (absAngleDiff <= frontHalfAngle) {
-                    // 正前方 ±45度: 全射程
+                    // Front ±45 degrees: Full range
                     canHit = dist < outerRadius;
                 } else if (absAngleDiff <= coneHalfAngle) {
-                    // 侧面 (45~110度): 半射程
+                    // Side (45~110 degrees): Half range
                     float halfRadius = outerRadius * 0.5f;
                     canHit = dist < halfRadius;
                 }
@@ -806,33 +814,33 @@ public class GameWorld {
     }
 
     /**
-     * 更新宝箱交互检测
+     * Update Chest Interaction Detection.
      * 
-     * 当玩家靠近未打开的宝箱时，触发交互：
-     * - 普通宝箱：直接打开并领取奖励
-     * - 谜题宝箱：通知监听器显示谜题UI（暂停游戏）
+     * When player is near an unopened chest, trigger interaction:
+     * - Normal Chest: Open directly and claim reward
+     * - Puzzle Chest: Notify listener to show puzzle UI (pause game)
      */
     private void updateChests(float delta) {
-        // 更新所有宝箱的动画状态
+        // Update all chest animation states
         for (TreasureChest chest : gameMap.getTreasureChests()) {
             chest.update(delta);
         }
 
-        // 检查玩家与宝箱的交互
+        // Check player-chest interaction
         for (TreasureChest chest : gameMap.getTreasureChests()) {
             if (chest.isInteracted())
-                continue; // 已交互过
+                continue; // Already interacted
 
-            // 检查玩家是否靠近宝箱
+            // Check if player is near chest
             float dx = player.getX() - chest.getX();
             float dy = player.getY() - chest.getY();
             float dist = (float) Math.sqrt(dx * dx + dy * dy);
 
-            if (dist < 1.0f) { // 交互半径 (slightly reduced for tighter feel)
-                // 直接打开所有宝箱（移除谜题机制）
+            if (dist < 1.0f) { // Interaction radius (slightly reduced for tighter feel)
+                // Open all chests directly (removed puzzle mechanism)
                 chest.startOpening();
 
-                // 领取奖励
+                // Claim reward
                 boolean success = chest.claimReward(player);
                 if (success && chest.getReward() != null) {
                     floatingTexts.add(new FloatingText(
@@ -841,7 +849,7 @@ public class GameWorld {
                     AudioManager.getInstance().playSound("collect");
                 }
 
-                // 可选：如果要保留 notify，可以只用于统计或成就
+                // Optional: if want to keep notify, can be used only for stats or achievements
                 if (listener != null) {
                     listener.onPuzzleChestInteract(chest);
                 }
@@ -878,7 +886,7 @@ public class GameWorld {
     }
 
     private void movePlayer(float deltaX, float deltaY) {
-        // NoClip模式：直接移动，忽略碰撞
+        // NoClip Mode: move directly, ignore collisions
         if (player.isNoClip()) {
             player.move(deltaX, deltaY);
             return;
@@ -993,20 +1001,21 @@ public class GameWorld {
     }
 
     /**
-     * 获取瞄准角度 (度数) - 仅限鼠标模式
+     * Gets aim angle (degrees) - Mouse mode only.
      * 
-     * @return 0=右, 90=上, 180=左, 270=下
+     * @return 0=right, 90=up, 180=left, 270=down
      */
     public float getAimAngle() {
         return aimAngle;
     }
 
     /**
-     * 获取当前攻击角度 (度数) - 根据模式自动选择
-     * 鼠标模式: 返回 aimAngle (鼠标方向)
-     * 键盘模式: 返回基于 aimDirection 向量的8向角度
+     * Gets current attack angle (degrees) - automatically chosen based on mode.
+     * Mouse mode: returns aimAngle (mouse direction).
+     * Keyboard mode: returns 8-way angle based on aimDirection vector.
      * 
-     * @return 0=右, 45=右上, 90=上, 135=左上, 180=左, 225=左下, 270=下, 315=右下
+     * @return 0=right, 45=up-right, 90=up, 135=up-left, 180=left, 225=down-left,
+     *         270=down, 315=down-right
      */
     public float getAttackAngle() {
         if (GameSettings.isUseMouseAiming()) {
@@ -1021,14 +1030,14 @@ public class GameWorld {
     }
 
     /**
-     * 获取鼠标世界坐标
+     * Gets mouse world coordinates.
      */
     public Vector2 getMouseWorldPos() {
         return mouseWorldPos;
     }
 
     /**
-     * 检查是否有开火事件需要处理（用于粒子效果）
+     * Checks if there's a fire event to consume (used for particle effects).
      */
     public boolean consumeFireEvent() {
         if (fireEventTriggered) {
@@ -1039,80 +1048,80 @@ public class GameWorld {
     }
 
     /**
-     * 获取上次开火位置 X
+     * Gets last fire position X.
      */
     public float getLastFireX() {
         return lastFireX;
     }
 
     /**
-     * 获取上次开火位置 Y
+     * Gets last fire position Y.
      */
     public float getLastFireY() {
         return lastFireY;
     }
 
     /**
-     * 获取上次开火方向 X
+     * Gets last fire direction X.
      */
     public float getLastFireDirX() {
         return lastFireDirX;
     }
 
     /**
-     * 获取上次开火方向 Y
+     * Gets last fire direction Y.
      */
     public float getLastFireDirY() {
         return lastFireDirY;
     }
 
     /**
-     * 更新鼠标瞄准方向
-     * 应在每帧渲染循环中调用
+     * Updates mouse aim direction.
+     * Should be called in every frame's render loop.
      * 
-     * @param camera 游戏相机
+     * @param camera Game camera
      */
     public void updateMouseAim(Camera camera) {
-        // 获取鼠标屏幕坐标
+        // Get mouse screen coordinates
         float screenX = Gdx.input.getX();
         float screenY = Gdx.input.getY();
 
-        // 转换为世界坐标
+        // Convert to world coordinates
         Vector3 worldCoords = camera.unproject(new Vector3(screenX, screenY, 0));
         mouseWorldPos.set(worldCoords.x / UNIT_SCALE, worldCoords.y / UNIT_SCALE);
 
-        // 计算玩家中心到鼠标的角度
+        // Calculate angle from player center to mouse
         float playerCenterX = player.getX() + 0.5f;
         float playerCenterY = player.getY() + 0.5f;
 
         float dx = mouseWorldPos.x - playerCenterX;
         float dy = mouseWorldPos.y - playerCenterY;
 
-        // 计算角度 (弧度转度数)
+        // Calculate angle (radians to degrees)
         aimAngle = MathUtils.atan2(dy, dx) * MathUtils.radDeg;
         if (aimAngle < 0)
             aimAngle += 360;
 
-        // 更新 aimDirection 向量
+        // Update aimDirection vector
         aimDirection.set(dx, dy).nor();
 
-        // 更新 playerDirection (用于动画选择)
-        // 将360度分成4个方向区间
+        // Update playerDirection (for animation selection)
+        // Divide 360 degrees into 4 direction sectors
         if (aimAngle >= 315 || aimAngle < 45) {
-            playerDirection = 3; // 右
+            playerDirection = 3; // Right
         } else if (aimAngle >= 45 && aimAngle < 135) {
-            playerDirection = 1; // 上
+            playerDirection = 1; // Up
         } else if (aimAngle >= 135 && aimAngle < 225) {
-            playerDirection = 2; // 左
+            playerDirection = 2; // Left
         } else {
-            playerDirection = 0; // 下
+            playerDirection = 0; // Down
         }
     }
 
     /**
-     * 触发攻击 (供鼠标点击调用)
+     * Trigger attack (called by mouse click).
      * 
-     * @return true 如果攻击成功触发
+     * @return true if attack successfully triggered
      */
     public boolean triggerAttack() {
         if (player.isDead())
@@ -1354,7 +1363,8 @@ public class GameWorld {
     }
 
     /**
-     * 增加本关收集的金币数量（用于开发者控制台等外部来源）
+     * Increases collected coins this level (used by developer console or external
+     * sources).
      */
     public void addCoinsCollected(int amount) {
         this.coinsCollected += amount;
@@ -1402,10 +1412,10 @@ public class GameWorld {
     // ==================== Developer Console Support ====================
 
     /**
-     * 生成敌人 (供开发者控制台使用)
+     * Spawns an enemy (for developer console).
      * 
-     * @param x 生成位置 X
-     * @param y 生成位置 Y
+     * @param x Spawn position X
+     * @param y Spawn position Y
      */
     public void spawnEnemy(float x, float y) {
         Enemy newEnemy = new Enemy(x, y);
@@ -1414,9 +1424,9 @@ public class GameWorld {
     }
 
     /**
-     * 杀死所有敌人 (供开发者控制台使用)
+     * Kills all enemies (for developer console).
      * 
-     * @return 杀死的敌人数量
+     * @return Number of enemies killed
      */
     public int killAllEnemies() {
         int count = 0;
@@ -1431,12 +1441,12 @@ public class GameWorld {
     }
 
     /**
-     * 杀死指定范围内的敌人 (供开发者控制台使用)
+     * Kills enemies within a specified range (for developer console).
      * 
-     * @param centerX 中心点 X
-     * @param centerY 中心点 Y
-     * @param radius  杀伤半径
-     * @return 杀死的敌人数量
+     * @param centerX Center point X
+     * @param centerY Center point Y
+     * @param radius  Kill radius
+     * @return Number of enemies killed
      */
     public int killEnemiesNear(float centerX, float centerY, float radius) {
         int count = 0;
@@ -1493,17 +1503,17 @@ public class GameWorld {
         projectiles.add(p);
         AudioManager.getInstance().playSound("spell_shoot");
 
-        // === Machine Gun 后坐力效果 ===
-        // 对 Machine Gun 和其他法杖类武器应用后坐力
+        // === Machine Gun Recoil Effect ===
+        // Apply recoil to Machine Gun and other staff weapons
         if (weapon.getName().contains("Gun") || weapon.getName().contains("Staff")
                 || weapon.getName().contains("staff")) {
-            float recoilStrength = 8.0f; // 后坐力强度 (增强)
-            // 向反方向施加速度脉冲
+            float recoilStrength = 8.0f; // Recoil strength (enhanced)
+            // Apply velocity pulse in opposite direction
             float recoilVx = -aimDirection.x * recoilStrength;
             float recoilVy = -aimDirection.y * recoilStrength;
             player.addVelocity(recoilVx, recoilVy);
 
-            // 记录开火事件，供粒子系统使用
+            // Record fire event for particle system use
             lastFireX = startX;
             lastFireY = startY;
             lastFireDirX = aimDirection.x;

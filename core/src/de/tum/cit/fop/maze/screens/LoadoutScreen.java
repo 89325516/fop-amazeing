@@ -4,6 +4,8 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.Pixmap;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -21,9 +23,10 @@ import de.tum.cit.fop.maze.shop.ShopItem;
 import java.util.List;
 
 /**
- * 装备选择界面 (Loadout Screen)
+ * Loadout Screen.
  * 
- * 在进入关卡前显示，允许玩家从已购买的武器中选择最多4个带入关卡。
+ * Displayed before entering a level, allowing the player to select up to 4
+ * purchased weapons to take into the level.
  */
 public class LoadoutScreen implements Screen {
 
@@ -35,6 +38,7 @@ public class LoadoutScreen implements Screen {
     private Table loadoutSlotsTable;
     private LoadoutManager loadoutManager;
     private Label slotsLabel;
+    private Texture backgroundTexture;
 
     public LoadoutScreen(MazeRunnerGame game, int targetLevel) {
         this.game = game;
@@ -48,28 +52,42 @@ public class LoadoutScreen implements Screen {
         Gdx.input.setInputProcessor(stage);
         skin = game.getSkin();
 
+        loadBackground();
         buildUI();
     }
 
+    private void loadBackground() {
+        try {
+            backgroundTexture = new Texture(Gdx.files.internal("images/backgrounds/armor_select_bg.png"));
+        } catch (Exception e) {
+            Gdx.app.error("LoadoutScreen", "Failed to load background, using fallback", e);
+            Pixmap pm = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
+            pm.setColor(0.05f, 0.05f, 0.1f, 1f);
+            pm.fill();
+            backgroundTexture = new Texture(pm);
+            pm.dispose();
+        }
+    }
+
     private void buildUI() {
-        // 主容器
+        // Main container
         Table root = new Table();
         root.setFillParent(true);
         stage.addActor(root);
 
-        // 标题
+        // Title
         Label titleLabel = new Label("SELECT YOUR LOADOUT", skin, "title");
         titleLabel.setColor(Color.GOLD);
         root.add(titleLabel).padTop(30).padBottom(20).colspan(2);
         root.row();
 
-        // 提示文字
+        // Tip text
         slotsLabel = new Label("", skin);
         updateSlotsLabel();
         root.add(slotsLabel).padBottom(20).colspan(2);
         root.row();
 
-        // 左侧：已购买武器
+        // Left side: Purchased weapons
         Table leftPanel = new Table();
         leftPanel.setBackground(skin.newDrawable("white", new Color(0.1f, 0.1f, 0.15f, 0.9f)));
         leftPanel.pad(20);
@@ -86,7 +104,7 @@ public class LoadoutScreen implements Screen {
 
         root.add(leftPanel).pad(20).top();
 
-        // 右侧：当前装备
+        // Right side: Current loadout
         Table rightPanel = new Table();
         rightPanel.setBackground(skin.newDrawable("white", new Color(0.15f, 0.1f, 0.1f, 0.9f)));
         rightPanel.pad(20);
@@ -104,7 +122,7 @@ public class LoadoutScreen implements Screen {
         root.add(rightPanel).pad(20).top();
         root.row();
 
-        // 底部按钮
+        // Footer buttons
         Table buttonRow = new Table();
 
         TextButton backButton = new TextButton("Back", skin);
@@ -114,7 +132,7 @@ public class LoadoutScreen implements Screen {
                 game.setScreen(new LevelSelectScreen(game));
             }
         });
-        buttonRow.add(backButton).width(150).height(50).pad(10);
+        buttonRow.add(backButton).width(180).height(50).pad(10);
 
         TextButton clearButton = new TextButton("Clear All", skin);
         clearButton.addListener(new ChangeListener() {
@@ -124,7 +142,7 @@ public class LoadoutScreen implements Screen {
                 refreshUI();
             }
         });
-        buttonRow.add(clearButton).width(150).height(50).pad(10);
+        buttonRow.add(clearButton).width(180).height(50).pad(10);
 
         TextButton confirmButton = new TextButton("START MISSION", skin);
         confirmButton.getLabel().setColor(Color.GREEN);
@@ -134,7 +152,7 @@ public class LoadoutScreen implements Screen {
                 startGame();
             }
         });
-        buttonRow.add(confirmButton).width(200).height(50).pad(10);
+        buttonRow.add(confirmButton).width(280).height(50).pad(10);
 
         root.add(buttonRow).colspan(2).padTop(20).padBottom(30);
     }
@@ -170,7 +188,7 @@ public class LoadoutScreen implements Screen {
         List<String> selectedIds = loadoutManager.getSelectedWeaponIds();
         int maxSlots = loadoutManager.getMaxLoadoutSize();
 
-        // === 第一槽位：Iron Sword（初始武器，不可移除） ===
+        // === First Slot: Iron Sword (Starting weapon, non-removable) ===
         Table swordRow = new Table();
         swordRow.setBackground(skin.newDrawable("white", new Color(0.15f, 0.25f, 0.15f, 0.9f)));
         swordRow.pad(10);
@@ -178,9 +196,10 @@ public class LoadoutScreen implements Screen {
         Label swordIcon = new Label("⚔", skin);
         swordRow.add(swordIcon).width(50).padRight(10);
 
-        Label swordName = new Label("Iron Sword (Default)", skin);
+        Label swordName = new Label("Iron Sword\n(Default)", skin);
         swordName.setColor(Color.LIGHT_GRAY);
-        swordRow.add(swordName).expandX().left();
+        swordName.setWrap(true);
+        swordRow.add(swordName).width(180).left().padRight(10);
 
         Label lockedLabel = new Label("🔒", skin);
         lockedLabel.setColor(Color.GRAY);
@@ -189,9 +208,9 @@ public class LoadoutScreen implements Screen {
         loadoutSlotsTable.add(swordRow).fillX().expandX().padBottom(8);
         loadoutSlotsTable.row();
 
-        // 显示已选武器（不包括 Iron Sword，因为它是固定的）
+        // Show selected weapons (excluding Iron Sword as it's fixed)
         for (String weaponId : selectedIds) {
-            // 获取武器信息
+            // Get weapon info
             ShopItem item = getShopItemById(weaponId);
             if (item != null) {
                 Table weaponRow = createWeaponRow(item, false);
@@ -200,7 +219,7 @@ public class LoadoutScreen implements Screen {
             }
         }
 
-        // 显示空槽位（-1 是因为 Iron Sword 占用了第一个槽位）
+        // Show empty slots (-1 because Iron Sword occupies the first slot)
         int usedSlots = 1 + selectedIds.size(); // Iron Sword + selected weapons
         int emptySlots = maxSlots - usedSlots;
         for (int i = 0; i < emptySlots; i++) {
@@ -220,13 +239,13 @@ public class LoadoutScreen implements Screen {
 
         boolean isSelected = loadoutManager.isWeaponSelected(weapon.getId());
         if (isAvailable && isSelected) {
-            bgColor = new Color(0.3f, 0.3f, 0.15f, 0.8f); // 已选中的显示黄色调
+            bgColor = new Color(0.3f, 0.3f, 0.15f, 0.8f); // Selected shows yellow tint
         }
 
         row.setBackground(skin.newDrawable("white", bgColor));
         row.pad(10);
 
-        // 武器图标
+        // Weapon icon
         Table iconCell = new Table();
         try {
             Animation<TextureRegion> idleAnim = CustomElementManager.getInstance()
@@ -246,12 +265,13 @@ public class LoadoutScreen implements Screen {
         }
         row.add(iconCell).width(50).padRight(10);
 
-        // 武器名称
+        // Weapon name - with wrap enabled and max width
         Label nameLabel = new Label(weapon.getName(), skin);
         nameLabel.setColor(isSelected ? Color.YELLOW : Color.WHITE);
-        row.add(nameLabel).expandX().left();
+        nameLabel.setWrap(true);
+        row.add(nameLabel).width(180).left().padRight(10);
 
-        // 操作按钮
+        // Action buttons
         if (isAvailable) {
             if (isSelected) {
                 Label selectedLabel = new Label("✓", skin);
@@ -270,7 +290,7 @@ public class LoadoutScreen implements Screen {
                 row.add(addBtn).width(40).height(40);
             }
         } else {
-            // 在装备栏中 - 显示移除按钮
+            // In loadout bar - show remove button
             TextButton removeBtn = new TextButton("×", skin);
             removeBtn.getLabel().setColor(Color.RED);
             removeBtn.addListener(new ClickListener() {
@@ -306,7 +326,7 @@ public class LoadoutScreen implements Screen {
     private void updateSlotsLabel() {
         int selectedCount = loadoutManager.getSelectedWeaponIds().size();
         int max = loadoutManager.getMaxLoadoutSize();
-        // +1 是因为 Iron Sword 始终占用第一个槽位
+        // +1 because Iron Sword always occupies the first slot
         int totalEquipped = 1 + selectedCount;
         slotsLabel.setText("Equipped: " + totalEquipped + " / " + max + " weapons");
 
@@ -318,7 +338,7 @@ public class LoadoutScreen implements Screen {
     }
 
     private void startGame() {
-        // 标记这是新游戏开始，应该使用 LoadoutManager 的武器选择
+        // Mark this as a fresh start, should use LoadoutManager's weapon selection
         loadoutManager.setFreshStart(true);
         String path = "maps/level-" + targetLevel + ".properties";
         game.setScreen(new LoadingScreen(game, path));
@@ -329,6 +349,46 @@ public class LoadoutScreen implements Screen {
         Gdx.gl.glClearColor(0.05f, 0.05f, 0.1f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
+        // Draw background image using Cover mode
+        if (backgroundTexture != null) {
+            com.badlogic.gdx.graphics.g2d.SpriteBatch batch = game.getSpriteBatch();
+
+            int screenWidth = Gdx.graphics.getBackBufferWidth();
+            int screenHeight = Gdx.graphics.getBackBufferHeight();
+
+            Gdx.gl.glViewport(0, 0, screenWidth, screenHeight);
+
+            batch.getProjectionMatrix().setToOrtho2D(0, 0, screenWidth, screenHeight);
+            batch.begin();
+            batch.setColor(0.7f, 0.7f, 0.7f, 1f); // Slightly dimmed
+
+            float texWidth = backgroundTexture.getWidth();
+            float texHeight = backgroundTexture.getHeight();
+
+            float screenRatio = (float) screenWidth / screenHeight;
+            float textureRatio = texWidth / texHeight;
+
+            float drawWidth, drawHeight;
+            float drawX, drawY;
+
+            if (screenRatio > textureRatio) {
+                drawWidth = screenWidth;
+                drawHeight = screenWidth / textureRatio;
+                drawX = 0;
+                drawY = (screenHeight - drawHeight) / 2;
+            } else {
+                drawHeight = screenHeight;
+                drawWidth = screenHeight * textureRatio;
+                drawX = (screenWidth - drawWidth) / 2;
+                drawY = 0;
+            }
+
+            batch.draw(backgroundTexture, drawX, drawY, drawWidth, drawHeight);
+            batch.setColor(Color.WHITE);
+            batch.end();
+        }
+
+        stage.getViewport().apply();
         stage.act(delta);
         stage.draw();
     }
@@ -354,5 +414,7 @@ public class LoadoutScreen implements Screen {
     public void dispose() {
         if (stage != null)
             stage.dispose();
+        if (backgroundTexture != null)
+            backgroundTexture.dispose();
     }
 }

@@ -1,9 +1,10 @@
 package de.tum.cit.fop.maze.utils;
 
 /**
- * Achievement Unlock Info - 成就解锁信息
+ * Achievement Unlock Info
  * 
- * 封装解锁成就的完整信息，用于 UI 显示
+ * Encapsulates full information for an unlocked achievement, used for UI
+ * display.
  */
 public class AchievementUnlockInfo {
     private final String name;

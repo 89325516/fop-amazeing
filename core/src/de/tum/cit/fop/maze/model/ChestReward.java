@@ -4,107 +4,107 @@ import de.tum.cit.fop.maze.model.weapons.Weapon;
 import de.tum.cit.fop.maze.utils.GameLogger;
 
 /**
- * 宝箱奖励封装类 (Chest Reward)
+ * Chest Reward wrapper class.
  * 
- * 封装宝箱打开后获得的各种奖励。
- * 支持关卡模式和无尽模式的不同奖励类型。
+ * Encapsulates various rewards obtained after opening a chest.
+ * Supports different reward types for both Level Mode and Endless Mode.
  */
 public class ChestReward {
 
     /**
-     * 奖励类型枚举
+     * Reward type enumeration
      */
     public enum RewardType {
-        // 关卡模式奖励 (Level Mode Rewards)
-        WEAPON, // 武器
-        COIN, // 金币
-        HEALTH, // 生命恢复
-        INVINCIBILITY, // 无敌状态
+        // Level Mode Rewards
+        WEAPON, // Weapon
+        COIN, // Gold
+        HEALTH, // Health Recovery
+        INVINCIBILITY, // Invincibility state
 
-        // 无尽模式奖励 (Endless Mode Rewards)
-        MEDKIT, // 急救包 (+1 生命)
-        SPEED_BUFF, // 极速 (移速+50%)
-        RAGE_BUFF, // 狂暴 (攻击冷却减半)
-        SHIELD_BUFF, // 护盾 (抵挡一次伤害)
-        EMP // 电磁脉冲 (全屏清场)
+        // Endless Mode Rewards
+        MEDKIT, // Medkit (+1 Life)
+        SPEED_BUFF, // Speed (MoveSpeed +50%)
+        RAGE_BUFF, // Rage (Attack cooldown halved)
+        SHIELD_BUFF, // Shield (Blocks one damage instance)
+        EMP // Electromagnetic Pulse (Full-screen clear)
     }
 
     private final RewardType type;
-    private final int value; // 数值：金币数量、生命恢复量、Buff持续时间(秒)等
-    private final Object payload; // 载荷：武器对象等
+    private final int value; // Value: gold amount, health recovery, buff duration (seconds), etc.
+    private final Object payload; // Payload: weapon object, etc.
 
-    // ========== 静态工厂方法 ==========
+    // ========== Static Factory Methods ==========
 
     /**
-     * 创建武器奖励
+     * Creates a weapon reward.
      */
     public static ChestReward weapon(Weapon weapon) {
         return new ChestReward(RewardType.WEAPON, 0, weapon);
     }
 
     /**
-     * 创建金币奖励 (Gold Reward)
+     * Creates a gold reward.
      */
     public static ChestReward gold(int amount) {
         return new ChestReward(RewardType.COIN, amount, null);
     }
 
     /**
-     * 创建生命恢复奖励
+     * Creates a health recovery reward.
      */
     public static ChestReward health(int amount) {
         return new ChestReward(RewardType.HEALTH, amount, null);
     }
 
     /**
-     * 创建无敌奖励
-     * 
-     * @param durationSeconds 无敌持续时间（秒）
+     * Creates an invincibility reward.
+     *
+     * @param durationSeconds Invincibility duration (seconds)
      */
     public static ChestReward invincibility(int durationSeconds) {
         return new ChestReward(RewardType.INVINCIBILITY, durationSeconds, null);
     }
 
     /**
-     * 创建急救包奖励（无尽模式）
+     * Creates a medkit reward (Endless Mode).
      */
     public static ChestReward medkit() {
         return new ChestReward(RewardType.MEDKIT, 1, null);
     }
 
     /**
-     * 创建速度Buff奖励（无尽模式）
-     * 
-     * @param durationSeconds Buff持续时间（秒）
+     * Creates a speed buff reward (Endless Mode).
+     *
+     * @param durationSeconds Buff duration (seconds)
      */
     public static ChestReward speedBuff(int durationSeconds) {
         return new ChestReward(RewardType.SPEED_BUFF, durationSeconds, null);
     }
 
     /**
-     * 创建狂暴Buff奖励（无尽模式）
-     * 
-     * @param durationSeconds Buff持续时间（秒）
+     * Creates a rage buff reward (Endless Mode).
+     *
+     * @param durationSeconds Buff duration (seconds)
      */
     public static ChestReward rageBuff(int durationSeconds) {
         return new ChestReward(RewardType.RAGE_BUFF, durationSeconds, null);
     }
 
     /**
-     * 创建护盾奖励（无尽模式）
+     * Creates a shield reward (Endless Mode).
      */
     public static ChestReward shield() {
         return new ChestReward(RewardType.SHIELD_BUFF, 1, null);
     }
 
     /**
-     * 创建EMP清场奖励（无尽模式）
+     * Creates an EMP clear reward (Endless Mode).
      */
     public static ChestReward emp() {
         return new ChestReward(RewardType.EMP, 0, null);
     }
 
-    // ========== 构造函数 ==========
+    // ========== Constructors ==========
 
     private ChestReward(RewardType type, int value, Object payload) {
         this.type = type;
@@ -112,13 +112,13 @@ public class ChestReward {
         this.payload = payload;
     }
 
-    // ========== 核心方法 ==========
+    // ========== Core Methods ==========
 
     /**
-     * 将奖励应用到玩家
-     * 
-     * @param player 玩家对象
-     * @return true 如果成功应用
+     * Applies the reward to the player.
+     *
+     * @param player Player object
+     * @return true if successfully applied
      */
     public boolean applyToPlayer(Player player) {
         if (player == null) {
@@ -139,7 +139,7 @@ public class ChestReward {
                 return true;
 
             case HEALTH:
-                // 提升最大生命值并增加当前生命（突破上限）
+                // Increase maximum health and add current health (breaking threshold)
                 player.upgradeMaxHealth(value);
                 return true;
 
@@ -165,8 +165,8 @@ public class ChestReward {
                 return true;
 
             case EMP:
-                // EMP 效果需要在 GameScreen/EndlessGameScreen 中处理
-                // 这里只标记已触发
+                // EMP effects need to be handled in GameScreen/EndlessGameScreen
+                // Here we only mark as triggered
                 return true;
 
             default:
@@ -190,7 +190,7 @@ public class ChestReward {
     }
 
     /**
-     * 获取奖励的显示名称（用于UI）
+     * Get display name of the reward (for UI).
      */
     public String getDisplayName() {
         switch (type) {
@@ -218,14 +218,14 @@ public class ChestReward {
     }
 
     /**
-     * 判断是否为即时效果（无需额外处理）
+     * Checks if it's an instant effect (no extra processing needed).
      */
     public boolean isInstantEffect() {
         return type == RewardType.COIN || type == RewardType.HEALTH || type == RewardType.MEDKIT;
     }
 
     /**
-     * 判断是否为Buff类型
+     * Checks if it's a Buff type.
      */
     public boolean isBuffType() {
         return type == RewardType.INVINCIBILITY ||

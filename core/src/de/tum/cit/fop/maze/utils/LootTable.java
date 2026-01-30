@@ -7,56 +7,56 @@ import de.tum.cit.fop.maze.model.weapons.*;
 import java.util.Random;
 
 /**
- * 掉落概率表 (Loot Table)
+ * Loot Probability Table (Loot Table)
  * 
- * 定义敌人死亡后的掉落物品及其概率。
- * 使用加权随机系统确保掉落公平性。
+ * Defines drop items and their probabilities after an enemy dies.
+ * Uses a weighted random system to ensure drop fairness.
  */
 public class LootTable {
 
     private static final Random random = new Random();
 
-    // === 基础掉落概率 ===
-    public static final float COIN_DROP_CHANCE = 0.70f; // 70% 掉金币
-    public static final float WEAPON_DROP_CHANCE = 0.15f; // 15% 掉武器
-    public static final float ARMOR_DROP_CHANCE = 0.10f; // 10% 掉护甲
-    public static final float NOTHING_CHANCE = 0.05f; // 5% 什么都不掉
+    // === Base drop probabilities ===
+    public static final float COIN_DROP_CHANCE = 0.70f; // 70% Coin drop
+    public static final float WEAPON_DROP_CHANCE = 0.15f; // 15% Weapon drop
+    public static final float ARMOR_DROP_CHANCE = 0.10f; // 10% Armor drop
+    public static final float NOTHING_CHANCE = 0.05f; // 5% Drops nothing
 
-    // === 金币掉落范围 ===
+    // === Coin drop range ===
     public static final int MIN_COIN_DROP = 1;
     public static final int MAX_COIN_DROP = 5;
 
     /**
-     * 根据概率生成掉落物品
+     * Generates drop items based on probabilities
      * 
-     * @param x        掉落位置 X
-     * @param y        掉落位置 Y
-     * @param levelNum 当前关卡编号（影响物品品质）
-     * @return 生成的掉落物品，null 表示没有掉落
+     * @param x        Drop position X
+     * @param y        Drop position Y
+     * @param levelNum Current level number (affects item quality)
+     * @return Generated dropped item, null means no drop
      */
     public static DroppedItem generateLoot(float x, float y, int levelNum) {
         float roll = random.nextFloat();
 
         if (roll < NOTHING_CHANCE) {
-            // 5% 什么都不掉
+            // 5% Drops nothing
             return null;
         } else if (roll < NOTHING_CHANCE + ARMOR_DROP_CHANCE) {
-            // 10% 掉护甲
+            // 10% Armor drop
             return DroppedItem.createArmorDrop(x, y, generateRandomArmor(x, y));
         } else if (roll < NOTHING_CHANCE + ARMOR_DROP_CHANCE + WEAPON_DROP_CHANCE) {
-            // 15% 掉武器
+            // 15% Weapon drop
             return DroppedItem.createWeaponDrop(x, y, generateRandomWeapon(x, y));
         } else {
-            // 70% 掉金币
+            // 70% Coin drop
             int coinAmount = MIN_COIN_DROP + random.nextInt(MAX_COIN_DROP - MIN_COIN_DROP + 1);
-            // 高关卡掉更多金币
+            // Higher level drops more coins
             coinAmount += levelNum / 2;
             return DroppedItem.createCoinDrop(x, y, coinAmount);
         }
     }
 
     /**
-     * 生成随机武器
+     * Generates random weapon
      */
     public static Weapon generateRandomWeapon(float x, float y) {
         int roll = random.nextInt(5);
@@ -78,7 +78,7 @@ public class LootTable {
     }
 
     /**
-     * 生成随机护甲
+     * Generates random armor
      */
     public static Armor generateRandomArmor(float x, float y) {
         if (random.nextBoolean()) {
@@ -89,26 +89,26 @@ public class LootTable {
     }
 
     /**
-     * 保证掉落一件金币（用于特殊情况）
+     * Guarantees a coin drop (used for special cases)
      */
     public static DroppedItem guaranteeCoinDrop(float x, float y, int amount) {
         return DroppedItem.createCoinDrop(x, y, amount);
     }
 
     /**
-     * 生成 Boss 级掉落（更高概率掉落稀有物品）
+     * Generates Boss-level loot (higher probability of rare items)
      */
     public static DroppedItem generateBossLoot(float x, float y) {
         float roll = random.nextFloat();
 
         if (roll < 0.5f) {
-            // 50% 掉武器
+            // 50% Weapon drop
             return DroppedItem.createWeaponDrop(x, y, generateRandomWeapon(x, y));
         } else if (roll < 0.8f) {
-            // 30% 掉护甲
+            // 30% Armor drop
             return DroppedItem.createArmorDrop(x, y, generateRandomArmor(x, y));
         } else {
-            // 20% 掉大量金币
+            // 20% Drops large amount of coins
             return DroppedItem.createCoinDrop(x, y, 10 + random.nextInt(11));
         }
     }

@@ -10,8 +10,8 @@ import de.tum.cit.fop.maze.model.WallEntity;
 import java.util.List;
 
 /**
- * MazeRenderer - 重构版
- * 使用 WallEntity 列表渲染墙体，而不是遍历格子。
+ * MazeRenderer - Refactored Version
+ * Renders walls using WallEntity list instead of traversing grids.
  */
 public class MazeRenderer {
 
@@ -45,8 +45,8 @@ public class MazeRenderer {
         maxX = Math.min(gameMap.getWidth() - 1, maxX);
         maxY = Math.min(gameMap.getHeight() - 1, maxY);
 
-        // Pass 1: Floors - 区分可行走区域和墙体区域
-        // 获取墙体底砖纹理（用于墙体所在格子）
+        // Pass 1: Floors - Distinguish between walkable area and wall area
+        // Get wall base floor texture (for tiles occupied by walls)
         TextureRegion wallBaseFloor = textureManager.getWallBaseFloor(gameMap.getTheme());
         TextureRegion walkableFloor = floorTexture != null ? floorTexture
                 : textureManager.getWalkableFloor(gameMap.getTheme());
@@ -55,17 +55,17 @@ public class MazeRenderer {
             for (int y = minY; y <= maxY; y++) {
                 TextureRegion region;
                 if (gameMap.isOccupied(x, y)) {
-                    // 墙体所在格子 -> 使用墙体底砖
+                    // Wall tile -> Use wall base floor
                     region = wallBaseFloor;
                 } else {
-                    // 可行走区域 -> 使用可行走地砖
+                    // Walkable area -> Use walkable floor
                     region = walkableFloor;
                 }
                 batch.draw(region, x * UNIT_SCALE, y * UNIT_SCALE, UNIT_SCALE, UNIT_SCALE);
             }
         }
 
-        // Pass 2: Grout (美缝)
+        // Pass 2: Grout (Tile Gaps)
         Color groutColor = getGroutColorForBiome(floorTexture);
         Color wallBoundaryColor = new Color(groutColor).mul(0.4f, 0.4f, 0.4f, 1f);
         wallBoundaryColor.a = 1f;
@@ -87,12 +87,12 @@ public class MazeRenderer {
         float viewX = camera.position.x - viewW / 2;
         float viewY = camera.position.y - viewH / 2;
 
-        // Pass 3: Walls - 使用 WallEntity 列表渲染
-        // 按Y坐标从高到低排序，实现正确的Z-ordering (Back to Front)
+        // Pass 3: Walls - Render using WallEntity list
+        // Sort by Y coordinate from high to low for correct Z-ordering (Back to Front)
         List<WallEntity> walls = new java.util.ArrayList<>(gameMap.getWalls());
         walls.sort((w1, w2) -> Integer.compare(w2.getOriginY(), w1.getOriginY()));
 
-        // 延迟渲染列表：用于存储墙顶部的渲染指令 (Grassland specific)
+        // Deferred rendering list: for wall top rendering commands (Grassland specific)
         List<Runnable> deferredTops = new java.util.ArrayList<>();
 
         boolean isGrassland = "grassland".equalsIgnoreCase(gameMap.getTheme());
@@ -103,19 +103,19 @@ public class MazeRenderer {
             float wallW = wall.getGridWidth() * UNIT_SCALE;
             float wallH = wall.getGridHeight() * UNIT_SCALE;
 
-            // 视锥体剔除 (Expanded bounds for tall walls)
+            // Frustum Culling (Expanded bounds for tall walls)
             if (wallX + wallW < viewX || wallX > viewX + viewW)
                 continue;
             if (wallY + wallH + UNIT_SCALE * 2 < viewY || wallY > viewY + viewH)
                 continue;
 
-            // 获取贴图
+            // Get Texture
             TextureRegion reg = getWallRegion(wall, gameMap.getTheme(), stateTime);
             if (reg == null)
                 continue;
 
             // Grassland Special Handling: Split Body and Top
-            if (isGrassland && reg.getRegionHeight() >= 32) { // 至少由Top(16)+Body(16)组成
+            if (isGrassland && reg.getRegionHeight() >= 32) { // Consists of at least Top(16)+Body(16)
                 int topH = 16;
                 int bodyH = reg.getRegionHeight() - topH;
 
@@ -149,7 +149,7 @@ public class MazeRenderer {
                     drawHeight = texH * (wallW / texW);
                 }
 
-                // 孤立墙体增加视觉高度
+                // Add visual height for isolated walls
                 if (drawHeight <= wallH && isWallIsolated(gameMap, wall) && !hasWallAbove(gameMap, wall)) {
                     drawHeight = wallH + 0.5f * UNIT_SCALE;
                 }
@@ -170,7 +170,7 @@ public class MazeRenderer {
     }
 
     /**
-     * 检查墙体是否孤立（四周无相邻墙体）
+     * Checks if a wall is isolated (no adjacent walls on four sides)
      */
     private boolean isWallIsolated(GameMap gameMap, WallEntity wall) {
         int x = wall.getOriginX();
@@ -178,22 +178,22 @@ public class MazeRenderer {
         int w = wall.getGridWidth();
         int h = wall.getGridHeight();
 
-        // 检查左边
+        // Check Left
         for (int dy = 0; dy < h; dy++) {
             if (gameMap.isOccupied(x - 1, y + dy))
                 return false;
         }
-        // 检查右边
+        // Check Right
         for (int dy = 0; dy < h; dy++) {
             if (gameMap.isOccupied(x + w, y + dy))
                 return false;
         }
-        // 检查下边
+        // Check Bottom
         for (int dx = 0; dx < w; dx++) {
             if (gameMap.isOccupied(x + dx, y - 1))
                 return false;
         }
-        // 检查上边
+        // Check Top
         for (int dx = 0; dx < w; dx++) {
             if (gameMap.isOccupied(x + dx, y + h))
                 return false;
@@ -203,7 +203,7 @@ public class MazeRenderer {
     }
 
     /**
-     * 检查墙体上方是否有墙
+     * Checks if there is a wall above
      */
     private boolean hasWallAbove(GameMap gameMap, WallEntity wall) {
         int x = wall.getOriginX();
@@ -218,7 +218,7 @@ public class MazeRenderer {
         return false;
     }
 
-    // 缓存生物群系颜色
+    // Cache biome colors
     private final com.badlogic.gdx.utils.ObjectMap<TextureRegion, Color> biomeColorCache = new com.badlogic.gdx.utils.ObjectMap<>();
 
     private Color getGroutColorForBiome(TextureRegion currentFloor) {
@@ -238,7 +238,7 @@ public class MazeRenderer {
         } else if (currentFloor == textureManager.floorIce) {
             color = new Color(0.2f, 0.3f, 0.6f, 0.5f);
         } else if (currentFloor == textureManager.floorGrassland) {
-            // 灰褐色调，匹配苔藓石板地砖
+            // Gray-brown tone matching slate floor tiles
             color = new Color(0.25f, 0.22f, 0.18f, 0.5f);
         } else if (currentFloor == textureManager.floorJungle) {
             color = new Color(0.05f, 0.2f, 0.05f, 0.5f);

@@ -11,10 +11,10 @@ import de.tum.cit.fop.maze.model.weapons.Weapon;
 import java.util.List;
 
 /**
- * 可复用的武器栏组件 (Reusable Weapon Slot Bar Widget)
+ * Reusable Weapon Slot Bar Widget
  * 
- * 从 GameHUD 和 EndlessHUD 中提取的公共逻辑。
- * 显示玩家背包中的武器并高亮当前选中武器。
+ * Shared logic extracted from GameHUD and EndlessHUD.
+ * Displays weapons in player inventory and highlights current selected weapon.
  */
 public class WeaponSlotBarWidget extends Table {
 
@@ -39,7 +39,7 @@ public class WeaponSlotBarWidget extends Table {
     }
 
     /**
-     * 设置槽位尺寸
+     * Set slot dimensions
      */
     public WeaponSlotBarWidget setSlotSize(float width, float height, float padding) {
         this.slotWidth = width;
@@ -50,7 +50,7 @@ public class WeaponSlotBarWidget extends Table {
     }
 
     /**
-     * 更新武器栏显示
+     * Update weapon bar display
      */
     public void update() {
         int currentWeaponIdx = player.getCurrentWeaponIndex();

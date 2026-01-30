@@ -197,10 +197,10 @@ public class CustomElementManager {
         if (Gdx.files == null)
             return; // Skip loading in headless tests
         try {
-            // 优先尝试从 internal (assets目录) 加载
+            // Try to load from internal (assets directory) first
             FileHandle file = Gdx.files.internal(SAVE_DIR + ELEMENTS_FILE);
 
-            // 如果 internal 不存在，尝试 local
+            // If internal doesn't exist, try local
             if (!file.exists()) {
                 file = Gdx.files.local(SAVE_DIR + ELEMENTS_FILE);
             }
@@ -381,7 +381,7 @@ public class CustomElementManager {
                 }
 
                 if (file.exists()) {
-                    // 使用纹理缓存避免重复加载和 Auto-padding
+                    // Use texture cache to avoid redundant loading and Auto-padding
                     TextureRegion region = textureCache.get(path);
                     if (region == null) {
                         Texture tex = new Texture(file);
@@ -410,9 +410,9 @@ public class CustomElementManager {
     }
 
     /**
-     * 获取预加载任务列表
+     * Get list of preload tasks.
      * 
-     * @return 需要预加载的 (elementId, action) 对列表
+     * @return List of (elementId, action) pairs to preload
      */
     public List<String[]> getPreloadTasks() {
         List<String[]> tasks = new ArrayList<>();
@@ -421,7 +421,7 @@ public class CustomElementManager {
             Map<String, String[]> spritePaths = def.getSpritePaths();
             for (String action : spritePaths.keySet()) {
                 String[] paths = spritePaths.get(action);
-                // 只添加有效的动画任务
+                // Only add valid animation tasks
                 if (paths != null && paths.length > 0 && paths[0] != null && !paths[0].startsWith("internal:")) {
                     tasks.add(new String[] { elementId, action });
                 }
@@ -431,11 +431,11 @@ public class CustomElementManager {
     }
 
     /**
-     * 预加载单个动画（调用 getAnimation 触发缓存）
+     * Preloads a single animation (calls getAnimation to trigger caching).
      * 
-     * @param elementId 元素ID
-     * @param action    动作名称
-     * @return 是否加载成功
+     * @param elementId Element ID
+     * @param action    Action name
+     * @return true if successfully loaded
      */
     public boolean preloadAnimation(String elementId, String action) {
         Animation<TextureRegion> anim = getAnimation(elementId, action);
@@ -443,7 +443,7 @@ public class CustomElementManager {
     }
 
     /**
-     * 检查动画缓存是否已完成预加载
+     * Checks if animation cache has completed preloading.
      */
     public boolean isPreloaded() {
         List<String[]> tasks = getPreloadTasks();

@@ -3,45 +3,46 @@ package de.tum.cit.fop.maze.model;
 import de.tum.cit.fop.maze.config.EndlessModeConfig;
 
 /**
- * COMBO击杀连击系统 (Combo Kill System)
+ * Combo Kill System.
  * 
- * 管理无尽模式中的连续击杀奖励机制。
+ * Manages the sequential kill reward mechanism in Endless Mode.
  * 
- * 机制:
- * - 每次击杀敌人 COMBO +1
- * - 5秒内无击杀 COMBO 重置为 0
- * - 高COMBO带来得分倍率加成
+ * Mechanics:
+ * - Each enemy kill increases COMBO by 1.
+ * - If no kills occur within 5 seconds, COMBO resets to 0.
+ * - Higher COMBO grants score multiplier bonuses.
  * 
- * 遵循单一职责原则：仅处理COMBO逻辑，不涉及其他系统。
+ * Follows Single Responsibility Principle: handles only combo logic,
+ * independent of other systems.
  */
 public class ComboSystem {
 
-    /** 当前COMBO计数 */
+    /** Current COMBO count */
     private int currentCombo;
 
-    /** 历史最高COMBO */
+    /** Historical maximum COMBO */
     private int maxCombo;
 
-    /** COMBO衰减计时器（秒） */
+    /** COMBO decay timer (seconds) */
     private float decayTimer;
 
-    /** COMBO是否激活（防止初始状态误判） */
+    /** Whether COMBO is active (prevents misjudgment in initial state) */
     private boolean isActive;
 
-    /** 监听器：COMBO变化时回调 */
+    /** Listener: callback when COMBO changes */
     private ComboListener listener;
 
     /**
-     * COMBO变化监听器接口
+     * COMBO change listener interface
      */
     public interface ComboListener {
-        /** COMBO增加时调用 */
+        /** Called when COMBO increases */
         void onComboIncreased(int newCombo, float multiplier);
 
-        /** COMBO重置时调用 */
+        /** Called when COMBO is reset */
         void onComboReset(int finalCombo);
 
-        /** 达到里程碑时调用 (5, 10, 20, 50) */
+        /** Called when a milestone is reached (5, 10, 20, 50) */
         void onMilestoneReached(int combo, String milestoneName);
     }
 
@@ -50,16 +51,16 @@ public class ComboSystem {
     }
 
     /**
-     * 设置COMBO变化监听器
+     * Sets the COMBO change listener.
      */
     public void setListener(ComboListener listener) {
         this.listener = listener;
     }
 
     /**
-     * 每帧更新
+     * Update per frame.
      * 
-     * @param delta 帧间隔时间（秒）
+     * @param delta Frame interval time (seconds)
      */
     public void update(float delta) {
         if (!isActive || currentCombo == 0) {
@@ -69,7 +70,7 @@ public class ComboSystem {
         decayTimer -= delta;
 
         if (decayTimer <= 0) {
-            // COMBO超时，重置
+            // COMBO timeout, reset
             int finalCombo = currentCombo;
             currentCombo = 0;
             isActive = false;
@@ -81,27 +82,27 @@ public class ComboSystem {
     }
 
     /**
-     * 击杀敌人时调用
+     * Called when an enemy is killed.
      * 
-     * @return 当前COMBO倍率
+     * @return Current COMBO multiplier
      */
     public float onKill() {
         currentCombo++;
         isActive = true;
         decayTimer = EndlessModeConfig.COMBO_DECAY_TIME;
 
-        // 更新最高COMBO
+        // Update maximum COMBO
         if (currentCombo > maxCombo) {
             maxCombo = currentCombo;
         }
 
         float multiplier = getMultiplier();
 
-        // 回调监听器
+        // Callback listener
         if (listener != null) {
             listener.onComboIncreased(currentCombo, multiplier);
 
-            // 检查里程碑
+            // Check milestone
             checkMilestone();
         }
 
@@ -109,12 +110,12 @@ public class ComboSystem {
     }
 
     /**
-     * 检查是否达到里程碑
+     * Check if a milestone is reached.
      */
     private void checkMilestone() {
         String milestoneName = null;
 
-        // 只在刚好达到阈值时触发
+        // Trigger only when reaching the threshold exactly
         for (int i = EndlessModeConfig.COMBO_THRESHOLDS.length - 1; i > 0; i--) {
             if (currentCombo == EndlessModeConfig.COMBO_THRESHOLDS[i]) {
                 milestoneName = EndlessModeConfig.COMBO_NAMES[i];
@@ -128,21 +129,21 @@ public class ComboSystem {
     }
 
     /**
-     * 获取当前得分倍率
+     * Gets the current score multiplier.
      */
     public float getMultiplier() {
         return EndlessModeConfig.getComboMultiplier(currentCombo);
     }
 
     /**
-     * 获取当前COMBO等级名称
+     * Gets the current COMBO level name.
      */
     public String getComboName() {
         return EndlessModeConfig.getComboName(currentCombo);
     }
 
     /**
-     * 获取COMBO衰减进度 (0-1, 1表示刚击杀, 0表示即将重置)
+     * Gets COMBO decay progress (0-1, 1 means just killed, 0 means about to reset).
      */
     public float getDecayProgress() {
         if (!isActive || currentCombo == 0) {
@@ -152,7 +153,7 @@ public class ComboSystem {
     }
 
     /**
-     * 延长COMBO衰减时间（道具效果）
+     * Extends COMBO decay time (item effect).
      */
     public void extendDecayTime(float extraSeconds) {
         if (isActive) {
@@ -161,7 +162,7 @@ public class ComboSystem {
     }
 
     /**
-     * 强制重置COMBO
+     * Force reset COMBO.
      */
     public void reset() {
         currentCombo = 0;
@@ -171,7 +172,7 @@ public class ComboSystem {
     }
 
     /**
-     * 保留最高记录的重置（用于继续游戏）
+     * Reset while keeping the highest record (for continuing game).
      */
     public void softReset() {
         currentCombo = 0;
@@ -197,7 +198,7 @@ public class ComboSystem {
         return decayTimer;
     }
 
-    // ========== Setters (用于存档恢复) ==========
+    // ========== Setters (for save restoration) ==========
 
     public void setCurrentCombo(int combo) {
         this.currentCombo = combo;

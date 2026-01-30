@@ -165,10 +165,10 @@ public class VictoryScreen implements Screen {
             public void changed(ChangeEvent event, Actor actor) {
                 // Check if map exists, if not generate it
                 if (!Gdx.files.internal(nextMapPath).exists() && !Gdx.files.local(nextMapPath).exists()) {
-                    // 使用 MapGenerator 默认配置生成地图
+                    // Generate map using MapGenerator default configuration
                     new de.tum.cit.fop.maze.utils.MapGenerator().generateAndSave(nextMapPath);
                 }
-                // 使用LoadingScreen预加载资源后再进入游戏
+                // Use LoadingScreen to preload resources before entering game
                 game.setScreen(new LoadingScreen(game, nextMapPath));
             }
         });
@@ -238,15 +238,15 @@ public class VictoryScreen implements Screen {
 
         int level = getLevelNumber(mapPath);
         if (level >= 1 && level <= 4)
-            return de.tum.cit.fop.maze.utils.SimpleParticleSystem.Theme.FOREST; // 草原
+            return de.tum.cit.fop.maze.utils.SimpleParticleSystem.Theme.FOREST; // Grassland
         if (level >= 5 && level <= 8)
-            return de.tum.cit.fop.maze.utils.SimpleParticleSystem.Theme.JUNGLE; // 丛林
+            return de.tum.cit.fop.maze.utils.SimpleParticleSystem.Theme.JUNGLE; // Jungle
         if (level >= 9 && level <= 12)
-            return de.tum.cit.fop.maze.utils.SimpleParticleSystem.Theme.DESERT; // 荒漠
+            return de.tum.cit.fop.maze.utils.SimpleParticleSystem.Theme.DESERT; // Desert
         if (level >= 13 && level <= 16)
-            return de.tum.cit.fop.maze.utils.SimpleParticleSystem.Theme.RAIN; // 冰原
+            return de.tum.cit.fop.maze.utils.SimpleParticleSystem.Theme.RAIN; // Ice Field
         if (level >= 17 && level <= 20)
-            return de.tum.cit.fop.maze.utils.SimpleParticleSystem.Theme.SPACE; // 太空船
+            return de.tum.cit.fop.maze.utils.SimpleParticleSystem.Theme.SPACE; // Spaceship
 
         return de.tum.cit.fop.maze.utils.SimpleParticleSystem.Theme.FOREST;
     }
@@ -296,7 +296,7 @@ public class VictoryScreen implements Screen {
     @Override
     public void show() {
         Gdx.input.setInputProcessor(stage);
-        // 🔊 全局按钮音效
+        // 🔊 Global button sound effect
         UIUtils.enableGameButtonSound(stage);
     }
 

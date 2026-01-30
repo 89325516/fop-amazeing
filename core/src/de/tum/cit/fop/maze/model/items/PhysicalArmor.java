@@ -3,19 +3,20 @@ package de.tum.cit.fop.maze.model.items;
 import de.tum.cit.fop.maze.model.DamageType;
 
 /**
- * 物理护甲 (Physical Armor)
+ * Physical Armor.
  * 
- * - 吸收物理伤害 (PHYSICAL)
- * - 对法术伤害 (MAGICAL) 完全无效
- * - 适合面对持剑、弩箭等物理攻击的怪物
+ * - Absorbs physical damage (PHYSICAL).
+ * - Completely ineffective against magical damage (MAGICAL).
+ * - Suitable when facing enemies with physical attacks like swords or
+ * crossbows.
  */
 public class PhysicalArmor extends Armor {
 
     /**
-     * 创建一个标准物理护甲
+     * Creates a standard physical armor.
      * 
-     * @param x X 坐标
-     * @param y Y 坐标
+     * @param x X coordinate
+     * @param y Y coordinate
      */
     public PhysicalArmor(float x, float y) {
         super(x, y, "Iron Shield", 5, DamageType.PHYSICAL);
@@ -23,12 +24,12 @@ public class PhysicalArmor extends Armor {
     }
 
     /**
-     * 创建自定义护盾值的物理护甲
+     * Creates a physical armor with custom shield value.
      * 
-     * @param x         X 坐标
-     * @param y         Y 坐标
-     * @param name      护甲名称
-     * @param maxShield 最大护盾值
+     * @param x         X coordinate
+     * @param y         Y coordinate
+     * @param name      Armor name
+     * @param maxShield Maximum shield value
      */
     public PhysicalArmor(float x, float y, String name, int maxShield) {
         super(x, y, name, maxShield, DamageType.PHYSICAL);

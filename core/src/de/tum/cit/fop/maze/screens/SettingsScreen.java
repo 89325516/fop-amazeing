@@ -64,7 +64,7 @@ public class SettingsScreen implements Screen {
     @Override
     public void show() {
         Gdx.input.setInputProcessor(stage);
-        // 🔊 全局按钮音效
+        // 🔊 Global button sound effect
         de.tum.cit.fop.maze.utils.UIUtils.enableMenuButtonSound(stage);
     }
 
@@ -77,23 +77,23 @@ public class SettingsScreen implements Screen {
         if (backgroundTexture != null) {
             SpriteBatch batch = game.getSpriteBatch();
 
-            // 获取实际屏幕尺寸 - 使用 backbuffer 尺寸以确保正确
+            // Get actual screen size - use backbuffer size to ensure correctness
             int screenWidth = Gdx.graphics.getBackBufferWidth();
             int screenHeight = Gdx.graphics.getBackBufferHeight();
 
-            // 重置 GL Viewport 到整个屏幕
+            // Reset GL Viewport to entire screen
             Gdx.gl.glViewport(0, 0, screenWidth, screenHeight);
 
-            // 设置投影矩阵到屏幕像素坐标系
+            // Set projection matrix to screen pixel coordinate system
             batch.getProjectionMatrix().setToOrtho2D(0, 0, screenWidth, screenHeight);
             batch.begin();
             batch.setColor(0.4f, 0.4f, 0.4f, 1f); // Dim to match shop
 
-            // 背景图片原始尺寸
+            // Background image original size
             float texWidth = backgroundTexture.getWidth();
             float texHeight = backgroundTexture.getHeight();
 
-            // 计算Cover模式的缩放比例
+            // Calculate scale ratio for Cover mode
             float screenRatio = (float) screenWidth / screenHeight;
             float textureRatio = texWidth / texHeight;
 
@@ -101,16 +101,16 @@ public class SettingsScreen implements Screen {
             float drawX, drawY;
 
             if (screenRatio > textureRatio) {
-                // 屏幕更宽，以宽度为准，高度可能超出
+                // Screen is wider, base on width, height may overflow
                 drawWidth = screenWidth;
                 drawHeight = screenWidth / textureRatio;
                 drawX = 0;
-                drawY = (screenHeight - drawHeight) / 2; // 垂直居中
+                drawY = (screenHeight - drawHeight) / 2; // Vertical center
             } else {
-                // 屏幕更高，以高度为准，宽度可能超出
+                // Screen is taller, base on height, width may overflow
                 drawHeight = screenHeight;
                 drawWidth = screenHeight * textureRatio;
-                drawX = (screenWidth - drawWidth) / 2; // 水平居中
+                drawX = (screenWidth - drawWidth) / 2; // Horizontal center
                 drawY = 0;
             }
 
@@ -119,7 +119,7 @@ public class SettingsScreen implements Screen {
             batch.end();
         }
 
-        // 恢复 Stage 的 Viewport
+        // Restore Stage's Viewport
         stage.getViewport().apply();
         stage.act(delta);
         stage.draw();

@@ -39,14 +39,14 @@ import java.util.Map;
 import java.util.Random;
 
 /**
- * 无尽模式主游戏画面 (Endless Game Screen)
+ * Endless Mode Main Game Screen.
  * 
- * 与GameScreen的主要区别:
- * - 使用ChunkManager动态加载900×900地图
- * - 集成ComboSystem, RageSystem, WaveSystem
- * - 敌人持续刷新而非预设
- * - 无钥匙和出口逻辑
- * - 使用EndlessHUD
+ * Key differences from GameScreen:
+ * - Uses ChunkManager to dynamically load 900x900 map
+ * - Integrates ComboSystem, RageSystem, WaveSystem
+ * - Enemies respawn continuously instead of being preset
+ * - No key or exit logic
+ * - Uses EndlessHUD
  */
 public class EndlessGameScreen implements Screen {
 
@@ -55,80 +55,80 @@ public class EndlessGameScreen implements Screen {
     private final Viewport gameViewport;
     private final Stage uiStage;
 
-    // === 渲染 ===
+    // === Rendering ===
     private TextureManager textureManager;
     private MazeRenderer mazeRenderer;
     private FogRenderer fogRenderer;
     private de.tum.cit.fop.maze.utils.PlayerRenderer playerRenderer;
 
-    // === 地图系统 ===
+    // === Map System ===
     private ChunkManager chunkManager;
     private EndlessMapGenerator mapGenerator;
 
-    // === 核心系统 ===
+    // === Core Systems ===
     private ComboSystem comboSystem;
     private RageSystem rageSystem;
     private WaveSystem waveSystem;
 
-    // === 游戏对象 ===
+    // === Game Objects ===
     private Player player;
     private List<Enemy> enemies;
     private SpatialHashGrid<Enemy> enemyGrid; // Spatial hash for O(1) neighbor queries
     private List<Trap> traps;
     private List<FloatingText> floatingTexts;
-    private List<Potion> potions; // 掉落的药水
+    private List<Potion> potions; // Dropped potions
 
-    // === 宝箱系统 ===
+    // === Chest System ===
     private Map<String, List<TreasureChest>> chunkChests; // chunkId -> chests
     private ChestInteractUI chestUI;
-    private TreasureChest activeChest; // 当前交互的宝箱
+    private TreasureChest activeChest; // Currently interacting chest
     private boolean isChestUIActive = false;
 
     // === HUD ===
     private EndlessHUD hud;
 
-    // === 游戏状态 ===
+    // === Game State ===
     private float stateTime = 0f;
     private int totalKills = 0;
     private int currentScore = 0;
     private boolean isPaused = false;
     private boolean isGameOver = false;
 
-    // === 暂停菜单 ===
+    // === Pause Menu ===
     private Table pauseTable;
     private de.tum.cit.fop.maze.ui.SettingsUI settingsUI;
     private Table settingsTable;
 
-    // === 控制台 ===
+    // === Console ===
     private DeveloperConsole developerConsole;
     private de.tum.cit.fop.maze.ui.ConsoleUI consoleUI;
     private boolean isConsoleOpen = false;
     private boolean consoleJustClosed = false;
     private boolean consoleJustOpened = false; // Prevents double-toggle in same frame
 
-    // === 常量 ===
+    // === Constants ===
     private static final float UNIT_SCALE = 16f;
     private static final float CAMERA_LERP_SPEED = 4.0f;
     private static final int MAX_ENEMIES = EndlessModeConfig.MAX_ENEMY_COUNT;
 
-    // === 玩家/武器朝向记忆 (队友功能) ===
+    // === Player/Weapon Facing Memory (Partner Functionality) ===
     private int lastPlayerFacing = 3;
 
-    // === 敌人刷新 ===
+    // === Enemy Spawn ===
     private Random spawnRandom;
 
-    // === 灰度Shader (对齐关卡模式死亡效果) ===
+    // === Grayscale Shader (Matches Level Mode Death Effect) ===
     private ShaderProgram grayscaleShader;
     private com.badlogic.gdx.graphics.glutils.ShapeRenderer shapeRenderer;
 
-    // === 溅血粒子系统 ===
+    // === Blood Particle System ===
     private BloodParticleSystem bloodParticles;
     private de.tum.cit.fop.maze.utils.DustParticleSystem dustParticles;
 
-    // === 鼠标瞄准系统 ===
-    private float aimAngle = 270f; // 瞄准角度 (度数, 0=右, 90=上, 180=左, 270=下)
+    // === Mouse Aiming System ===
+    private float aimAngle = 270f; // Aiming angle (degrees: 0=Right, 90=Up, 180=Left, 270=Down)
     private com.badlogic.gdx.math.Vector2 mouseWorldPos = new com.badlogic.gdx.math.Vector2();
-    private int playerDirection = 0; // 0=下, 1=上, 2=左, 3=右
+    private int playerDirection = 0; // 0=Down, 1=Up, 2=Left, 3=Right
     private de.tum.cit.fop.maze.utils.CrosshairRenderer crosshairRenderer;
 
     public EndlessGameScreen(MazeRunnerGame game) {
@@ -164,21 +164,21 @@ public class EndlessGameScreen implements Screen {
         setupDeveloperConsole();
         setInputProcessors();
 
-        // 播放无尽模式BGM
+        // Play endless mode BGM
         AudioManager.getInstance().playBgm(AudioManager.BGM_BOSS);
     }
 
     private void initializeSystems() {
-        // 地图系统
+        // Map system
         mapGenerator = new EndlessMapGenerator();
         chunkManager = new ChunkManager();
 
-        // 核心系统
+        // Core systems
         comboSystem = new ComboSystem();
         rageSystem = new RageSystem();
         waveSystem = new WaveSystem();
 
-        // 游戏对象
+        // Game objects
         enemies = new ArrayList<>();
         enemyGrid = new SpatialHashGrid<>(16f); // Cell size matches typical view radius
         traps = new ArrayList<>();
@@ -186,17 +186,17 @@ public class EndlessGameScreen implements Screen {
         potions = new ArrayList<>();
         spawnRandom = new Random();
 
-        // 宝箱系统
+        // Chest system
         chunkChests = new HashMap<>();
 
-        // 溅血粒子系统
+        // Blood particle system
         bloodParticles = new BloodParticleSystem();
         dustParticles = new de.tum.cit.fop.maze.utils.DustParticleSystem();
 
-        // 准星渲染器
+        // Crosshair renderer
         crosshairRenderer = new de.tum.cit.fop.maze.utils.CrosshairRenderer();
 
-        // 设置系统监听器
+        // Setup system listeners
         setupSystemListeners();
 
         // Initialize Grayscale Shader
@@ -241,35 +241,35 @@ public class EndlessGameScreen implements Screen {
     }
 
     private void setupSystemListeners() {
-        // COMBO监听器
+        // COMBO listener
         comboSystem.setListener(new ComboSystem.ComboListener() {
             @Override
             public void onComboIncreased(int newCombo, float multiplier) {
-                // 可以在这里添加视觉效果
+                // Add visual effects here
             }
 
             @Override
             public void onComboReset(int finalCombo) {
-                // COMBO断了
+                // COMBO broken
             }
 
             @Override
             public void onMilestoneReached(int combo, String milestoneName) {
-                // 显示里程碑特效
+                // Show milestone special effects
                 floatingTexts.add(new FloatingText(
                         player.getX(), player.getY() + 1,
                         milestoneName, Color.GOLD));
             }
         });
 
-        // RAGE监听器
+        // RAGE listener
         rageSystem.setListener((newLevel, levelName) -> {
             floatingTexts.add(new FloatingText(
                     player.getX(), player.getY() + 1.5f,
                     "RAGE: " + levelName, Color.RED));
         });
 
-        // 波次监听器
+        // Wave listener
         waveSystem.setListener(new WaveSystem.WaveListener() {
             @Override
             public void onWaveChanged(int newWave, float spawnInterval, float healthMultiplier) {
@@ -291,27 +291,26 @@ public class EndlessGameScreen implements Screen {
     }
 
     private void initializeNewGame() {
-        // 玩家出生在地图中心
+        // Player spawns at map center
         Vector2 spawnPoint = mapGenerator.getPlayerSpawnPoint();
         player = new Player(spawnPoint.x, spawnPoint.y);
-        // 绑定玩家溅血粒子监听器
-        // 绑定玩家溅血粒子监听器
+        // Bind player blood particle listener
         player.setDamageListener(
                 (x, y, amount, dirX, dirY, knockback) -> bloodParticles.spawn(x, y, amount, dirX, dirY, knockback,
                         new Color(0.0f, 0.0f, 0.5f, 1.0f)));
 
-        // 加载初始区块
+        // Load initial chunks
         chunkManager.updateActiveChunks(player.getX(), player.getY());
     }
 
     private void loadState(EndlessGameState state) {
         player = new Player(state.playerX, state.playerY);
         player.setLives(state.playerLives);
-        // 绑定玩家溅血粒子监听器
+        // Bind player blood particle listener
         player.setDamageListener(
                 (x, y, amount, dirX, dirY, knockback) -> bloodParticles.spawn(x, y, amount, dirX, dirY, knockback));
 
-        // 恢复系统状态
+        // Restore system states
         comboSystem.setCurrentCombo(state.currentCombo);
         comboSystem.setMaxCombo(state.maxCombo);
         rageSystem.setRageLevel(state.rageLevel);
@@ -320,7 +319,7 @@ public class EndlessGameScreen implements Screen {
         totalKills = state.totalKills;
         currentScore = state.score;
 
-        // 加载区块
+        // Load chunks
         chunkManager.updateActiveChunks(player.getX(), player.getY());
     }
 
@@ -375,10 +374,10 @@ public class EndlessGameScreen implements Screen {
         developerConsole = new DeveloperConsole();
         consoleUI = new de.tum.cit.fop.maze.ui.ConsoleUI(uiStage, game.getSkin());
         consoleUI.setConsole(developerConsole);
-        // 无尽模式没有GameWorld，设置为null
+        // Endless mode has no GameWorld, set to null
         developerConsole.setGameWorld(null);
 
-        // 注册无尽模式数据提供器
+        // Register endless mode data provider
         developerConsole.setEndlessMode(true, new DeveloperConsole.EndlessModeData() {
             @Override
             public int getTotalKills() {
@@ -519,18 +518,18 @@ public class EndlessGameScreen implements Screen {
     }
 
     /**
-     * 鼠标输入处理器 - 处理攻击和武器切换
+     * Mouse input processor - Handles attack and weapon switching.
      */
     private com.badlogic.gdx.InputProcessor getMouseInputProcessor() {
         return new com.badlogic.gdx.InputAdapter() {
             @Override
             public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-                // 控制台/暂停/游戏结束时不处理输入
+                // Don't handle input during console, pause, or game over
                 if (isConsoleOpen || isPaused || isGameOver)
                     return false;
 
                 if (button == com.badlogic.gdx.Input.Buttons.LEFT) {
-                    // 左键攻击 - 仅在鼠标模式启用时生效
+                    // Left-click attack - Only effective when mouse mode is enabled
                     if (!GameSettings.isUseMouseAiming())
                         return false;
                     if (player.canAttack()) {
@@ -542,7 +541,7 @@ public class EndlessGameScreen implements Screen {
                     }
                     return true;
                 } else if (button == com.badlogic.gdx.Input.Buttons.RIGHT) {
-                    // 右键切换武器 - 仅在鼠标模式启用时生效
+                    // Right-click switch weapon - Only effective when mouse mode is enabled
                     if (!GameSettings.isUseMouseAiming())
                         return false;
                     player.switchWeapon();
@@ -555,39 +554,39 @@ public class EndlessGameScreen implements Screen {
     }
 
     /**
-     * 更新鼠标瞄准方向
+     * Updates mouse aiming direction.
      */
     private void updateMouseAim() {
-        // 获取鼠标屏幕坐标
+        // Get mouse screen coordinates
         float screenX = Gdx.input.getX();
         float screenY = Gdx.input.getY();
 
-        // 转换为世界坐标
+        // Convert to world coordinates
         com.badlogic.gdx.math.Vector3 worldCoords = camera
                 .unproject(new com.badlogic.gdx.math.Vector3(screenX, screenY, 0));
         mouseWorldPos.set(worldCoords.x / UNIT_SCALE, worldCoords.y / UNIT_SCALE);
 
-        // 计算玩家中心到鼠标的角度
+        // Calculate angle from player center to mouse
         float playerCenterX = player.getX() + 0.5f;
         float playerCenterY = player.getY() + 0.5f;
 
         float dx = mouseWorldPos.x - playerCenterX;
         float dy = mouseWorldPos.y - playerCenterY;
 
-        // 计算角度
+        // Calculate angle
         aimAngle = MathUtils.atan2(dy, dx) * MathUtils.radDeg;
         if (aimAngle < 0)
             aimAngle += 360;
 
-        // 更新 playerDirection (用于动画选择)
+        // Update playerDirection (used for animation selection)
         if (aimAngle >= 315 || aimAngle < 45) {
-            playerDirection = 3; // 右
+            playerDirection = 3; // Right
         } else if (aimAngle >= 45 && aimAngle < 135) {
-            playerDirection = 1; // 上
+            playerDirection = 1; // Up
         } else if (aimAngle >= 135 && aimAngle < 225) {
-            playerDirection = 2; // 左
+            playerDirection = 2; // Left
         } else {
-            playerDirection = 0; // 下
+            playerDirection = 0; // Down
         }
     }
 
@@ -608,7 +607,7 @@ public class EndlessGameScreen implements Screen {
         };
     }
 
-    // === 主循环 ===
+    // === Main Loop ===
 
     @Override
     public void render(float delta) {
@@ -662,7 +661,7 @@ public class EndlessGameScreen implements Screen {
     private void updateGame(float delta) {
         stateTime += delta;
 
-        // === 更新鼠标瞄准 (仅在鼠标模式开启时) ===
+        // === Update Mouse Aim (only when mouse mode is enabled) ===
         if (GameSettings.isUseMouseAiming()) {
             updateMouseAim();
             if (crosshairRenderer != null) {
@@ -670,45 +669,46 @@ public class EndlessGameScreen implements Screen {
             }
         }
 
-        // 更新玩家定时器（攻击动画、受伤闪烁等）
+        // Update player timers (attack animation, hurt flash, etc.)
         player.updateTimers(delta);
 
-        // 更新核心系统
+        // Update core systems
         comboSystem.update(delta);
         rageSystem.update(totalKills, waveSystem.getSurvivalTime());
         waveSystem.update(delta);
 
-        // 更新玩家输入
+        // Update player input
         updatePlayerInput(delta);
 
-        // 更新区块加载
+        // Update chunk loading
         chunkManager.updateActiveChunks(player.getX(), player.getY());
 
-        // 更新敌人
+        // Update enemies
         updateEnemies(delta);
 
-        // 更新陷阱碰撞检测
+        // Update trap collision detection
         updateTraps(delta);
 
-        // 更新浮动文字
+        // Update floating texts
         updateFloatingTexts(delta);
 
-        // 更新药水拾取
+        // Update potion pickup
         updatePotions(delta);
 
-        // 更新宝箱交互
+        // Update chest interaction
         updateChests(delta);
 
-        // 更新HUD数据
+        // Update HUD data
         hud.setTotalKills(totalKills);
         hud.setCurrentScore(currentScore);
         hud.setCurrentZone(EndlessModeConfig.getThemeForPosition(
                 (int) player.getX(), (int) player.getY()));
 
-        // 检查游戏结束 - 当玩家死亡且游戏尚未结束时触发
-        // Fix: 之前的条件 `player.getLives() <= 0 && !player.isDead()` 有逻辑错误
-        // 因为 Player.damage() 在生命值 <= 0 时会立即设置 isDead = true
-        // 所以该条件永远无法满足，导致 game over 从不触发
+        // Check for game over - Triggered when player is dead and game is not yet over
+        // Fix: Previous condition `player.getLives() <= 0 && !player.isDead()` had
+        // logical error.
+        // Because Player.damage() sets isDead = true immediately when lives <= 0.
+        // So that condition could never be met, causing game over to never trigger.
         if (player.isDead() && !isGameOver) {
             triggerGameOver();
         }
@@ -725,7 +725,7 @@ public class EndlessGameScreen implements Screen {
         if (Gdx.input.isKeyPressed(GameSettings.KEY_UP)) {
             targetVy = speed;
             hasInput = true;
-            // 非鼠标模式时根据键盘更新方向
+            // Update direction based on keyboard when not in mouse mode
             if (!GameSettings.isUseMouseAiming()) {
                 playerDirection = 1;
                 aimAngle = 90f;
@@ -759,17 +759,17 @@ public class EndlessGameScreen implements Screen {
         player.setRunning(Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT));
         player.applyAcceleration(targetVx, targetVy, delta);
 
-        // 应用移动
+        // Apply movement
         float moveX = player.getVelocityX() * delta;
         float moveY = player.getVelocityY() * delta;
 
         if (!player.isNoClip()) {
-            // X轴移动 - 使用内联碰撞检查
+            // X-axis movement - Use inline collision check
             if (!canPlayerMoveTo(player.getX() + moveX, player.getY())) {
                 player.handleWallCollision('x');
                 moveX = 0;
             }
-            // Y轴移动
+            // Y-axis movement
             if (!canPlayerMoveTo(player.getX(), player.getY() + moveY)) {
                 player.handleWallCollision('y');
                 moveY = 0;
@@ -778,14 +778,15 @@ public class EndlessGameScreen implements Screen {
 
         player.move(moveX, moveY);
 
-        // 玩家停止时对齐到整数格
-        // 当没有输入且速度接近零时，平滑对齐到最近的整数格位置
+        // Snap player to grid when stopped
+        // Smoothly snap to nearest integer grid position when no input and speed is
+        // near zero
         if (!hasInput && !player.isMoving()) {
             snapPlayerToGrid(delta);
         }
 
-        // 键盘攻击已移至鼠标输入处理器 (getMouseInputProcessor)
-        // 保留键盘攻击作为备选
+        // Keyboard attack has moved to mouse input processor (getMouseInputProcessor)
+        // Keep keyboard attack as an alternative
         if (Gdx.input.isKeyJustPressed(GameSettings.KEY_ATTACK)) {
             if (player.canAttack()) {
                 player.attack();
@@ -798,11 +799,13 @@ public class EndlessGameScreen implements Screen {
     }
 
     /**
-     * 平滑地将玩家对齐到最近的整数格位置
-     * 当玩家停止移动时调用，确保玩家不会停在两个格子之间
+     * Smoothly snaps the player to the nearest integer grid position.
+     * Called when player stops moving to ensure the player doesn't stop between
+     * tiles.
      */
     private void snapPlayerToGrid(float delta) {
-        // 使用Player类中的统一实现，传入碰撞检测回调
+        // Use unified implementation from Player class, passing collision check
+        // callback
         player.snapToGrid(delta, this::canPlayerMoveTo);
     }
 
@@ -811,26 +814,26 @@ public class EndlessGameScreen implements Screen {
         if (weapon == null)
             return;
 
-        // 远程武器不使用此逻辑
+        // Ranged weapons don't use this logic
         if (weapon.isRanged()) {
-            // TODO: 远程武器单独处理
+            // TODO: Handle ranged weapons separately
             return;
         }
 
-        // === 新攻击范围逻辑 (New Attack Range Logic) ===
-        // 360度全方位攻击圈: innerRadius = R0 × 0.8
-        // 朝向扇形扩展: outerRadius = R0 × 1.2
+        // === New Attack Range Logic ===
+        // 360-degree all-around attack circle: innerRadius = R0 × 0.8
+        // Directional sector expansion: outerRadius = R0 × 1.2
         float attackRange = weapon.getRange();
-        float innerRadius = attackRange * 0.8f; // 360度全方位攻击半径
-        float outerRadius = attackRange * 1.2f; // 朝向扇形扩展半径
-        float outerRadiusSq = outerRadius * outerRadius; // 用于快速预过滤
+        float innerRadius = attackRange * 0.8f; // 360-degree all-around attack radius
+        float outerRadius = attackRange * 1.2f; // Directional sector expansion radius
+        float outerRadiusSq = outerRadius * outerRadius; // Used for fast pre-filtering
         float attackDamage = weapon.getDamage() + player.getDamageBonus();
 
         for (Enemy enemy : enemies) {
             if (enemy.isDead())
                 continue;
 
-            // 快速预过滤：用平方距离跳过明显远的敌人 (使用外半径)
+            // Fast pre-filtering: Skip enemies clearly too far using squared outer radius
             float dx = enemy.getX() - player.getX();
             float dy = enemy.getY() - player.getY();
             if (dx * dx + dy * dy > outerRadiusSq)
@@ -838,16 +841,17 @@ public class EndlessGameScreen implements Screen {
 
             float dist = (float) Math.sqrt(dx * dx + dy * dy);
 
-            // === 新判定逻辑 ===
-            // 条件1: 在innerRadius内 → 360度全方位命中
-            // 条件2: 在innerRadius~outerRadius范围内 → 需要在朝向扇形内才能命中
+            // === New Decision Logic ===
+            // Condition 1: Within innerRadius -> 360-degree all-around hit
+            // Condition 2: Within innerRadius to outerRadius range -> Requires being inside
+            // the directional sector to hit
             boolean canHit = false;
 
             if (dist < innerRadius) {
-                // 360度全方位攻击圈内，直接命中
+                // Directly hit within 360-degree all-around attack circle
                 canHit = true;
             } else if (dist < outerRadius) {
-                // 在扇形扩展范围内，需要检查角度
+                // Within sector expansion range, need to check angle
                 float enemyAngle = MathUtils.atan2(dy, dx) * MathUtils.radDeg;
                 if (enemyAngle < 0)
                     enemyAngle += 360;
@@ -858,7 +862,7 @@ public class EndlessGameScreen implements Screen {
                 while (angleDiff < -180)
                     angleDiff += 360;
 
-                // 攻击锥形半角 = 30度
+                // Attack cone half-angle = 30 degrees
                 canHit = Math.abs(angleDiff) <= 30;
             }
 
@@ -871,7 +875,7 @@ public class EndlessGameScreen implements Screen {
 
                 boolean killed = enemy.isDead();
 
-                // === Hit Feedback: Damage Number (伤害数值显示) ===
+                // === Hit Feedback: Damage Number ===
                 floatingTexts.add(new FloatingText(enemy.getX(), enemy.getY(), "-" + damage, Color.RED));
                 AudioManager.getInstance().playSound("enemy_hurt");
 
@@ -892,23 +896,23 @@ public class EndlessGameScreen implements Screen {
     private void onEnemyKilled(Enemy enemy) {
         totalKills++;
 
-        // COMBO加分
+        // COMBO bonus points
         float multiplier = comboSystem.onKill();
         int baseScore = EndlessModeConfig.SCORE_PER_KILL;
         int earnedScore = (int) (baseScore * multiplier);
         currentScore += earnedScore;
 
-        // 浮动分数显示
+        // Floating score display
         floatingTexts.add(new FloatingText(
                 enemy.getX(), enemy.getY() + 0.5f,
                 "+" + earnedScore, Color.GOLD));
 
-        // 掉落物品
+        // Drop items
         spawnDrops(enemy);
     }
 
     private void spawnDrops(Enemy enemy) {
-        // 生命药水掉落 (10%)
+        // Health potion drop (10%)
         if (spawnRandom.nextFloat() < EndlessModeConfig.HEALTH_POTION_DROP_RATE) {
             Potion potion = Potion.createHealthPotion(enemy.getX(), enemy.getY());
             potions.add(potion);
@@ -917,19 +921,19 @@ public class EndlessGameScreen implements Screen {
     }
 
     /**
-     * 更新药水拾取逻辑
+     * Updates potion pickup logic.
      */
     private void updatePotions(float delta) {
         for (int i = potions.size() - 1; i >= 0; i--) {
             Potion potion = potions.get(i);
 
-            // 检查玩家是否拾取
+            // Check if player picks it up
             float dx = player.getX() - potion.getX();
             float dy = player.getY() - potion.getY();
             float dist = (float) Math.sqrt(dx * dx + dy * dy);
 
-            if (dist < 1.0f) { // 拾取半径
-                // 恢复生命
+            if (dist < 1.0f) { // Pickup radius
+                // Restore health
                 if (player.getLives() < player.getMaxHealth()) {
                     player.restoreHealth(1);
                     floatingTexts.add(new FloatingText(
@@ -937,7 +941,7 @@ public class EndlessGameScreen implements Screen {
                             "+1 HP", Color.GREEN));
                     AudioManager.getInstance().playSound("pickup");
                 } else {
-                    // 满血时转化为分数
+                    // Convert to score at full health
                     currentScore += 50;
                     floatingTexts.add(new FloatingText(
                             player.getX(), player.getY() + 0.5f,
@@ -949,7 +953,7 @@ public class EndlessGameScreen implements Screen {
     }
 
     private void updateEnemies(float delta) {
-        // 移除死亡敌人（同时从空间网格中移除）
+        // Remove dead enemies (also remove from spatial grid)
         enemies.removeIf(e -> {
             if (e.isDead() && e.isRemovable()) {
                 enemyGrid.remove(e);
@@ -958,64 +962,65 @@ public class EndlessGameScreen implements Screen {
             return false;
         });
 
-        // 更新存活敌人 - 使用带碰撞检测的寻路逻辑
+        // Update surviving enemies - Use pathfinding logic with collision detection
         for (Enemy enemy : enemies) {
             if (!enemy.isDead()) {
-                // 敌人AI - 追踪玩家，带碰撞检测
+                // Enemy AI - Chase player with collision detection
                 float dx = player.getX() - enemy.getX();
                 float dy = player.getY() - enemy.getY();
                 float dist = (float) Math.sqrt(dx * dx + dy * dy);
 
                 if (dist < 30 && dist > 0.5f) {
-                    // 追踪玩家，应用RAGE速度加成
+                    // Chase player, apply RAGE speed boost
                     float speed = GameSettings.enemyChaseSpeed * rageSystem.getEnemySpeedMultiplier() * delta;
 
-                    // 轴对齐寻路：优先沿主轴移动，被阻挡时尝试次轴
+                    // Axis-aligned pathfinding: Prefer moving along primary axis, try secondary
+                    // axis if blocked
                     float moveX = 0;
                     float moveY = 0;
 
-                    // 确定主轴和次轴
+                    // Determine primary and secondary axes
                     boolean preferX = Math.abs(dx) > Math.abs(dy);
 
                     if (preferX) {
-                        // 主轴X：尝试水平移动
+                        // Primary Axis X: try horizontal movement
                         moveX = Math.signum(dx) * speed;
                         if (!canEnemyMoveTo(enemy.getX() + moveX, enemy.getY())) {
-                            // X轴被阻挡，尝试Y轴
+                            // X-axis blocked, try Y-axis
                             moveX = 0;
                             if (Math.abs(dy) > 0.1f) {
                                 moveY = Math.signum(dy) * speed;
                                 if (!canEnemyMoveTo(enemy.getX(), enemy.getY() + moveY)) {
-                                    moveY = 0; // 两个方向都被阻挡
+                                    moveY = 0; // Both directions blocked
                                 }
                             }
                         }
                     } else {
-                        // 主轴Y：尝试垂直移动
+                        // Primary Axis Y: try vertical movement
                         moveY = Math.signum(dy) * speed;
                         if (!canEnemyMoveTo(enemy.getX(), enemy.getY() + moveY)) {
-                            // Y轴被阻挡，尝试X轴
+                            // Y-axis blocked, try X-axis
                             moveY = 0;
                             if (Math.abs(dx) > 0.1f) {
                                 moveX = Math.signum(dx) * speed;
                                 if (!canEnemyMoveTo(enemy.getX() + moveX, enemy.getY())) {
-                                    moveX = 0; // 两个方向都被阻挡
+                                    moveX = 0; // Both directions blocked
                                 }
                             }
                         }
                     }
 
-                    // 应用移动（只有在可以移动时才更新位置）
+                    // Apply movement (only update position if movement is possible)
                     if (moveX != 0 || moveY != 0) {
                         float newX = enemy.getX() + moveX;
                         float newY = enemy.getY() + moveY;
                         enemy.setPosition(newX, newY);
-                        // 更新空间网格
+                        // Update spatial grid
                         enemyGrid.update(enemy, newX, newY);
                     }
                 }
 
-                // 攻击玩家
+                // Attack player
                 if (dist < 0.8f) {
                     int baseDamage = 1;
                     int damage = (int) (baseDamage * rageSystem.getEnemyDamageMultiplier());
@@ -1032,28 +1037,30 @@ public class EndlessGameScreen implements Screen {
     }
 
     /**
-     * 检查指定位置是否可以安全生成敌人（不会卡墙）
-     * 执行更严格的碰撞检测，检查生成位置周围是否有墙
+     * Checks if an enemy can safely spawn at the specified position (without
+     * getting stuck in walls).
+     * Performs stricter collision detection by checking the surrounding area of the
+     * spawn point.
      * 
-     * @param x 生成位置 X 坐标
-     * @param y 生成位置 Y 坐标
-     * @return 如果位置安全可以生成则返回 true
+     * @param x Spawn position X coordinate
+     * @param y Spawn position Y coordinate
+     * @return true if the position is safe for spawning
      */
     private boolean canSpawnAt(float x, float y) {
-        float size = 1.0f; // 敌人占用1个格子
-        float padding = 0.1f; // 边缘缓冲距离
+        float size = 1.0f; // Enemy occupies 1 tile
+        float padding = 0.1f; // Edge buffer distance
 
-        // 检查生成位置的中心格子
+        // Check the center tile of the spawn position
         int centerX = (int) x;
         int centerY = (int) y;
 
-        // 首先检查中心点是否在墙内
+        // First check if the center point is inside a wall
         if (isWallAt(centerX, centerY)) {
             return false;
         }
 
-        // 检查敌人碰撞箱的四个角
-        // 使用比移动检测更大的边距，确保有足够空间
+        // Check the four corners of the enemy's collision box
+        // Use a larger margin than movement detection to ensure adequate space
         if (isWallAt((int) (x + padding), (int) (y + padding)) ||
                 isWallAt((int) (x + size - padding), (int) (y + padding)) ||
                 isWallAt((int) (x + size - padding), (int) (y + size - padding)) ||
@@ -1061,16 +1068,16 @@ public class EndlessGameScreen implements Screen {
             return false;
         }
 
-        // 额外检查：确保有足够的移动空间（检查周围一圈）
-        // 避免敌人生成在狭窄通道入口处
+        // Additional check: ensure enough movement space (check surrounding ring)
+        // Avoid spawning enemies at narrow corridor entrances
         for (int dx = -1; dx <= 1; dx++) {
             for (int dy = -1; dy <= 1; dy++) {
                 if (dx == 0 && dy == 0)
-                    continue; // 跳过中心
+                    continue; // Skip center
                 int checkX = centerX + dx;
                 int checkY = centerY + dy;
-                // 如果周围有超过3个墙，说明位置太狭窄
-                // 这里我们只需要确保至少有一个方向可以移动
+                // If there are more than 3 walls around, the location is too narrow
+                // Here we just need to ensure at least one direction is moveable
             }
         }
 
@@ -1078,13 +1085,13 @@ public class EndlessGameScreen implements Screen {
     }
 
     /**
-     * 检查敌人是否可以移动到指定位置（碰撞检测）
+     * Checks if an enemy can move to the specified position (collision detection).
      */
     private boolean canEnemyMoveTo(float x, float y) {
-        float size = 0.9f; // 敌人碰撞箱大小
+        float size = 0.9f; // Enemy collision box size
         float padding = 0.05f;
 
-        // 检查四个角
+        // Check four corners
         return !isWallAt((int) (x + padding), (int) (y + padding)) &&
                 !isWallAt((int) (x + size - padding), (int) (y + padding)) &&
                 !isWallAt((int) (x + size - padding), (int) (y + size - padding)) &&
@@ -1095,7 +1102,7 @@ public class EndlessGameScreen implements Screen {
         if (enemies.size() >= MAX_ENEMIES)
             return;
 
-        // 尝试最多5次找到安全生成位置
+        // Try up to 5 times to find a safe spawn location
         for (int attempt = 0; attempt < 5; attempt++) {
             float angle = spawnRandom.nextFloat() * 360f * MathUtils.degreesToRadians;
             float distance = EndlessModeConfig.SPAWN_MIN_DISTANCE +
@@ -1105,13 +1112,13 @@ public class EndlessGameScreen implements Screen {
             float spawnX = player.getX() + MathUtils.cos(angle) * distance;
             float spawnY = player.getY() + MathUtils.sin(angle) * distance;
 
-            // 边界检查
+            // Boundary check
             spawnX = MathUtils.clamp(spawnX, 5, EndlessModeConfig.MAP_WIDTH - 5);
             spawnY = MathUtils.clamp(spawnY, 5, EndlessModeConfig.MAP_HEIGHT - 5);
 
-            // 检查是否能安全生成 (检查四个角落)
+            // Check if safe to spawn (check four corners)
             if (!canSpawnAt(spawnX, spawnY))
-                continue; // 尝试下一个位置
+                continue; // Try next position
 
             // === Random Custom Enemy Selection ===
             de.tum.cit.fop.maze.custom.CustomElementManager mgr = de.tum.cit.fop.maze.custom.CustomElementManager
@@ -1189,7 +1196,7 @@ public class EndlessGameScreen implements Screen {
             // Add to world
             addEnemyToWorld(enemy, spawnX, spawnY);
 
-            return; // 生成成功，退出
+            return; // Spawn successful, exit
         }
     }
 
@@ -1201,7 +1208,7 @@ public class EndlessGameScreen implements Screen {
     }
 
     private void spawnBossNearPlayer() {
-        // 尝试最多5次找到安全生成位置
+        // Try up to 5 times to find a safe spawn location
         for (int attempt = 0; attempt < 5; attempt++) {
             float angle = spawnRandom.nextFloat() * 360f * MathUtils.degreesToRadians;
             float distance = EndlessModeConfig.SPAWN_MAX_DISTANCE;
@@ -1212,9 +1219,9 @@ public class EndlessGameScreen implements Screen {
             spawnX = MathUtils.clamp(spawnX, 5, EndlessModeConfig.MAP_WIDTH - 5);
             spawnY = MathUtils.clamp(spawnY, 5, EndlessModeConfig.MAP_HEIGHT - 5);
 
-            // 检查是否能安全生成 (检查四个角落)
+            // Check if safe to spawn (check four corners)
             if (!canSpawnAt(spawnX, spawnY))
-                continue; // 尝试下一个位置
+                continue; // Try next position
 
             // === Random Boss Selection ===
             de.tum.cit.fop.maze.custom.CustomElementManager mgr = de.tum.cit.fop.maze.custom.CustomElementManager
@@ -1291,9 +1298,9 @@ public class EndlessGameScreen implements Screen {
 
             floatingTexts.add(new FloatingText(
                     spawnX, spawnY + 1, name + " BOSS!", Color.RED));
-            return; // 生成成功，退出
+            return; // Spawn successful, exit
         }
-        // 5次都失败，放弃这次生成
+        // All 5 attempts failed, abort spawn
     }
 
     private void updateFloatingTexts(float delta) {
@@ -1321,12 +1328,13 @@ public class EndlessGameScreen implements Screen {
     }
 
     /**
-     * 检查指定区块内某格子是否被墙体占用（用于渲染时的高效检查）
+     * Checks if a tile within a specified chunk is occupied by a wall (efficient
+     * check for rendering).
      * 
-     * @param chunk  区块
-     * @param worldX 世界坐标 X
-     * @param worldY 世界坐标 Y
-     * @return 是否被墙体占用
+     * @param chunk  The chunk
+     * @param worldX World X coordinate
+     * @param worldY World Y coordinate
+     * @return true if occupied by a wall
      */
     private boolean isWallAtInChunk(MapChunk chunk, int worldX, int worldY) {
         for (WallEntity wall : chunk.getWalls()) {
@@ -1342,13 +1350,13 @@ public class EndlessGameScreen implements Screen {
     }
 
     /**
-     * 检查玩家是否可以移动到指定位置
+     * Checks if the player can move to the specified position.
      */
     private boolean canPlayerMoveTo(float x, float y) {
         float size = player.getWidth();
         float padding = 0.05f;
 
-        // 检查四个角
+        // Check four corners
         return !isWallAt((int) (x + padding), (int) (y + padding)) &&
                 !isWallAt((int) (x + size - padding), (int) (y + padding)) &&
                 !isWallAt((int) (x + size - padding), (int) (y + size - padding)) &&
@@ -1362,11 +1370,13 @@ public class EndlessGameScreen implements Screen {
         game.getSpriteBatch().setProjectionMatrix(camera.combined);
         game.getSpriteBatch().begin();
 
-        // 1. 渲染地板 (背景层)
-        // [FIX] 每个区块使用自己的主题纹理，而不是使用玩家位置的主题
-        // 这样确保不同主题区域保持各自的地板纹理
+        // 1. Render floor (background layer)
+        // [FIX] Use each chunk's own theme texture instead of the player position
+        // theme.
+        // This ensures different themed areas maintain their respective floor textures.
         for (MapChunk chunk : chunkManager.getLoadedChunks()) {
-            // 获取该区块的主题（优先使用区块存储的主题，否则根据区块中心坐标计算）
+            // Get chunk theme (priority to stored chunk theme, otherwise calculate based on
+            // chunk center)
             String chunkTheme = chunk.getTheme();
             if (chunkTheme == null) {
                 chunkTheme = EndlessModeConfig.getThemeForPosition(
@@ -1401,7 +1411,7 @@ public class EndlessGameScreen implements Screen {
         dustParticles.render(camera.combined);
         game.getSpriteBatch().begin();
 
-        // 1.5 渲染陷阱 (Traps) - 在地板上方、实体下方
+        // 1.5 Render Traps - above floor, below entities
         for (MapChunk chunk : chunkManager.getLoadedChunks()) {
             String chunkTheme = chunk.getTheme();
             if (chunkTheme == null) {
@@ -1409,23 +1419,23 @@ public class EndlessGameScreen implements Screen {
             }
 
             for (Vector2 trapPos : chunk.getTraps()) {
-                // 检查是否有动画效果
+                // Check for animation effects
                 com.badlogic.gdx.graphics.g2d.Animation<TextureRegion> trapAnim = textureManager
                         .getTrapAnimation(chunkTheme);
                 if (trapAnim != null) {
-                    // 1. 绘制静态底图
+                    // 1. Draw static base image
                     TextureRegion base = textureManager.getTrapRegion(chunkTheme);
                     if (base != null) {
                         game.getSpriteBatch().draw(base, trapPos.x * UNIT_SCALE, trapPos.y * UNIT_SCALE,
                                 UNIT_SCALE, UNIT_SCALE);
                     }
-                    // 2. 绘制动画叠加层（向上偏移，使效果从格子中心开始）
+                    // 2. Draw animation overlay (offset upwards to start from tile center)
                     TextureRegion currentFrame = trapAnim.getKeyFrame(stateTime, true);
                     float overlayY = trapPos.y * UNIT_SCALE + (UNIT_SCALE / 2f);
                     game.getSpriteBatch().draw(currentFrame, trapPos.x * UNIT_SCALE, overlayY,
                             UNIT_SCALE, UNIT_SCALE);
                 } else {
-                    // 无动画时仅绘制静态纹理
+                    // Draw static texture only if no animation
                     TextureRegion trapTex = textureManager.getTrapRegion(chunkTheme);
                     if (trapTex != null) {
                         game.getSpriteBatch().draw(trapTex, trapPos.x * UNIT_SCALE, trapPos.y * UNIT_SCALE,
@@ -1435,29 +1445,29 @@ public class EndlessGameScreen implements Screen {
             }
         }
 
-        // 2. 渲染实体 (Entities) - 玩家和敌人都在墙下层
-        // 敌人
+        // 2. Render Entities - Player and enemies are on the layer below walls
+        // Enemies
         for (Enemy e : enemies) {
             renderEnemy(e);
         }
-        // 玩家
+        // Player
         renderPlayer();
 
-        // 3. 渲染墙体 (Foreground/Cover)
-        // 用户要求：玩家全程在墙图层下方 (被墙遮挡)
+        // 3. Render Walls (Foreground/Cover)
+        // User Requirement: Player is always behind the wall layer (occluded by walls)
         for (MapChunk chunk : chunkManager.getLoadedChunks()) {
             for (WallEntity wall : chunk.getWalls()) {
                 renderWall(wall);
             }
         }
 
-        // 渲染药水掉落物 (根据类型选择正确的贴图，尺寸缩放60%)
+        // Render potion drops (select correct texture based on type, scale size to 60%)
         float dropScale = 0.6f;
         float dropSize = UNIT_SCALE * dropScale;
-        float dropOffset = (UNIT_SCALE - dropSize) / 2; // 居中偏移
+        float dropOffset = (UNIT_SCALE - dropSize) / 2; // Centering offset
         for (Potion potion : potions) {
             TextureRegion potionTex;
-            // 生命药水使用爱心贴图，其他类型使用默认药水贴图
+            // Use heart texture for health potions, default potion texture for others
             if (potion.getType() == Potion.PotionType.HEALTH) {
                 potionTex = textureManager.heartDropRegion != null ? textureManager.heartDropRegion
                         : textureManager.potionRegion;
@@ -1472,7 +1482,7 @@ public class EndlessGameScreen implements Screen {
             }
         }
 
-        // 渲染浮动文字
+        // Render floating texts
         com.badlogic.gdx.graphics.g2d.BitmapFont font = game.getSkin().getFont("font");
         font.getData().setScale(0.3f);
         for (FloatingText ft : floatingTexts) {
@@ -1493,7 +1503,7 @@ public class EndlessGameScreen implements Screen {
             }
         }
 
-        // 迷雾效果
+        // Fog effect
         game.getSpriteBatch().setColor(Color.WHITE);
         float pcX = player.getX() * UNIT_SCALE + UNIT_SCALE / 2;
         float pcY = player.getY() * UNIT_SCALE + UNIT_SCALE / 2;
@@ -1501,11 +1511,11 @@ public class EndlessGameScreen implements Screen {
 
         game.getSpriteBatch().end();
 
-        // === 渲染溅血粒子 ===
+        // === Render blood particles ===
         bloodParticles.update(Gdx.graphics.getDeltaTime());
         bloodParticles.render(camera.combined);
 
-        // === 渲染准星 (Crosshair) - 仅在鼠标模式启用时显示 ===
+        // === Render crosshair - Only displayed when Mouse Mode is enabled ===
         if (crosshairRenderer != null && GameSettings.isUseMouseAiming() && !isPaused && !isConsoleOpen
                 && !isGameOver) {
             crosshairRenderer.render(camera, mouseWorldPos.x * UNIT_SCALE, mouseWorldPos.y * UNIT_SCALE);
@@ -1552,9 +1562,9 @@ public class EndlessGameScreen implements Screen {
         }
     }
 
-    // [Added Helper Method] Render a single enemy - 对齐关卡模式
+    // [Added Helper Method] Render a single enemy - Aligned with Level Mode
     private void renderEnemy(Enemy e) {
-        // 使用固定尺寸，与关卡模式一致
+        // Use fixed dimensions, consistent with Level Mode
         float drawWidth = 16f;
         float drawHeight = 16f;
         float drawX = e.getX() * UNIT_SCALE - (drawWidth - UNIT_SCALE) / 2;
@@ -1614,7 +1624,7 @@ public class EndlessGameScreen implements Screen {
             game.getSpriteBatch().setColor(Color.WHITE);
         }
 
-        // 状态着色（受伤、中毒、冰冻、燃烧） - Only when ALIVE
+        // Status tinting (hurt, poisoned, frozen, burning) - Only when ALIVE
         if (!e.isDead()) {
             if (e.isHurt()) {
                 game.getSpriteBatch().setColor(1, 0, 0, 1); // Red flash
@@ -1636,14 +1646,15 @@ public class EndlessGameScreen implements Screen {
             game.getSpriteBatch().draw(enemyFrame, drawX, drawY, drawWidth, drawHeight);
         }
 
-        // 重要：在恢复 shader 之前先恢复颜色
+        // IMPORTANT: Restore color before restoring shader
         game.getSpriteBatch().setColor(Color.WHITE);
         game.getSpriteBatch().setShader(null);
     }
 
-    // [Helper] Render Health Bar - 对齐关卡模式，始终显示血条
+    // [Helper] Render Health Bar - Aligned with Level Mode, health bar always
+    // displayed
     private void renderHealthBar(Enemy e, float x, float y, float w, float h) {
-        // 使用固定尺寸，与关卡模式一致
+        // Use fixed dimensions, consistent with Level Mode
         float drawWidth = 16f;
         float drawX = e.getX() * UNIT_SCALE - (drawWidth - UNIT_SCALE) / 2;
         float drawY = e.getY() * UNIT_SCALE - (drawWidth - UNIT_SCALE) / 2;
@@ -1661,7 +1672,7 @@ public class EndlessGameScreen implements Screen {
         shapeRenderer.setColor(com.badlogic.gdx.graphics.Color.RED);
         shapeRenderer.rect(barX, barY, barWidth, barHeight);
 
-        // Health - 使用 float 除法确保正确的百分比
+        // Health - Using float division to ensure correct percentage
         float healthPercent = (float) e.getHealth() / (float) e.getMaxHealth();
         shapeRenderer.setColor(com.badlogic.gdx.graphics.Color.GREEN);
         shapeRenderer.rect(barX, barY, barWidth * healthPercent, barHeight);
@@ -1688,7 +1699,7 @@ public class EndlessGameScreen implements Screen {
     }
 
     private void renderPlayer() {
-        // 基于速度确定方向 - 与关卡模式对齐
+        // Determine direction based on velocity - Aligned with Level Mode
         int dir = 0;
         if (Math.abs(player.getVelocityY()) > Math.abs(player.getVelocityX())) {
             dir = player.getVelocityY() > 0 ? 1 : 0;
@@ -1698,14 +1709,15 @@ public class EndlessGameScreen implements Screen {
 
         boolean isMoving = player.isMoving();
 
-        // 使用统一的 PlayerRenderer 工具类进行渲染
-        // 武器渲染回调确保武器在正确的层级（玩家前/后）渲染
+        // Use unified PlayerRenderer utility class for rendering
+        // Weapon rendering callback ensures weapon is rendered at the correct layer
+        // (front/back of player)
         playerRenderer.render(player, dir, stateTime, isMoving,
                 (p, d, t) -> renderEquippedWeapon(p, d));
     }
 
     /**
-     * 渲染玩家装备的武器精灵 (队友功能)
+     * Renders player equipped weapon sprite (partner functionality).
      */
     private void renderEquippedWeapon(Player player, int dir) {
         if (player.isDead())
@@ -1723,13 +1735,13 @@ public class EndlessGameScreen implements Screen {
         boolean useRotation = false;
 
         if (player.isAttacking()) {
-            // 攻击时只使用Attack动画，通过旋转处理方向
+            // Only use Attack animation when attacking, handle direction via rotation
             weaponAnim = de.tum.cit.fop.maze.custom.CustomElementManager
                     .getInstance()
                     .getAnimation(weaponId, "Attack");
             useRotation = true;
         } else {
-            // 待机时尝试使用方向性动画
+            // Try directional animations when idling
             String directionSuffix = "";
             if (dir == 1) {
                 directionSuffix = "Up";
@@ -1742,7 +1754,7 @@ public class EndlessGameScreen implements Screen {
                         .getInstance()
                         .getAnimation(weaponId, "Idle" + directionSuffix);
             }
-            // 回退到默认Idle
+            // Fallback to default Idle
             if (weaponAnim == null) {
                 weaponAnim = de.tum.cit.fop.maze.custom.CustomElementManager
                         .getInstance()
@@ -1764,9 +1776,9 @@ public class EndlessGameScreen implements Screen {
         float rotation = 0f;
         boolean flipX = false;
 
-        // 根据玩家朝向调整武器位置
+        // Adjust weapon position based on player orientation
         switch (dir) {
-            case 1: // 朝上
+            case 1: // Upwards
                 offsetX = UNIT_SCALE * 0.5f;
                 offsetY = UNIT_SCALE * 0.1f;
                 if (useRotation)
@@ -1774,18 +1786,18 @@ public class EndlessGameScreen implements Screen {
                 else
                     flipX = true;
                 break;
-            case 0: // 朝下
+            case 0: // Downwards
                 offsetX = -UNIT_SCALE * 0.4f;
                 offsetY = UNIT_SCALE * 0.1f;
                 if (useRotation)
                     rotation = -90f;
                 break;
-            case 2: // 朝左
+            case 2: // Facing Left
                 offsetX = -UNIT_SCALE * 0.25f;
                 offsetY = UNIT_SCALE * 0.05f;
                 flipX = true;
                 break;
-            case 3: // 朝右
+            case 3: // Facing Right
             default:
                 offsetX = UNIT_SCALE * 0.25f;
                 offsetY = UNIT_SCALE * 0.05f;
@@ -1796,23 +1808,23 @@ public class EndlessGameScreen implements Screen {
         float weaponY = playerCenterY + offsetY - weaponSize / 2;
 
         if (rotation != 0f) {
-            // 带旋转绘制（攻击时）
+            // Draw with rotation (when attacking)
             game.getSpriteBatch().draw(weaponFrame,
                     weaponX, weaponY,
                     weaponSize / 2f, weaponSize / 2f,
                     weaponSize, weaponSize,
                     1f, 1f, rotation);
         } else if (flipX) {
-            // 水平翻转绘制
+            // Draw with horizontal flip
             game.getSpriteBatch().draw(weaponFrame, weaponX + weaponSize, weaponY, -weaponSize, weaponSize);
         } else {
-            // 正常绘制
+            // Normal drawing
             game.getSpriteBatch().draw(weaponFrame, weaponX, weaponY, weaponSize, weaponSize);
         }
     }
 
     /**
-     * 根据武器名称查找自定义武器元素ID
+     * Finds custom weapon element ID based on weapon name.
      */
     private String findCustomWeaponId(String weaponName) {
         for (de.tum.cit.fop.maze.custom.CustomElementDefinition def : de.tum.cit.fop.maze.custom.CustomElementManager
@@ -1831,7 +1843,7 @@ public class EndlessGameScreen implements Screen {
         camera.position.x += (targetX - camera.position.x) * CAMERA_LERP_SPEED * delta;
         camera.position.y += (targetY - camera.position.y) * CAMERA_LERP_SPEED * delta;
 
-        // Z/X 按键控制相机缩放 (与关卡模式一致)
+        // Z/X keys control camera zoom (consistent with Level Mode)
         if (Gdx.input.isKeyPressed(Input.Keys.Z))
             GameSettings.cameraZoom -= 0.02f;
         if (Gdx.input.isKeyPressed(Input.Keys.X))
@@ -1856,7 +1868,7 @@ public class EndlessGameScreen implements Screen {
         uiStage.draw();
     }
 
-    // === 游戏流程 ===
+    // === Game Flow ===
 
     private void togglePause() {
         isPaused = !isPaused;
@@ -1879,7 +1891,7 @@ public class EndlessGameScreen implements Screen {
     private void triggerGameOver() {
         isGameOver = true;
 
-        // 切换到结算画面
+        // Switch to game over screen
         EndlessGameState finalState = EndlessGameState.createFromGame(
                 player,
                 waveSystem.getSurvivalTime(),
@@ -1891,26 +1903,26 @@ public class EndlessGameScreen implements Screen {
                 currentScore,
                 EndlessModeConfig.getThemeForPosition((int) player.getX(), (int) player.getY()));
 
-        // === 持久化数据 (Persistence) ===
+        // === Persistence Data ===
 
-        // 1. 提交成绩到排行榜 (使用 "endless" 作为 levelPath 标识)
+        // 1. Submit score to leaderboard (use "endless" as levelPath identifier)
         LeaderboardManager.getInstance().submitScore(
-                "Player", // 默认玩家名称
-                currentScore, // 分数
-                "endless", // 无尽模式标识
-                totalKills, // 击杀数
-                waveSystem.getSurvivalTime() // 生存时间
+                "Player", // Default player name
+                currentScore, // Score
+                "endless", // Endless mode identifier
+                totalKills, // Kill count
+                waveSystem.getSurvivalTime() // Survival time
         );
 
-        // 2. 累加金币到全局账户 (供商店/技能树使用)
+        // 2. Add coins to global account (for shop/skill tree use)
         int collectedCoins = player.getCoins();
         if (collectedCoins > 0) {
             AchievementManager.addCoinsToTotal(collectedCoins);
-            // 检查金币相关成就
+            // Check coin-related achievements
             AchievementManager.checkCoinMilestone(0);
         }
 
-        // 3. 检查击杀相关成就
+        // 3. Check kill-related achievements
         AchievementManager.checkAchievements(totalKills);
 
         GameLogger.info("EndlessGameScreen",
@@ -1934,21 +1946,21 @@ public class EndlessGameScreen implements Screen {
                 currentScore,
                 EndlessModeConfig.getThemeForPosition((int) player.getX(), (int) player.getY()));
 
-        // TODO: 调用SaveManager保存无尽模式存档
+        // TODO: Call SaveManager to save endless game
         GameLogger.info("EndlessGameScreen", "Game saved: " + state);
     }
 
-    // === 设置界面截图背景 ===
+    // === Settings UI Screenshot Background ===
     private Texture settingsScreenshotTexture;
 
     private void showSettingsOverlay() {
-        // 截取当前游戏画面作为设置界面背景
+        // Capture current game screen as settings background
         if (settingsScreenshotTexture != null) {
             settingsScreenshotTexture.dispose();
         }
         settingsScreenshotTexture = captureScreenshot();
 
-        // 每次重新创建设置界面以使用新截图
+        // Recreate settings UI each time to use new screenshot
         if (settingsTable != null) {
             settingsTable.remove();
             if (settingsUI != null) {
@@ -1959,13 +1971,13 @@ public class EndlessGameScreen implements Screen {
         settingsUI = new de.tum.cit.fop.maze.ui.SettingsUI(game, uiStage, () -> {
             // On Back -> Hide settings, show pause menu
             settingsTable.setVisible(false);
-            // 禁用触摸事件，防止隐藏的按钮仍然响应点击
+            // Disable touch events to prevent hidden buttons from responding to clicks
             settingsTable.setTouchable(com.badlogic.gdx.scenes.scene2d.Touchable.disabled);
             pauseTable.setVisible(true);
         });
         settingsTable = settingsUI.buildWithBackground(settingsScreenshotTexture);
         settingsTable.setVisible(true);
-        // 启用触摸事件
+        // Enable touch events
         settingsTable.setTouchable(com.badlogic.gdx.scenes.scene2d.Touchable.enabled);
         settingsTable.setFillParent(true);
         uiStage.addActor(settingsTable);
@@ -1973,20 +1985,20 @@ public class EndlessGameScreen implements Screen {
     }
 
     /**
-     * 截取当前游戏画面
+     * Captures the current game screen.
      */
     private Texture captureScreenshot() {
         int width = Gdx.graphics.getWidth();
         int height = Gdx.graphics.getHeight();
 
-        // 读取当前帧缓冲区的像素
+        // Read pixels from current frame buffer
         byte[] pixels = com.badlogic.gdx.utils.ScreenUtils.getFrameBufferPixels(0, 0, width, height, true);
 
-        // 创建 Pixmap
+        // Create Pixmap
         Pixmap pixmap = new Pixmap(width, height, Pixmap.Format.RGBA8888);
         com.badlogic.gdx.utils.BufferUtils.copy(pixels, 0, pixmap.getPixels(), pixels.length);
 
-        // 创建纹理
+        // Create texture
         Texture texture = new Texture(pixmap);
         pixmap.dispose();
 
@@ -2075,22 +2087,22 @@ public class EndlessGameScreen implements Screen {
         uiStage.addActor(win);
     }
 
-    // === 陷阱更新 ===
+    // === Trap Updates ===
 
     /**
-     * 更新陷阱碰撞检测
+     * Updates trap collision detection.
      */
     private void updateTraps(float delta) {
-        // 遍历已加载区块的陷阱
+        // Iterate through traps in loaded chunks
         for (MapChunk chunk : chunkManager.getLoadedChunks()) {
             for (Vector2 trapPos : chunk.getTraps()) {
-                // 检查玩家是否踩到陷阱
+                // Check if player stepped on a trap
                 float dx = player.getX() - trapPos.x;
                 float dy = player.getY() - trapPos.y;
                 float dist = (float) Math.sqrt(dx * dx + dy * dy);
 
-                if (dist < 0.8f) { // 碰撞半径
-                    // 造成陷阱伤害
+                if (dist < 0.8f) { // Collision radius
+                    // Deal trap damage
                     boolean damaged = player.damage(1, DamageType.PHYSICAL);
                     if (damaged) {
                         floatingTexts.add(new FloatingText(
@@ -2102,20 +2114,20 @@ public class EndlessGameScreen implements Screen {
         }
     }
 
-    // === 宝箱更新 ===
+    // === Chest Updates ===
 
     /**
-     * 更新宝箱交互检测
+     * Updates chest interaction detection.
      * 
-     * 当玩家靠近未打开的宝箱时，自动触发交互：
-     * - 普通宝箱：直接打开并领取奖励
-     * - 谜题宝箱：暂停游戏并显示谜题UI（待实现）
+     * When the player is near an unopened chest, automatically trigger interaction:
+     * - Normal chest: Open directly and claim reward.
+     * - Puzzle chest: Pause game and show puzzle UI (To be implemented).
      */
     private void updateChests(float delta) {
         if (isChestUIActive)
-            return; // 正在与宝箱交互中，不处理新碰撞
+            return; // Interaction active, don't handle new collisions
 
-        // 遍历已加载区块的宝箱
+        // Iterate through chests in loaded chunks
         for (MapChunk chunk : chunkManager.getLoadedChunks()) {
             String chunkId = chunk.getId();
             List<TreasureChest> chests = chunkChests.get(chunkId);
@@ -2124,21 +2136,21 @@ public class EndlessGameScreen implements Screen {
 
             for (TreasureChest chest : chests) {
                 if (chest.isInteracted())
-                    continue; // 已交互过
+                    continue; // Already interacted
 
-                // 检查玩家是否靠近宝箱
+                // Check if player is near the chest
                 float dx = player.getX() - chest.getX();
                 float dy = player.getY() - chest.getY();
                 float dist = (float) Math.sqrt(dx * dx + dy * dy);
 
-                if (dist < 1.2f) { // 交互半径
-                    // 玩家接触到宝箱
+                if (dist < 1.2f) { // Interaction radius
+                    // Player touched the chest
                     if (chest.getType() == TreasureChest.ChestType.NORMAL) {
-                        // 普通宝箱：直接打开
+                        // Normal chest: open directly
                         chest.startOpening();
-                        chest.update(0.5f); // 快速完成开启动画
+                        chest.update(0.5f); // Fast-forward opening animation
 
-                        // 领取奖励（claimReward 内部会应用到玩家）
+                        // Claim reward (claimReward applies it to player internally)
                         boolean success = chest.claimReward(player);
                         if (success && chest.getReward() != null) {
                             floatingTexts.add(new FloatingText(
@@ -2147,7 +2159,7 @@ public class EndlessGameScreen implements Screen {
                             AudioManager.getInstance().playSound("pickup");
                         }
                     } else {
-                        // 谜题宝箱：暂停游戏并显示谜题UI
+                        // Puzzle chest: pause game and show puzzle UI
                         isPaused = true;
                         isChestUIActive = true;
                         activeChest = chest;
@@ -2155,7 +2167,7 @@ public class EndlessGameScreen implements Screen {
                         chestUI = new ChestInteractUI(chest, game.getSkin(), new ChestInteractUI.ChestUIListener() {
                             @Override
                             public void onChestOpened(ChestReward reward) {
-                                // 领取奖励
+                                // Claim reward
                                 if (reward != null) {
                                     reward.applyToPlayer(player);
                                     floatingTexts.add(new FloatingText(
@@ -2169,14 +2181,14 @@ public class EndlessGameScreen implements Screen {
 
                             @Override
                             public void onChestFailed() {
-                                // 谜题失败，给安慰奖
+                                // Puzzle failed, give consolation prize
                                 player.addCoins(1);
                                 chest.setInteracted(true);
                             }
 
                             @Override
                             public void onUIClose() {
-                                // 关闭UI，恢复游戏
+                                // Close UI, resume game
                                 if (chestUI != null) {
                                     chestUI.remove();
                                     chestUI = null;
@@ -2190,23 +2202,24 @@ public class EndlessGameScreen implements Screen {
                         uiStage.addActor(chestUI);
                         GameLogger.info("EndlessGameScreen", "Puzzle chest interaction started");
                     }
-                    return; // 一次只处理一个宝箱
+                    return; // Only process one chest at a time
                 }
             }
         }
     }
 
-    // === 辅助方法 ===
+    // === Helper Methods ===
 
     /**
-     * 根据主题获取对应的敌人类型 - 统一使用第一关怪物素材
+     * Gets corresponding enemy type based on theme - currently using first level
+     * mob assets for all.
      */
     private Enemy.EnemyType getEnemyTypeForTheme(String theme) {
-        // 统一使用第一关的怪物素材 (BOAR)
+        // Use Level 1 mob assets (BOAR) for all themes
         return Enemy.EnemyType.BOAR;
     }
 
-    // === Screen生命周期 ===
+    // === Screen Lifecycle ===
 
     @Override
     public void resize(int width, int height) {
@@ -2253,7 +2266,7 @@ public class EndlessGameScreen implements Screen {
             bloodParticles.dispose();
         if (dustParticles != null)
             dustParticles.dispose();
-        // 清理设置界面相关资源
+        // Clean up settings screen resources
         if (settingsScreenshotTexture != null)
             settingsScreenshotTexture.dispose();
         if (settingsUI != null)

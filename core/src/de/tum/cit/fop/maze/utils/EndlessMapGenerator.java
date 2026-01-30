@@ -10,34 +10,37 @@ import de.tum.cit.fop.maze.model.WallEntity;
 import java.util.Random;
 
 /**
- * 无尽模式地图生成器 (Endless Map Generator)
+ * Endless Mode Map Generator
  * 
- * 生成900×900格子的多主题大地图。
- * 使用分块生成策略，每次只生成一个64×64的区块。
+ * Generates a large map with multiple themes (900x900 grid).
+ * Uses a chunk generation strategy, generating only one 64x64 chunk at a time.
  * 
- * 主题布局:
- * - 中心圆形区域 (半径200): Space
- * - 西北象限: Grassland
- * - 东北象限: Jungle
- * - 西南象限: Desert
- * - 东南象限: Ice
+ * Theme Layout:
+ * - Central circular area (radius 200): Space
+ * - NW Quadrant: Grassland
+ * - NE Quadrant: Jungle
+ * - SW Quadrant: Desert
+ * - SE Quadrant: Ice
  * 
- * 遵循单一职责原则：仅处理地图生成逻辑。
+ * Follows SRP: only handles map generation logic.
  */
 public class EndlessMapGenerator {
 
-    /** 随机数生成器 */
+    /** Random number generator */
     private final Random random;
 
-    /** 种子（用于可重复生成） */
+    /** Seed (for reproducible generation) */
     private long seed;
 
-    /** 墙体尺寸选项 */
+    /** Wall dimension options */
     private static final int[][] WALL_SIZES = {
             { 2, 2 }, { 3, 2 }, { 2, 3 }, { 4, 2 }, { 2, 4 }, { 3, 3 }, { 4, 4 }
     };
 
-    /** 玩家出生点安全区域半径（格子数，确保玩家不会出生在墙内） */
+    /**
+     * Player spawn safe zone radius (in tiles, ensuring player doesn't spawn inside
+     * walls)
+     */
     private static final int SPAWN_SAFE_ZONE_RADIUS = 8;
 
     public EndlessMapGenerator() {
@@ -51,39 +54,39 @@ public class EndlessMapGenerator {
     }
 
     /**
-     * 生成指定区块
+     * Generates a specific chunk
      * 
-     * @param chunkX 区块X坐标
-     * @param chunkY 区块Y坐标
-     * @return 生成的区块
+     * @param chunkX Chunk X coordinate
+     * @param chunkY Chunk Y coordinate
+     * @return Generated chunk
      */
     public MapChunk generateChunk(int chunkX, int chunkY) {
         int chunkSize = EndlessModeConfig.CHUNK_SIZE;
         MapChunk chunk = new MapChunk(chunkX, chunkY, chunkSize);
 
-        // 为此区块创建确定性随机数生成器
+        // Create a deterministic RNG for this chunk
         long chunkSeed = seed ^ ((long) chunkX << 16) ^ chunkY;
         Random chunkRandom = new Random(chunkSeed);
 
-        // 确定区块主题
+        // Determine chunk theme
         int worldCenterX = chunk.getWorldStartX() + chunkSize / 2;
         int worldCenterY = chunk.getWorldStartY() + chunkSize / 2;
         String theme = EndlessModeConfig.getThemeForPosition(worldCenterX, worldCenterY);
         chunk.setTheme(theme);
 
-        // 生成边界墙（如果是边缘区块）
+        // Generate border walls if this is an edge chunk
         generateBorderWalls(chunk, chunkRandom);
 
-        // 生成内部墙体
+        // Generate internal walls
         generateInternalWalls(chunk, chunkRandom);
 
-        // 生成陷阱位置
+        // Generate traps
         generateTraps(chunk, chunkRandom);
 
-        // 生成宝箱位置 (密度约为陷阱的 1/20)
+        // Generate chests (density ~1/20 of traps)
         generateChests(chunk, chunkRandom);
 
-        // 生成敌人刷新点
+        // Generate enemy spawn points
         generateSpawnPoints(chunk, chunkRandom);
 
         chunk.markGenerated();
@@ -91,7 +94,7 @@ public class EndlessMapGenerator {
     }
 
     /**
-     * 生成边界墙（如果是地图边缘区块）
+     * Generates border walls if this is a map edge chunk
      */
     private void generateBorderWalls(MapChunk chunk, Random rand) {
         int chunkSize = chunk.getSize();
@@ -101,7 +104,7 @@ public class EndlessMapGenerator {
         int mapHeight = EndlessModeConfig.MAP_HEIGHT;
         int borderWidth = 2;
 
-        // 左边界
+        // Left boundary
         if (worldStartX == 0) {
             for (int y = 0; y < chunkSize; y += 2) {
                 int worldY = worldStartY + y;
@@ -113,7 +116,7 @@ public class EndlessMapGenerator {
             }
         }
 
-        // 右边界
+        // Right boundary
         if (worldStartX + chunkSize >= mapWidth) {
             int borderX = mapWidth - borderWidth;
             for (int y = 0; y < chunkSize; y += 2) {
@@ -126,7 +129,7 @@ public class EndlessMapGenerator {
             }
         }
 
-        // 下边界
+        // Bottom boundary
         if (worldStartY == 0) {
             for (int x = 0; x < chunkSize; x += 2) {
                 int worldX = worldStartX + x;
@@ -138,7 +141,7 @@ public class EndlessMapGenerator {
             }
         }
 
-        // 上边界
+        // Top boundary
         if (worldStartY + chunkSize >= mapHeight) {
             int borderY = mapHeight - borderWidth;
             for (int x = 0; x < chunkSize; x += 2) {
@@ -153,18 +156,18 @@ public class EndlessMapGenerator {
     }
 
     /**
-     * 生成内部墙体
+     * Generates internal walls
      */
     private void generateInternalWalls(MapChunk chunk, Random rand) {
         int chunkSize = chunk.getSize();
         int worldStartX = chunk.getWorldStartX();
         int worldStartY = chunk.getWorldStartY();
 
-        // 墙体密度（提高到0.40f以匹配关卡地图）
+        // Wall density (increased to 0.40f to match level maps)
         float wallDensity = 0.40f;
         int expectedWalls = (int) (chunkSize * chunkSize * wallDensity / 16);
 
-        // 使用占用网格避免墙体重叠
+        // Occupancy grid to avoid overlapping walls
         boolean[][] occupied = new boolean[chunkSize][chunkSize];
 
         int attempts = 0;
@@ -174,25 +177,25 @@ public class EndlessMapGenerator {
         while (wallsPlaced < expectedWalls && attempts < maxAttempts) {
             attempts++;
 
-            // 随机选择墙体尺寸
+            // Random size selection
             int[] size = WALL_SIZES[rand.nextInt(WALL_SIZES.length)];
             int width = size[0];
             int height = size[1];
 
-            // 随机位置（区块内局部坐标）
+            // Random position (local chunk coordinates)
             int localX = rand.nextInt(chunkSize - width);
             int localY = rand.nextInt(chunkSize - height);
 
-            // 转换为世界坐标进行安全区域检查
+            // Convert to world coordinates for safe zone check
             int worldX = worldStartX + localX;
             int worldY = worldStartY + localY;
 
-            // 检查是否在玩家出生安全区域内
+            // Check if within player spawn safe zone
             if (isInSpawnSafeZone(worldX, worldY, width, height)) {
                 continue;
             }
 
-            // 检查是否可以放置
+            // Check if placeable
             if (canPlaceWall(occupied, localX, localY, width, height, chunkSize)) {
                 int typeId = getTypeIdForSize(width, height);
 
@@ -205,7 +208,7 @@ public class EndlessMapGenerator {
                 WallEntity wall = new WallEntity(worldX, worldY, width, height, typeId, false, collisionHeight);
                 chunk.addWall(wall);
 
-                // 标记占用
+                // Mark as occupied
                 markOccupied(occupied, localX, localY, width, height);
 
                 wallsPlaced++;
@@ -214,10 +217,10 @@ public class EndlessMapGenerator {
     }
 
     /**
-     * 检查是否可以在指定位置放置墙体
+     * Checks if a wall can be placed at the specified position
      */
     private boolean canPlaceWall(boolean[][] occupied, int x, int y, int w, int h, int size) {
-        // 减少安全边距以允许更密集的布局
+        // Reduce safety margin to allow denser layout
         int margin = 0;
         int startX = Math.max(0, x - margin);
         int startY = Math.max(0, y - margin);
@@ -235,7 +238,7 @@ public class EndlessMapGenerator {
     }
 
     /**
-     * 标记区域为已占用
+     * Marks a region as occupied
      */
     private void markOccupied(boolean[][] occupied, int x, int y, int w, int h) {
         for (int px = x; px < x + w; px++) {
@@ -248,7 +251,7 @@ public class EndlessMapGenerator {
     }
 
     /**
-     * 根据墙体尺寸获取类型ID
+     * Gets type ID based on wall dimensions
      */
     private int getTypeIdForSize(int w, int h) {
         if (w == 2 && h == 2)
@@ -269,51 +272,52 @@ public class EndlessMapGenerator {
     }
 
     /**
-     * 生成陷阱位置
+     * Generates trap positions
      * 
-     * 修复：使用整数坐标确保陷阱严格对齐到网格格子，
-     * 并通过HashSet追踪已占用位置避免重叠。
+     * Fix: Use integer coordinates to ensure traps are strictly aligned with grid
+     * cells,
+     * and track occupied positions via HashSet to avoid overlap.
      */
     private void generateTraps(MapChunk chunk, Random rand) {
         int chunkSize = chunk.getSize();
         int worldStartX = chunk.getWorldStartX();
         int worldStartY = chunk.getWorldStartY();
 
-        // 陷阱密度
+        // Trap density
         float trapDensity = 0.005f;
         int expectedTraps = (int) (chunkSize * chunkSize * trapDensity);
 
-        // 追踪已放置陷阱的格子位置，避免重复
+        // Track placed trap cell positions to avoid repetition
         java.util.Set<String> occupiedCells = new java.util.HashSet<>();
 
         int attempts = 0;
-        int maxAttempts = expectedTraps * 3; // 最大尝试次数，避免无限循环
+        int maxAttempts = expectedTraps * 3; // Max attempts to avoid infinite loops
         int trapsPlaced = 0;
 
         while (trapsPlaced < expectedTraps && attempts < maxAttempts) {
             attempts++;
 
-            // 使用整数坐标，确保陷阱严格对齐到格子
+            // Use integer coordinates to ensure strict grid alignment
             int localX = rand.nextInt(chunkSize - 2) + 1;
             int localY = rand.nextInt(chunkSize - 2) + 1;
 
             int worldX = worldStartX + localX;
             int worldY = worldStartY + localY;
 
-            // 生成唯一键用于去重
+            // Generate unique key for deduplication
             String cellKey = worldX + "," + worldY;
 
-            // 检查是否已有陷阱在此位置
+            // Check if trap already exists here
             if (occupiedCells.contains(cellKey)) {
                 continue;
             }
 
-            // 检查是否在玩家出生安全区域内
+            // Check if within player spawn safe zone
             if (isInSpawnSafeZone(worldX, worldY, 1, 1)) {
                 continue;
             }
 
-            // 检查是否与墙体重叠
+            // Check for wall collisions
             boolean collision = false;
             for (WallEntity wall : chunk.getWalls()) {
                 if (worldX >= wall.getOriginX() && worldX < wall.getOriginX() + wall.getGridWidth() &&
@@ -324,7 +328,7 @@ public class EndlessMapGenerator {
             }
 
             if (!collision) {
-                // 使用整数坐标添加陷阱
+                // Add trap with integer coordinates
                 chunk.addTrap(worldX, worldY);
                 occupiedCells.add(cellKey);
                 trapsPlaced++;
@@ -333,24 +337,24 @@ public class EndlessMapGenerator {
     }
 
     /**
-     * 生成宝箱位置
+     * Generates chest positions
      * 
-     * 密度约为陷阱数量的 1/20，确保每个区块有 0-1 个宝箱概率。
-     * 宝箱不与墙体或陷阱重叠。
+     * Density is about 1/20 of traps, ensuring 0-1 chest per chunk.
+     * Chests do not overlap with walls or traps.
      */
     private void generateChests(MapChunk chunk, Random rand) {
         int chunkSize = chunk.getSize();
         int worldStartX = chunk.getWorldStartX();
         int worldStartY = chunk.getWorldStartY();
 
-        // 根据陷阱数量计算宝箱数量（约 1/20，至少0个）
+        // Calculate chest count based on traps (density ~1/20, min 0)
         int trapCount = chunk.getTrapPositions().size();
         int expectedChests = Math.max(0, (int) (trapCount * GameConfig.CHEST_DENSITY_RATIO));
 
-        // 每个区块最多 1-2 个宝箱，避免过于密集
+        // Max 1-2 chests per chunk to avoid overcrowding
         expectedChests = Math.min(expectedChests, 2);
 
-        // 收集已占用的格子（墙体 + 陷阱）
+        // Collect occupied cells (walls + traps)
         java.util.Set<String> occupiedCells = new java.util.HashSet<>();
         for (WallEntity wall : chunk.getWalls()) {
             for (int wx = wall.getOriginX(); wx < wall.getOriginX() + wall.getGridWidth(); wx++) {
@@ -370,7 +374,7 @@ public class EndlessMapGenerator {
         while (chestsPlaced < expectedChests && attempts < maxAttempts) {
             attempts++;
 
-            // 使用整数坐标，确保宝箱对齐到格子
+            // Use integer coordinates to ensure strict grid alignment
             int localX = rand.nextInt(chunkSize - 4) + 2;
             int localY = rand.nextInt(chunkSize - 4) + 2;
 
@@ -379,17 +383,17 @@ public class EndlessMapGenerator {
 
             String cellKey = worldX + "," + worldY;
 
-            // 检查是否已占用
+            // Check if occupied
             if (occupiedCells.contains(cellKey)) {
                 continue;
             }
 
-            // 检查是否在玩家出生安全区域内
+            // Check if within player spawn safe zone
             if (isInSpawnSafeZone(worldX, worldY, 1, 1)) {
                 continue;
             }
 
-            // 放置宝箱
+            // Place chest
             chunk.addChest(worldX, worldY);
             occupiedCells.add(cellKey);
             chestsPlaced++;
@@ -397,14 +401,14 @@ public class EndlessMapGenerator {
     }
 
     /**
-     * 生成敌人刷新点
+     * Generates enemy spawn points
      */
     private void generateSpawnPoints(MapChunk chunk, Random rand) {
         int chunkSize = chunk.getSize();
         int worldStartX = chunk.getWorldStartX();
         int worldStartY = chunk.getWorldStartY();
 
-        // 每个区块约4-8个刷新点
+        // ~4-8 spawn points per chunk
         int spawnCount = rand.nextInt(5) + 4;
 
         for (int i = 0; i < spawnCount; i++) {
@@ -414,7 +418,7 @@ public class EndlessMapGenerator {
             float worldX = worldStartX + localX;
             float worldY = worldStartY + localY;
 
-            // 检查是否与墙体重叠
+            // Check for wall collisions
             boolean collision = false;
             for (WallEntity wall : chunk.getWalls()) {
                 if (worldX >= wall.getOriginX() - 1 && worldX < wall.getOriginX() + wall.getGridWidth() + 1 &&
@@ -431,7 +435,7 @@ public class EndlessMapGenerator {
     }
 
     /**
-     * 获取玩家出生点（地图中心）
+     * Gets player spawn point (central map position)
      */
     public Vector2 getPlayerSpawnPoint() {
         float centerX = EndlessModeConfig.MAP_WIDTH / 2f;
@@ -440,20 +444,20 @@ public class EndlessMapGenerator {
     }
 
     /**
-     * 检查给定位置是否在玩家出生安全区域内
+     * Checks if a given position is within the player's spawn safe zone
      * 
-     * @param worldX 世界坐标X
-     * @param worldY 世界坐标Y
-     * @param width  物体宽度
-     * @param height 物体高度
-     * @return true如果该区域与安全区域重叠
+     * @param worldX World X coordinate
+     * @param worldY World Y coordinate
+     * @param width  Object width
+     * @param height Object height
+     * @return true if the area overlaps with the safe zone
      */
     private boolean isInSpawnSafeZone(int worldX, int worldY, int width, int height) {
         float spawnX = EndlessModeConfig.MAP_WIDTH / 2f;
         float spawnY = EndlessModeConfig.MAP_HEIGHT / 2f;
         float radius = SPAWN_SAFE_ZONE_RADIUS;
 
-        // 检查物体的四个角是否在安全区域内
+        // Check if any of the object's four corners are in the safe zone
         float[] cornersX = { worldX, worldX + width, worldX, worldX + width };
         float[] cornersY = { worldY, worldY, worldY + height, worldY + height };
 
@@ -466,20 +470,20 @@ public class EndlessMapGenerator {
             }
         }
 
-        // 额外检查：物体中心到出生点的距离
+        // Extra check: Distance from object center to spawn point
         float centerX = worldX + width / 2f;
         float centerY = worldY + height / 2f;
         float dx = centerX - spawnX;
         float dy = centerY - spawnY;
         float dist = (float) Math.sqrt(dx * dx + dy * dy);
 
-        // 考虑物体尺寸的一半
+        // Consider half of object dimensions
         float effectiveRadius = radius + Math.max(width, height) / 2f;
         return dist <= effectiveRadius;
     }
 
     /**
-     * 设置随机种子
+     * Sets random seed
      */
     public void setSeed(long seed) {
         this.seed = seed;
@@ -487,7 +491,7 @@ public class EndlessMapGenerator {
     }
 
     /**
-     * 获取当前种子
+     * Gets current seed
      */
     public long getSeed() {
         return seed;

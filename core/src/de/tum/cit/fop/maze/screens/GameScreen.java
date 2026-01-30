@@ -70,7 +70,10 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
     private de.tum.cit.fop.maze.utils.DeveloperConsole developerConsole;
     private de.tum.cit.fop.maze.ui.ConsoleUI consoleUI;
     private boolean isConsoleOpen = false;
-    /** 帧保护标志：控制台刚关闭时跳过ESC暂停检测，防止同帧触发暂停菜单 */
+    /**
+     * Frame protection flag: skips ESC pause detection when console is just closed
+     * to prevent triggering pause menu in the same frame
+     */
     private boolean consoleJustClosed = false;
 
     private float stateTime = 0f;
@@ -86,14 +89,14 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
     private Color biomeColor = Color.WHITE;
     private com.badlogic.gdx.graphics.glutils.ShaderProgram grayscaleShader;
 
-    // 宝箱交互UI
+    // Treasure chest interaction UI
     private ChestInteractUI chestInteractUI;
     private TreasureChest activeChest;
 
-    // === 玩家/武器朝向记忆 (队友功能) ===
-    private int lastPlayerFacing = 3; // 记录最后水平朝向 (2=左, 3=右)
+    // === Player/Weapon orientation memory (Teammate feature) ===
+    private int lastPlayerFacing = 3; // Record last horizontal facing (2=Left, 3=Right)
 
-    // === 背包系统 (Inventory System) ===
+    // === Inventory System ===
     private InventorySystem inventorySystem;
     private InventoryUI inventoryUI;
     private boolean isInventoryOpen = false;
@@ -152,8 +155,8 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         this.playerRenderer = new de.tum.cit.fop.maze.utils.PlayerRenderer(game.getSpriteBatch(), textureManager,
                 UNIT_SCALE);
 
-        // 在 initGameWorld 之前保存 freshStart 状态
-        // 因为 GameWorld 的构造函数会消耗（consume）这个标志
+        // Save freshStart status before initGameWorld
+        // Because the GameWorld constructor consumes this flag
         boolean isFreshGameStart = de.tum.cit.fop.maze.shop.LoadoutManager.getInstance().isFreshStart();
 
         initGameWorld(this.currentLevelPath);
@@ -190,8 +193,10 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
                         state.getCooldownReduction(),
                         state.getSpeedBonus());
 
-                // 只有在非新游戏开始时才从存档恢复武器（继续下一关）
-                // 新游戏开始时使用 LoadoutManager 的选择（已在 GameWorld 中初始化）
+                // Only restore weapons from save if not a fresh game start (continuing to next
+                // level)
+                // New game starts use LoadoutManager's selection (already initialized in
+                // GameWorld)
                 if (!isFreshGameStart) {
                     p.setInventoryFromTypes(state.getInventoryWeaponTypes());
                 }
@@ -210,37 +215,37 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         this.currentLevelPath = mapPath;
         GameMap map = MapLoader.loadMap(mapPath);
 
-        // Biome Logic - Theme order: 草原, 丛林, 荒漠, 冰原, 太空船
+        // Biome Logic - Theme order: Grassland, Jungle, Desert, Ice, Spaceship
         GameLogger.info("GameScreen", "Initializing GameWorld with map: " + mapPath);
         if (mapPath.contains("level-1"))
-            biomeColor = Color.WHITE; // 草原 (Grassland)
+            biomeColor = Color.WHITE; // Grassland
         else if (mapPath.contains("level-2"))
-            biomeColor = new Color(0.6f, 0.8f, 0.6f, 1f); // 丛林 (Jungle - Dark Green)
+            biomeColor = new Color(0.6f, 0.8f, 0.6f, 1f); // Jungle (Dark Green)
         else if (mapPath.contains("level-3"))
-            biomeColor = new Color(1f, 0.9f, 0.6f, 1f); // 荒漠 (Desert - Sand)
+            biomeColor = new Color(1f, 0.9f, 0.6f, 1f); // Desert (Sand)
         else if (mapPath.contains("level-4"))
-            biomeColor = new Color(0.7f, 0.9f, 1f, 1f); // 冰原 (Ice - Cyan)
+            biomeColor = new Color(0.7f, 0.9f, 1f, 1f); // Ice (Cyan)
         else if (mapPath.contains("level-5"))
-            biomeColor = new Color(0.8f, 0.8f, 0.8f, 1f); // 太空船 (Spaceship - Grey)
+            biomeColor = new Color(0.8f, 0.8f, 0.8f, 1f); // Spaceship (Grey)
         else
             biomeColor = Color.WHITE;
 
         this.gameWorld = new GameWorld(map, mapPath);
         this.gameWorld.setListener(this);
 
-        // === 注册投射物命中粒子效果监听器 ===
+        // === Register projectile hit particle effect listener ===
         this.gameWorld.setProjectileHitListener((x, y, textureKey, damage, effect) -> {
-            // 基于效果类型生成不同颜色的粒子
+            // Spawn different color particles based on effect type
             if (effect == de.tum.cit.fop.maze.model.weapons.WeaponEffect.SLOW) {
-                // Magic Wand: 蓝色爆炸粒子
+                // Magic Wand: blue explosion particles
                 Color blueColor = new Color(0.3f, 0.5f, 1.0f, 1.0f);
                 bloodParticles.spawn(x, y, 8, 0, 0, 1.5f, blueColor);
             } else if (effect == de.tum.cit.fop.maze.model.weapons.WeaponEffect.FREEZE) {
-                // Ice Bow: 冰蓝色爆炸粒子
+                // Ice Bow: ice blue explosion particles
                 Color iceColor = new Color(0.6f, 0.9f, 1.0f, 1.0f);
                 bloodParticles.spawn(x, y, 12, 0, 0, 2.0f, iceColor);
             } else if (effect == de.tum.cit.fop.maze.model.weapons.WeaponEffect.BURN) {
-                // Machine Gun: 橙红色粒子
+                // Machine Gun: orange-red particles
                 Color fireColor = new Color(1.0f, 0.4f, 0.1f, 1.0f);
                 bloodParticles.spawn(x, y, 5, 0, 0, 0.8f, fireColor);
             }
@@ -249,7 +254,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         if (hud != null)
             hud.dispose();
 
-        // === 初始化背包系统 ===
+        // === Initialize inventory system ===
         inventorySystem = new InventorySystem(gameWorld.getPlayer());
         inventoryUI = new InventoryUI(uiStage, game.getSkin(), textureManager, inventorySystem);
         inventoryUI.setOnCloseCallback(this::onInventoryClosed);
@@ -318,18 +323,18 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
     }
 
     /**
-     * 鼠标输入处理器 - 处理攻击和武器切换
+     * Mouse input processor - handles attacks and weapon switching
      */
     private com.badlogic.gdx.InputProcessor getMouseInputProcessor() {
         return new com.badlogic.gdx.InputAdapter() {
             @Override
             public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-                // 控制台/暂停/背包打开时不处理游戏输入
+                // Don't process game input when console/pause/inventory is open
                 if (isConsoleOpen || isPaused || isInventoryOpen)
                     return false;
 
                 if (button == com.badlogic.gdx.Input.Buttons.LEFT) {
-                    // 左键攻击 - 仅在鼠标模式启用时生效
+                    // Left click attack - only valid when mouse mode is enabled
                     if (!GameSettings.isUseMouseAiming())
                         return false;
                     if (gameWorld.triggerAttack()) {
@@ -339,7 +344,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
                     }
                     return true;
                 } else if (button == com.badlogic.gdx.Input.Buttons.RIGHT) {
-                    // 右键切换武器 - 仅在鼠标模式启用时生效
+                    // Right click weapon switch - only valid when mouse mode is enabled
                     if (!GameSettings.isUseMouseAiming())
                         return false;
                     gameWorld.getPlayer().switchWeapon();
@@ -408,10 +413,11 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         Player player = gameWorld.getPlayer();
 
         // Auto-save logic
-        // === 修复：进入下一关时恢复满血 ===
-        // 保存满血状态而非当前血量，确保下一关开始时血量恢复
+        // === Fix: Restore full health when entering next level ===
+        // Save max health instead of current health to ensure full recovery in next
+        // level
         GameState state = new GameState(player.getX(), player.getY(), currentLevelPath,
-                player.getMaxHealth(), player.hasKey()); // 使用 getMaxHealth() 而非 getLives()
+                player.getMaxHealth(), player.hasKey()); // Use getMaxHealth() instead of getLives()
         state.setSkillPoints(player.getSkillPoints());
         state.setMaxHealthBonus(player.getMaxHealthBonus());
         state.setDamageBonus(player.getDamageBonus());
@@ -426,11 +432,11 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         if (saveFile == null)
             saveFile = "auto_save_victory.json";
 
-        // === 先同步本关收集的金币到 ShopManager ===
-        // 这样 getPlayerCoins() 返回的值才包含本关收集的金币
+        // === Sync coins collected in this level to ShopManager first ===
+        // So that getPlayerCoins() returns the value including coins from this level
         de.tum.cit.fop.maze.shop.ShopManager.syncCoinsFromGame(gameWorld.getCoinsCollected());
 
-        // === PERSIST SHOP STATE (包含累加后的金币) ===
+        // === PERSIST SHOP STATE (including accumulated coins) ===
         state.setCoins(de.tum.cit.fop.maze.shop.ShopManager.getPlayerCoins());
         state.setPurchasedItemIds(de.tum.cit.fop.maze.shop.ShopManager.getPurchasedItemIds());
 
@@ -473,10 +479,10 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
 
         // If console is open, handle console-specific input and render
         if (isConsoleOpen) {
-            // ESC 专门用于关闭控制台
+            // ESC specifically used to close console
             if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
-                toggleConsole(); // 关闭控制台
-                consoleJustClosed = true; // 防止下一帧触发暂停
+                toggleConsole(); // Close console
+                consoleJustClosed = true; // Prevent pause in next frame
             }
 
             Gdx.gl.glClearColor(0.1f, 0.1f, 0.1f, 1);
@@ -488,18 +494,18 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
             return;
         }
 
-        // 控制台刚关闭的帧，跳过ESC暂停检测
+        // Skip ESC pause detection in the frame just after console closes
         if (consoleJustClosed) {
             consoleJustClosed = false;
         } else if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
             if (isInventoryOpen) {
-                toggleInventory(); // 关闭背包
+                toggleInventory(); // Close inventory
             } else {
                 togglePause();
             }
         }
 
-        // 背包快捷键检测
+        // Inventory shortcut detection
         if (Gdx.input.isKeyJustPressed(GameSettings.KEY_INVENTORY)) {
             toggleInventory();
         }
@@ -509,7 +515,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
 
         gameViewport.apply();
 
-        // === 更新鼠标瞄准 (仅在鼠标模式开启时) ===
+        // === Update mouse aiming (only when mouse mode is enabled) ===
         if (GameSettings.isUseMouseAiming()) {
             gameWorld.updateMouseAim(camera);
             if (crosshairRenderer != null) {
@@ -523,7 +529,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
             gameWorld.update(effectiveDelta);
             stateTime += effectiveDelta;
 
-            // === 鼠标模式下按住左键连续攻击 ===
+            // === Continuous attack when holding left button in mouse mode ===
             if (GameSettings.isUseMouseAiming() && !isConsoleOpen && !isPaused && !isInventoryOpen) {
                 if (Gdx.input.isButtonPressed(com.badlogic.gdx.Input.Buttons.LEFT)) {
                     if (gameWorld.triggerAttack()) {
@@ -534,17 +540,17 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
                 }
             }
 
-            // === Machine Gun 开火粒子效果 ===
+            // === Machine Gun fire particle effect ===
             if (gameWorld.consumeFireEvent()) {
-                // 使用橙红色火焰粒子
+                // Use orange-red fire particles
                 Color fireColor = new Color(1.0f, 0.4f, 0.1f, 1.0f);
                 bloodParticles.spawn(
                         gameWorld.getLastFireX(),
                         gameWorld.getLastFireY(),
-                        5, // 中等粒子数量
+                        5, // Medium particle count
                         gameWorld.getLastFireDirX(),
                         gameWorld.getLastFireDirY(),
-                        0.8f, // 扩散强度
+                        0.8f, // Diffusion intensity
                         fireColor);
             }
         } else {
@@ -654,25 +660,25 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
                 game.getSpriteBatch().setColor(Color.WHITE);
         }
 
-        // 2.5 Render Treasure Chests (底部对齐)
+        // 2.5 Render Treasure Chests (Bottom alignment)
         for (
 
         TreasureChest chest : gameMap.getTreasureChests()) {
             TextureRegion chestTex = textureManager.getChestFrame(chest.getState());
             if (chestTex != null) {
-                // 底部对齐渲染：宝箱底边与格子底边对齐
+                // Bottom-aligned rendering: Chest bottom edge aligns with grid bottom
                 float renderHeight = textureManager.getChestRenderHeight(chest.getState(), UNIT_SCALE);
                 float drawX = chest.getX() * UNIT_SCALE;
-                float drawY = chest.getY() * UNIT_SCALE; // 底边对齐
+                float drawY = chest.getY() * UNIT_SCALE; // Bottom alignment
                 game.getSpriteBatch().draw(chestTex, drawX, drawY,
                         UNIT_SCALE, UNIT_SCALE * renderHeight);
             }
         }
 
-        // 2.6 Render Dropped Items (金币、武器、护甲等掉落物)
-        float dropScale = 0.6f; // 掉落物尺寸缩放为60%
+        // 2.6 Render Dropped Items (Coins, Weapons, Armor, etc.)
+        float dropScale = 0.6f; // Dropped item size scaled to 60%
         float dropSize = UNIT_SCALE * dropScale;
-        float dropOffset = (UNIT_SCALE - dropSize) / 2; // 居中偏移
+        float dropOffset = (UNIT_SCALE - dropSize) / 2; // Center offset
         for (de.tum.cit.fop.maze.model.items.DroppedItem item : gameWorld.getDroppedItems()) {
             if (item.isPickedUp())
                 continue;
@@ -683,10 +689,10 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
                     itemTex = textureManager.coinRegion;
                     break;
                 case WEAPON:
-                    // 使用 Idle 状态动画作为武器掉落物显示
+                    // Use Idle animation for weapon drops
                     de.tum.cit.fop.maze.model.weapons.Weapon weapon = (de.tum.cit.fop.maze.model.weapons.Weapon) item
                             .getPayload();
-                    // 尝试从 CustomElementManager 获取 Idle 动画第一帧
+                    // Try to get first frame of Idle animation from CustomElementManager
                     String weaponIdForDrop = findCustomWeaponId(weapon.getName());
                     if (weaponIdForDrop != null) {
                         com.badlogic.gdx.graphics.g2d.Animation<TextureRegion> idleAnim = de.tum.cit.fop.maze.custom.CustomElementManager
@@ -696,19 +702,19 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
                             itemTex = idleAnim.getKeyFrame(0);
                         }
                     }
-                    // 回退到商店贴图
+                    // Fallback to shop texture
                     if (itemTex == null) {
                         itemTex = getWeaponTexture(weapon.getName());
                     }
                     if (itemTex == null)
-                        itemTex = textureManager.coinRegion; // 最终回退
+                        itemTex = textureManager.coinRegion; // Final fallback
                     break;
                 case ARMOR:
                     de.tum.cit.fop.maze.model.items.Armor armor = (de.tum.cit.fop.maze.model.items.Armor) item
                             .getPayload();
                     itemTex = getArmorTexture(armor.getName());
                     if (itemTex == null)
-                        itemTex = textureManager.coinRegion; // 回退（避免使用钥匙纹理）
+                        itemTex = textureManager.coinRegion; // Fallback (avoid using key texture)
                     break;
                 case POTION:
                     itemTex = textureManager.getPotionTexture(item.getTextureKey());
@@ -716,7 +722,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
             }
 
             if (itemTex != null) {
-                float bobY = item.getBobOffset() * UNIT_SCALE; // 浮动动画
+                float bobY = item.getBobOffset() * UNIT_SCALE; // Floating animation
                 game.getSpriteBatch().draw(itemTex,
                         item.getX() * UNIT_SCALE + dropOffset,
                         item.getY() * UNIT_SCALE + dropOffset + bobY,
@@ -731,7 +737,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         float pX = gameWorld.getPlayer().getX();
         float pY = gameWorld.getPlayer().getY();
         for (Enemy e : gameWorld.getEnemies()) {
-            // 距离过滤：只渲染玩家渲染半径内的敌人
+            // Distance filtering: only render enemies within the player's render radius
             float dx = e.getX() - pX;
             float dy = e.getY() - pY;
             if (dx * dx + dy * dy > renderRadiusSq)
@@ -937,9 +943,9 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         // 6. Render Player
         renderPlayer(player);
 
-        // 6.1 Render Attack Range Indicator (攻击范围可视化)
+        // 6.1 Render Attack Range Indicator
         if (player.isAttacking() && GameSettings.isShowAttackRange()) {
-            game.getSpriteBatch().end(); // 暂停 SpriteBatch 以使用 ShapeRenderer
+            game.getSpriteBatch().end(); // Pause SpriteBatch to use ShapeRenderer
             Weapon currentWeapon = player.getCurrentWeapon();
             if (currentWeapon != null && !currentWeapon.isRanged()) {
                 float total = player.getAttackAnimTotalDuration();
@@ -947,17 +953,18 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
                     total = 0.2f;
                 float elapsed = total - player.getAttackAnimTimer();
                 float progress = elapsed / total;
-                // 使用统一的 getAttackAngle() 方法，支持鼠标和8向键盘攻击
+                // Use unified getAttackAngle() method, supporting mouse and 8-way keyboard
+                // attacks
                 attackRangeRenderer.render(camera, player.getX(), player.getY(),
                         gameWorld.getAttackAngle(), currentWeapon.getRange(),
                         currentWeapon.getAttackArc(),
                         currentWeapon.isRanged(), progress);
             }
-            game.getSpriteBatch().begin(); // 恢复 SpriteBatch
+            game.getSpriteBatch().begin(); // Resume SpriteBatch
             game.getSpriteBatch().setProjectionMatrix(camera.combined);
         }
 
-        // 6.5 Render Projectiles (队友功能: 弹道渲染)
+        // 6.5 Render Projectiles (Teammate feature: Ballistics rendering)
         for (de.tum.cit.fop.maze.model.Projectile p : gameWorld.getProjectiles()) {
             TextureRegion projRegion = null;
             String key = p.getTextureKey();
@@ -1056,10 +1063,11 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         font.setColor(Color.WHITE);
         font.getData().setScale(1f);
 
-        // 7. Render Fog of War (渐变迷雾效果)
-        // 必须在所有游戏元素渲染完成后、batch.end() 之前渲染
-        // 迷雾会覆盖在游戏画面上，但不影响 HUD
-        // 注意：迷雾可见半径固定，不随相机缩放变化，防止作弊
+        // 7. Render Fog of War (Gradient fog effect)
+        // Must be rendered after all game elements are rendered and before batch.end()
+        // Fog covers the game screen but does not affect the HUD
+        // Note: Fog visibility radius is fixed and does not change with camera zoom to
+        // prevent cheating
         game.getSpriteBatch().setColor(Color.WHITE);
         float playerCenterX = player.getX() * UNIT_SCALE + UNIT_SCALE / 2;
         float playerCenterY = player.getY() * UNIT_SCALE + UNIT_SCALE / 2;
@@ -1071,7 +1079,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         bloodParticles.update(delta);
         bloodParticles.render(camera.combined);
 
-        // === 渲染准星 (Crosshair) - 仅在鼠标模式启用时显示 ===
+        // === Render Crosshair - only displayed when mouse mode is enabled ===
         if (crosshairRenderer != null && GameSettings.isUseMouseAiming() && !isPaused && !isConsoleOpen
                 && !isInventoryOpen) {
             com.badlogic.gdx.math.Vector2 mousePos = gameWorld.getMouseWorldPos();
@@ -1106,14 +1114,15 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
                 || Gdx.input.isKeyPressed(GameSettings.KEY_DOWN)
                 || Gdx.input.isKeyPressed(GameSettings.KEY_LEFT) || Gdx.input.isKeyPressed(GameSettings.KEY_RIGHT));
 
-        // 使用统一的 PlayerRenderer 工具类进行渲染
-        // 武器渲染回调确保武器在正确的层级（玩家前/后）渲染
+        // Use unified PlayerRenderer utility class for rendering
+        // Weapon rendering callback ensures weapon is rendered at the correct layer
+        // (front/back of player)
         playerRenderer.render(player, dir, stateTime, isMoving,
                 (p, d, t) -> renderEquippedWeapon(p, d));
     }
 
     /**
-     * 渲染玩家装备的武器精灵 (队友功能)
+     * Render player equipped weapon sprite (Teammate feature)
      */
     private void renderEquippedWeapon(Player player, int dir) {
         if (player.isDead())
@@ -1131,13 +1140,13 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         boolean useRotation = false;
 
         if (player.isAttacking()) {
-            // 攻击时只使用Attack动画，通过旋转处理方向
+            // Only use Attack animation during attack, handle direction via rotation
             weaponAnim = de.tum.cit.fop.maze.custom.CustomElementManager
                     .getInstance()
                     .getAnimation(weaponId, "Attack");
             useRotation = true;
         } else {
-            // 待机时尝试使用方向性动画
+            // Try directional animations for idle state
             String directionSuffix = "";
             if (dir == 1) {
                 directionSuffix = "Up";
@@ -1150,7 +1159,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
                         .getInstance()
                         .getAnimation(weaponId, "Idle" + directionSuffix);
             }
-            // 回退到默认Idle
+            // Fallback to default Idle state
             if (weaponAnim == null) {
                 weaponAnim = de.tum.cit.fop.maze.custom.CustomElementManager
                         .getInstance()
@@ -1172,9 +1181,9 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         float rotation = 0f;
         boolean flipX = false;
 
-        // 根据玩家朝向调整武器位置
+        // Adjust weapon position based on player direction
         switch (dir) {
-            case 1: // 朝上
+            case 1: // Facing UP
                 offsetX = UNIT_SCALE * 0.5f;
                 offsetY = UNIT_SCALE * 0.1f;
                 if (useRotation)
@@ -1182,18 +1191,18 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
                 else
                     flipX = true;
                 break;
-            case 0: // 朝下
+            case 0: // Facing DOWN
                 offsetX = -UNIT_SCALE * 0.4f;
                 offsetY = UNIT_SCALE * 0.1f;
                 if (useRotation)
                     rotation = -90f;
                 break;
-            case 2: // 朝左
+            case 2: // Facing LEFT
                 offsetX = -UNIT_SCALE * 0.25f;
                 offsetY = UNIT_SCALE * 0.05f;
                 flipX = true;
                 break;
-            case 3: // 朝右
+            case 3: // Facing RIGHT
             default:
                 offsetX = UNIT_SCALE * 0.25f;
                 offsetY = UNIT_SCALE * 0.05f;
@@ -1204,23 +1213,23 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         float weaponY = playerCenterY + offsetY - weaponSize / 2;
 
         if (rotation != 0f) {
-            // 带旋转绘制（攻击时）
+            // Draw with rotation (during attack)
             game.getSpriteBatch().draw(weaponFrame,
                     weaponX, weaponY,
                     weaponSize / 2f, weaponSize / 2f,
                     weaponSize, weaponSize,
                     1f, 1f, rotation);
         } else if (flipX) {
-            // 水平翻转绘制
+            // Draw with horizontal flip
             game.getSpriteBatch().draw(weaponFrame, weaponX + weaponSize, weaponY, -weaponSize, weaponSize);
         } else {
-            // 正常绘制
+            // Normal draw
             game.getSpriteBatch().draw(weaponFrame, weaponX, weaponY, weaponSize, weaponSize);
         }
     }
 
     /**
-     * 根据武器名称查找自定义武器元素ID
+     * Find custom weapon element ID by weapon name
      */
     private String findCustomWeaponId(String weaponName) {
         for (de.tum.cit.fop.maze.custom.CustomElementDefinition def : de.tum.cit.fop.maze.custom.CustomElementManager
@@ -1247,7 +1256,8 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         float viewW = camera.viewportWidth * camera.zoom;
         float viewH = camera.viewportHeight * camera.zoom;
 
-        // 当视野大于地图时居中相机，否则 clamp 到地图边界
+        // Center camera when viewport is larger than map, otherwise clamp to map
+        // boundaries
         if (mapW <= viewW) {
             camera.position.x = mapW / 2;
         } else {
@@ -1286,8 +1296,10 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
                 state.getCooldownReduction(),
                 state.getSpeedBonus());
 
-        // 只有在非新游戏开始时才从存档恢复武器（继续下一关）
-        // 新游戏开始时使用 LoadoutManager 的选择（在 GameWorld 中初始化）
+        // Only restore weapons from save if not a fresh game start (continuing to next
+        // level)
+        // New game starts use LoadoutManager's selection (already initialized in
+        // GameWorld)
         if (!de.tum.cit.fop.maze.shop.LoadoutManager.getInstance().isFreshStart()) {
             player.setInventoryFromTypes(state.getInventoryWeaponTypes());
         }
@@ -1334,7 +1346,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
             showSettingsOverlay();
         });
         addMenuButton("Skills", () -> {
-            // 打开技能树界面（游戏内访问模式）
+            // Open Skill Screen (In-game access mode)
             game.setScreen(new SkillScreen(game, currentLevelPath, false, true));
         });
         addMenuButton("Save Game", () -> {
@@ -1354,7 +1366,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
     }
 
     /**
-     * 初始化开发者控制台
+     * Initialize Developer Console
      */
     private void setupDeveloperConsole() {
         developerConsole = new de.tum.cit.fop.maze.utils.DeveloperConsole();
@@ -1363,20 +1375,20 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         consoleUI.setConsole(developerConsole);
         developerConsole.setGameWorld(gameWorld);
 
-        // 设置关卡控制监听器，实现 level/restart/skip/win 命令
+        // Set level control listener for level/restart/skip/win commands
         developerConsole.setLevelChangeListener(new de.tum.cit.fop.maze.utils.DeveloperConsole.LevelChangeListener() {
             @Override
             public void onLevelChange(int levelNumber) {
-                // 跳转到指定关卡
+                // Jump to specified level
                 String newLevelPath = "maps/level-" + levelNumber + ".properties";
-                toggleConsole(); // 关闭控制台
+                toggleConsole(); // Close console
                 initGameWorld(newLevelPath);
-                setupDeveloperConsole(); // 重新初始化控制台
+                setupDeveloperConsole(); // Re-initialize console
             }
 
             @Override
             public void onRestart() {
-                // 重新开始当前关卡
+                // Restart current level
                 toggleConsole();
                 initGameWorld(currentLevelPath);
                 setupDeveloperConsole();
@@ -1384,7 +1396,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
 
             @Override
             public void onSkip() {
-                // 跳到下一关
+                // Skip to next level
                 int currentLevel = 1;
                 try {
                     String levelStr = currentLevelPath.replaceAll("[^0-9]", "");
@@ -1411,7 +1423,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
     }
 
     /**
-     * 切换开发者控制台显示状态
+     * Toggle developer console visibility
      */
     private void toggleConsole() {
         isConsoleOpen = !isConsoleOpen;
@@ -1431,7 +1443,8 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
             Gdx.input.setInputProcessor(consoleMultiplexer);
         } else {
             consoleUI.hide();
-            // 设置帧保护标志，防止同帧ESC被再次检测并触发暂停菜单
+            // Set frame protection flag to prevent ESC from being detected again and
+            // triggering pause menu
             consoleJustClosed = true;
             setInputProcessors(); // Restore Gameplay Chain
         }
@@ -1449,7 +1462,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
     }
 
     private void showSettingsOverlay() {
-        // 每次重新创建设置界面
+        // Recreate settings UI every time
         if (settingsTable != null) {
             settingsTable.remove();
             if (settingsUI != null) {
@@ -1460,14 +1473,14 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         settingsUI = new de.tum.cit.fop.maze.ui.SettingsUI(game, uiStage, () -> {
             // On Back -> Hide settings, show pause menu
             settingsTable.setVisible(false);
-            // 禁用触摸事件，防止隐藏的按钮仍然响应点击
+            // Disable touch events to prevent hidden buttons from responding to clicks
             settingsTable.setTouchable(com.badlogic.gdx.scenes.scene2d.Touchable.disabled);
             pauseTable.setVisible(true);
         });
-        // 使用不透明深色背景（不再使用截图）
+        // Use opaque dark background (no longer using screenshot)
         settingsTable = settingsUI.buildWithBackground(null);
         settingsTable.setVisible(true);
-        // 启用触摸事件
+        // Enable touch events
         settingsTable.setTouchable(com.badlogic.gdx.scenes.scene2d.Touchable.enabled);
         settingsTable.setFillParent(true);
         uiStage.addActor(settingsTable);
@@ -1608,20 +1621,20 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
     }
 
     /**
-     * 切换背包界面显示状态
+     * Toggle inventory interface visibility
      */
     private void toggleInventory() {
         isInventoryOpen = !isInventoryOpen;
         inventoryUI.setVisible(isInventoryOpen);
         if (isInventoryOpen) {
-            isPaused = true; // 打开背包时暂停游戏
+            isPaused = true; // Pause game when inventory is open
         } else {
             isPaused = false;
         }
     }
 
     /**
-     * 背包关闭回调
+     * Inventory close callback
      */
     private void onInventoryClosed() {
         isInventoryOpen = false;
@@ -1651,7 +1664,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
             grayscaleShader.dispose();
         if (dustParticles != null)
             dustParticles.dispose();
-        // 清理设置界面相关资源
+        // Clean up settings UI resources
         if (settingsUI != null)
             settingsUI.dispose();
     }
@@ -1703,19 +1716,19 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         }
     }
 
-    // 武器贴图缓存 (使用商店素材)
+    // Weapon/Armor texture cache (using shop assets)
     private java.util.Map<String, TextureRegion> weaponTexCache = new java.util.HashMap<>();
     private java.util.Map<String, TextureRegion> armorTexCache = new java.util.HashMap<>();
 
     /**
-     * 获取武器掉落物的贴图 (优先使用商店素材)
+     * Get texture for weapon drop (prefers shop assets)
      */
     private TextureRegion getWeaponTexture(String weaponName) {
         if (weaponTexCache.containsKey(weaponName)) {
             return weaponTexCache.get(weaponName);
         }
 
-        // 尝试从商店素材加载
+        // Try load from shop assets
         String fileName = weaponName.toLowerCase().replace(" ", "_").replace("'", "") + ".png";
         String path = "images/items/shop/" + fileName;
         try {
@@ -1726,7 +1739,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
                 return region;
             }
         } catch (Exception e) {
-            // 忽略加载失败
+            // Ignore loading failure
         }
 
         weaponTexCache.put(weaponName, null);
@@ -1734,14 +1747,14 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
     }
 
     /**
-     * 获取护甲掉落物的贴图 (优先使用商店素材)
+     * Get texture for armor drop (prefers shop assets)
      */
     private TextureRegion getArmorTexture(String armorName) {
         if (armorTexCache.containsKey(armorName)) {
             return armorTexCache.get(armorName);
         }
 
-        // 尝试从商店素材加载
+        // Try load from shop assets
         String fileName = armorName.toLowerCase().replace(" ", "_").replace("'", "") + ".png";
         String path = "images/items/shop/" + fileName;
         try {
@@ -1752,7 +1765,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
                 return region;
             }
         } catch (Exception e) {
-            // 忽略加载失败
+            // Ignore loading failure
         }
 
         armorTexCache.put(armorName, null);

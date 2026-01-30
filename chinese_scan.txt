@@ -1,0 +1,737 @@
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/ChestInteractUI.java:13: * 宝箱交互UI界面 (Chest Interact UI)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/ChestInteractUI.java:15: * 显示在游戏暂停时，用于处理宝箱交互：
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/ChestInteractUI.java:16: * - 普通宝箱：显示"打开"按钮
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/ChestInteractUI.java:17: * - 奖励展示
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/ChestInteractUI.java:92: Label titleLabel = new Label("发现宝箱！", skin, "title");
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/ChestInteractUI.java:96: Label descLabel = new Label("一个神秘的宝箱正在等待你打开...", skin);
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/ChestInteractUI.java:101: TextButton openButton = new TextButton("打开宝箱", skin);
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/ChestInteractUI.java:115: Label titleLabel = new Label("恭喜！", skin, "title");
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/ChestInteractUI.java:120: String rewardText = currentReward != null ? currentReward.getDisplayName() : "神秘宝藏";
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/ChestInteractUI.java:121: Label rewardLabel = new Label("获得: " + rewardText, skin);
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/ChestInteractUI.java:126: TextButton closeButton = new TextButton("太棒了！", skin);
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/InventoryUI.java:19: * 背包界面 (Inventory UI)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/InventoryUI.java:21: * 显示玩家的武器和药水库存，支持选择、使用和丢弃操作。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/InventoryUI.java:22: * 使用 Scene2D 的 Window 组件作为弹窗容器。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/InventoryUI.java:115: Label weaponsLabel = new Label("Weapons / 武器", skin);
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/InventoryUI.java:126: Label potionsLabel = new Label("Potions / 药水", skin);
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/InventoryUI.java:141: detailLabel = new Label("Select an item to view details\n选择物品查看详情", skin);
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/InventoryUI.java:152: useButton = new TextButton("Use / 使用", skin);
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/InventoryUI.java:161: dropButton = new TextButton("Drop / 丢弃", skin);
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/InventoryUI.java:337: detailLabel.setText("Select an item to view details\n选择物品查看详情");
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/InventoryUI.java:345: detail.append("[Weapon / 武器]\n");
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/InventoryUI.java:346: detail.append("Name / 名称: ").append(weapon.getName()).append("\n");
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/InventoryUI.java:347: detail.append("Damage / 伤害: ").append(weapon.getDamage()).append("\n");
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/InventoryUI.java:348: detail.append("Range / 范围: ").append(String.format("%.1f", weapon.getRange())).append("\n");
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/InventoryUI.java:349: detail.append("Type / 类型: ").append(weapon.isRanged() ? "Ranged / 远程" : "Melee / 近战");
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/InventoryUI.java:352: detail.append("[Potion / 药水]\n");
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/InventoryUI.java:353: detail.append("Name / 名称: ").append(potion.getName()).append("\n");
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/InventoryUI.java:354: detail.append("Effect / 效果: ").append(potion.getDescription()).append("\n");
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/InventoryUI.java:355: detail.append("Quantity / 数量: ").append(potion.getStackCount());
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/InventoryUI.java:366: useButton.setText(isWeaponSelected ? "Equip / 装备" : "Use / 使用");
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/EndlessHUD.java:34: * 无尽模式专用HUD (Endless Mode HUD)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/EndlessHUD.java:36: * 基于GameHUD设计，添加无尽模式专有元素：
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/EndlessHUD.java:37: * - COMBO计数器和倍率显示
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/EndlessHUD.java:38: * - RAGE仪表盘
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/EndlessHUD.java:39: * - 生存时间计时器
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/EndlessHUD.java:40: * - 击杀计数器
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/EndlessHUD.java:41: * - 当前区域指示器
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/EndlessHUD.java:43: * 不包含出口导航箭头（无尽模式无出口）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/EndlessHUD.java:107: * 设置核心系统引用
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/widgets/HealthBarWidget.java:12: * 可复用的生命值显示组件 (Reusable Health Bar Widget)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/widgets/HealthBarWidget.java:14: * 从 GameHUD 和 EndlessHUD 中提取的公共逻辑。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/widgets/HealthBarWidget.java:15: * 显示心形图标表示玩家生命值，支持心碎动画。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/widgets/HealthBarWidget.java:41: * 设置心形图标大小
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/widgets/HealthBarWidget.java:51: * 更新心形显示
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/widgets/WeaponSlotBarWidget.java:14: * 可复用的武器栏组件 (Reusable Weapon Slot Bar Widget)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/widgets/WeaponSlotBarWidget.java:16: * 从 GameHUD 和 EndlessHUD 中提取的公共逻辑。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/widgets/WeaponSlotBarWidget.java:17: * 显示玩家背包中的武器并高亮当前选中武器。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/widgets/WeaponSlotBarWidget.java:42: * 设置槽位尺寸
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/ui/widgets/WeaponSlotBarWidget.java:53: * 更新武器栏显示
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/config/GameSettings.java:7: * 集中管理所有可调整的游戏参数。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/config/GameSettings.java:9: * 功能说明：
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/config/GameSettings.java:10: * - 硬编码默认值 (DEFAULT_*): 系统原始默认值，不可修改
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/config/GameSettings.java:11: * - 用户默认值: 玩家在菜单中自定义并保存的默认值
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/config/GameSettings.java:12: * - 当前值: 本局游戏中使用的值 (可在游戏中调整)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/config/GameSettings.java:14: * 使用方法：
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/config/GameSettings.java:15: * - 游戏启动时调用 loadUserDefaults() 加载用户自定义默认值
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/config/GameSettings.java:16: * - 菜单中调整参数后调用 saveAsUserDefaults() 保存
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/config/GameSettings.java:17: * - 新关卡开始时调用 resetToUserDefaults() 重置为用户默认值
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/config/GameSettings.java:18: * - 游戏中可以临时调整当前值，但不影响保存的默认值
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/config/GameSettings.java:196: * 重置当前值为用户自定义默认值。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/config/GameSettings.java:197: * 应在每次新关卡开始时调用。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/shop/ShopManager.java:11: * 商店管理器 (Shop Manager)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/shop/ShopManager.java:13: * 管理商店物品、购买记录和玩家金币的持久化存储。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/shop/ShopManager.java:28: * 初始化商店物品列表
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/shop/ShopManager.java:181: * 检查物品是否已购买
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/shop/ShopManager.java:188: * 获取玩家金币
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/shop/ShopManager.java:196: * 设置玩家金币
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/shop/ShopManager.java:207: * 添加金币
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/shop/ShopManager.java:214: * 将游戏中收集的金币同步到持久化存储
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/shop/ShopManager.java:215: * 在关卡结束时调用此方法
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/shop/ShopManager.java:217: * @param coinsEarned 本关卡收集的金币数
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/shop/ShopManager.java:228: * 加载购买状态到内存
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/shop/ShopManager.java:238: * 保存购买状态到持久化存储
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/shop/ShopManager.java:254: * 重置所有购买记录（用于调试）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/shop/LoadoutManager.java:11: * 装备管理器 (Loadout Manager)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/shop/LoadoutManager.java:13: * 管理玩家进入关卡前选择的武器装备配置。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/shop/LoadoutManager.java:14: * 最多可选择4个已购买的武器带入关卡。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/shop/LoadoutManager.java:164: * 保存装备配置
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/shop/LoadoutManager.java:178: * 检查是否是新游戏开始（从 LoadoutScreen 进入的）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/shop/LoadoutManager.java:185: * 设置是否是新游戏开始
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/shop/LoadoutManager.java:192: * 消费 freshStart 标志（获取后自动重置）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/shop/ShopItem.java:4: * 商店商品数据类 (Shop Item)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/shop/ShopItem.java:6: * 存储商店中可购买物品的信息。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChestRewardGenerator.java:124: * 根据游戏模式生成奖励
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChestRewardGenerator.java:126: * @param isEndlessMode 是否为无尽模式
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChestRewardGenerator.java:127: * @param random        随机数生成器
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChestRewardGenerator.java:128: * @return 随机奖励
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/TextureManager.java:818: * 获取宝箱纹理的渲染高度（用于底部对齐）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/TextureManager.java:820: * 宝箱纹理尺寸：closed (30x31), half (30x34), open (30x51)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/TextureManager.java:821: * 需要根据状态返回正确的高度以实现底部对齐。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/TextureManager.java:823: * @param state    宝箱状态
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/TextureManager.java:824: * @param tileSize 格子大小（像素）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/TextureManager.java:825: * @return 渲染高度（格子单位）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/TextureManager.java:839: * 获取宝箱纹理的宽高比
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/TextureManager.java:891: * 加载墙体底砖纹理，若不存在则回退到指定的默认纹理
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/TextureManager.java:893: * @param path     墙体底砖纹理路径
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/TextureManager.java:894: * @param fallback 回退纹理（通常是对应主题的可行走地砖）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/TextureManager.java:895: * @return 加载的纹理或回退纹理
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/TextureManager.java:913: * 获取指定主题的可行走地砖纹理
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/TextureManager.java:915: * @param theme 主题名称（Grassland, Desert, Ice, Jungle, Space, Dungeon）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/TextureManager.java:916: * @return 对应主题的可行走地砖纹理
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/TextureManager.java:940: * 获取指定主题的墙体底砖纹理
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/TextureManager.java:942: * @param theme 主题名称（Grassland, Desert, Ice, Jungle, Space, Dungeon）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/TextureManager.java:943: * @return 对应主题的墙体底砖纹理（若未加载则回退到可行走地砖）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AttackRangeRenderer.java:12: * 攻击范围可视化渲染器 (Attack Range Visualizer)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AttackRangeRenderer.java:14: * 在玩家攻击时绘制扇形指示器，显示实际伤害判定范围。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AttackRangeRenderer.java:15: * 扇形参数与 GameWorld.handleAttack() 中的判定逻辑保持一致：
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AttackRangeRenderer.java:16: * - 半径 = weapon.getRange()
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AttackRangeRenderer.java:17: * - 角度 = 60° (鼠标瞄准方向 ±30°)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:14: * 处理战争迷雾（Fog of War）效果的渲染。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:15: * 在玩家周围创建一个可见的圆形区域，周围是渐变到黑色的迷雾。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:17: * 设计原则：
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:18: * - 可见半径固定为 VISION_RADIUS_TILES 格，不随相机缩放变化
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:19: * - 防止玩家通过调整相机高度来获取更多地图信息
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:20: * - 迷雾始终完全覆盖屏幕，仅在玩家周围留下固定大小的可见圆
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:28: // 可见半径（以格子为单位）- 固定值，不随相机变化
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:29: private static final float VISION_RADIUS_TILES = 4.0f; // 4格可见半径
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:30: private static final float GRADIENT_TILES = 2.0f; // 渐变区域宽度（格子数）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:31: private static final float TILE_SIZE = 16f; // 每格像素
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:33: // 纹理中的渐变参数（比例）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:34: private static final float INNER_RADIUS_RATIO = 0.20f; // 完全透明的内圈比例
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:35: private static final float OUTER_RADIUS_RATIO = 0.35f; // 渐变结束的外圈比例
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:43: * 创建迷雾纹理。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:44: * 纹理中心是透明的，向边缘渐变为不透明黑色。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:49: // 首先填充完全不透明的黑色
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:53: // 禁用 Pixmap 混合，直接写入透明像素
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:61: // 创建径向渐变
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:70: // 内圈：完全透明
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:73: // 渐变区域：从透明渐变到不透明
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:75: // Hermite 插值实现平滑过渡
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:79: // 外圈：完全不透明黑色
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:97: * 渲染以玩家为中心的迷雾效果。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:99: * 关键设计：迷雾可见半径是固定的，不随相机缩放变化。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:100: * 这防止玩家通过缩小相机（zoom out）来看到更多地图信息。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:102: * @param playerX 玩家的世界X坐标（像素）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:103: * @param playerY 玩家的世界Y坐标（像素）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:104: * @param camera  游戏相机（用于获取视野大小和缩放）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:111: // 保存当前的混合状态
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:114: // 启用混合并设置正确的混合函数
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:119: // 固定的可见半径（世界像素单位）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:122: // 计算迷雾纹理的绘制大小
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:123: // 纹理中透明圆的半径是 textureSize * INNER_RADIUS_RATIO
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:124: // 我们希望绘制后透明圆的实际半径等于 visionRadiusWorld
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:128: // 确保纹理覆盖整个可见屏幕
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:129: // 即使相机 zoom out，迷雾也要完全覆盖
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:134: // 纹理必须足够大以覆盖整个屏幕
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:135: // 从玩家位置到屏幕角落的最大距离
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:136: float maxScreenCornerDist = screenDiagonal / 2 + 50; // 额外边距
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:138: // 纹理外边缘必须超过屏幕边缘
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:139: // 纹理半径 = drawSize / 2
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:140: // 我们需要 drawSize / 2 >= maxScreenCornerDist
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:144: // 纹理太小，需要放大
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:145: // 但放大纹理会让透明圆变大，这不是我们想要的
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:146: // 所以我们需要绘制额外的黑色边框来填充
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:147: // 关键修复：使用相机位置而非玩家位置来计算覆盖区域
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:151: // 以玩家为中心绘制迷雾纹理
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:156: // 恢复混合状态
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:163: * 绘制额外的黑色边框以填充迷雾纹理覆盖不到的屏幕区域。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:164: * 这确保了即使相机 zoom out 很远，屏幕边缘也是黑色的。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:166: * 关键设计：必须使用相机位置来确定覆盖区域，因为相机可能被 clamp 到地图边界，
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:167: * 导致相机位置与玩家位置不一致。如果只按玩家位置绘制，当玩家在地图边缘时，
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:168: * 远离玩家的地图区域会暴露出来。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:174: // 使用相机的实际可见区域来计算需要覆盖的范围
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:180: // 相机可见区域的边界（加上安全边距）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:186: // 迷雾纹理覆盖的区域（以玩家为中心）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:194: // 上边：覆盖迷雾纹理上方到相机顶部的区域
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:199: // 下边：覆盖迷雾纹理下方到相机底部的区域
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:204: // 左边：覆盖迷雾纹理左侧到相机左边的区域（只覆盖迷雾高度范围内）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:213: // 右边：覆盖迷雾纹理右侧到相机右边的区域（只覆盖迷雾高度范围内）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:226: * 绘制纯黑矩形（使用迷雾纹理的边缘部分，那里是纯黑的）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:229: // 使用迷雾纹理的角落（纯黑区域）来绘制矩形
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:230: // 角落坐标：0,0 到 10,10（肯定是纯黑的）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/FogRenderer.java:235: * 释放资源。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LootTable.java:10: * 掉落概率表 (Loot Table)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LootTable.java:12: * 定义敌人死亡后的掉落物品及其概率。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LootTable.java:13: * 使用加权随机系统确保掉落公平性。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LootTable.java:19: // === 基础掉落概率 ===
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LootTable.java:20: public static final float COIN_DROP_CHANCE = 0.70f; // 70% 掉金币
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LootTable.java:21: public static final float WEAPON_DROP_CHANCE = 0.15f; // 15% 掉武器
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LootTable.java:22: public static final float ARMOR_DROP_CHANCE = 0.10f; // 10% 掉护甲
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LootTable.java:23: public static final float NOTHING_CHANCE = 0.05f; // 5% 什么都不掉
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LootTable.java:25: // === 金币掉落范围 ===
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LootTable.java:30: * 根据概率生成掉落物品
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LootTable.java:32: * @param x        掉落位置 X
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LootTable.java:33: * @param y        掉落位置 Y
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LootTable.java:34: * @param levelNum 当前关卡编号（影响物品品质）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LootTable.java:35: * @return 生成的掉落物品，null 表示没有掉落
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LootTable.java:41: // 5% 什么都不掉
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LootTable.java:44: // 10% 掉护甲
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LootTable.java:47: // 15% 掉武器
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LootTable.java:50: // 70% 掉金币
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LootTable.java:52: // 高关卡掉更多金币
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LootTable.java:59: * 生成随机武器
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LootTable.java:81: * 生成随机护甲
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LootTable.java:92: * 保证掉落一件金币（用于特殊情况）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LootTable.java:99: * 生成 Boss 级掉落（更高概率掉落稀有物品）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LootTable.java:105: // 50% 掉武器
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LootTable.java:108: // 30% 掉护甲
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LootTable.java:111: // 20% 掉大量金币
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AchievementRarity.java:4: * 成就稀有度枚举 (Achievement Rarity Enum)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AchievementRarity.java:6: * 定义成就的稀有程度，用于：
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AchievementRarity.java:7: * - 决定成就的金币奖励
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AchievementRarity.java:8: * - 影响成就在 UI 中的显示样式（颜色、边框等）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AchievementRarity.java:9: * - 反映成就的获取难度
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AchievementRarity.java:13: * 普通成就 - 基础流程即可获得
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AchievementRarity.java:14: * 奖励：10 金币
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AchievementRarity.java:15: * 颜色建议：白色/灰色
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AchievementRarity.java:20: * 稀有成就 - 需要特定行为或里程碑
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AchievementRarity.java:21: * 奖励：30 金币
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AchievementRarity.java:22: * 颜色建议：蓝色
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AchievementRarity.java:27: * 史诗成就 - 需要大量投入或高技巧
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AchievementRarity.java:28: * 奖励：100 金币
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AchievementRarity.java:29: * 颜色建议：紫色
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AchievementRarity.java:34: * 传说成就 - 极限挑战或完美主义
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AchievementRarity.java:35: * 奖励：300 金币
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AchievementRarity.java:36: * 颜色建议：金色
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AchievementRarity.java:51: * 获取该稀有度对应的金币奖励
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AchievementRarity.java:58: * 获取稀有度的显示名称
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AchievementRarity.java:65: * 获取稀有度的图标（用于 UI 显示）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MazeRenderer.java:13: * MazeRenderer - 重构版
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MazeRenderer.java:14: * 使用 WallEntity 列表渲染墙体，而不是遍历格子。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MazeRenderer.java:48: // Pass 1: Floors - 区分可行走区域和墙体区域
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MazeRenderer.java:49: // 获取墙体底砖纹理（用于墙体所在格子）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MazeRenderer.java:58: // 墙体所在格子 -> 使用墙体底砖
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MazeRenderer.java:61: // 可行走区域 -> 使用可行走地砖
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MazeRenderer.java:68: // Pass 2: Grout (美缝)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MazeRenderer.java:90: // Pass 3: Walls - 使用 WallEntity 列表渲染
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MazeRenderer.java:91: // 按Y坐标从高到低排序，实现正确的Z-ordering (Back to Front)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MazeRenderer.java:95: // 延迟渲染列表：用于存储墙顶部的渲染指令 (Grassland specific)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MazeRenderer.java:106: // 视锥体剔除 (Expanded bounds for tall walls)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MazeRenderer.java:112: // 获取贴图
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MazeRenderer.java:118: if (isGrassland && reg.getRegionHeight() >= 32) { // 至少由Top(16)+Body(16)组成
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MazeRenderer.java:152: // 孤立墙体增加视觉高度
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MazeRenderer.java:173: * 检查墙体是否孤立（四周无相邻墙体）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MazeRenderer.java:181: // 检查左边
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MazeRenderer.java:186: // 检查右边
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MazeRenderer.java:191: // 检查下边
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MazeRenderer.java:196: // 检查上边
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MazeRenderer.java:206: * 检查墙体上方是否有墙
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MazeRenderer.java:221: // 缓存生物群系颜色
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MazeRenderer.java:241: // 灰褐色调，匹配苔藓石板地砖
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:12: * 排行榜管理器 (Leaderboard Manager)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:14: * 管理本地高分存储和查询。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:15: * 使用 LibGDX Preferences 进行持久化存储。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:17: * 功能：
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:18: * - 提交分数 (带玩家名称、关卡、日期)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:19: * - 获取排行榜前 N 名
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:20: * - 按关卡筛选排行榜
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:21: * - 计算分数公式
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:33: * 排行榜条目
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:43: // 无参构造函数 (JSON 反序列化需要)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:59: // 降序排列 (分数高的在前)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:64: * 获取格式化的日期字符串
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:72: * 获取关卡显示名称
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:87: * 获取格式化的时间 (MM:SS)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:102: * 获取单例实例
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:112: * 计算分数
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:114: * 公式:
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:115: * - 基础分: 1000
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:116: * - 时间加成: max(0, 500 - time * 2) (越快分越高)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:117: * - 击杀加成: kills * 50
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:118: * - 金币加成: coins * 10
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:119: * - 完美加成: +200 (无伤通关)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:121: * @param timeSeconds 完成时间 (秒)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:122: * @param kills       击杀数
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:123: * @param coins       收集的金币
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:124: * @param tookDamage  是否受到伤害
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:125: * @return 计算后的分数
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:137: * 提交分数
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:139: * @param playerName     玩家名称
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:140: * @param score          分数
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:141: * @param levelPath      关卡路径
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:142: * @param kills          击杀数
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:143: * @param completionTime 完成时间
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:157: // 保留前 MAX_ENTRIES 名
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:167: * 获取前 N 名
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:169: * @param limit 返回的最大数量
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:170: * @return 排行榜条目列表
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:178: * 获取所有分数
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:185: * 按关卡筛选分数
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:187: * @param levelPath 关卡路径
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:188: * @return 该关卡的排行榜条目
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:201: * 获取玩家的最高分
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:203: * @param playerName 玩家名称
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:204: * @return 最高分条目，如果没有则返回 null
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:216: * 获取某个分数的排名
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:218: * @param score 分数
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:219: * @return 排名 (1-based)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:234: * 检查分数是否进入前 N 名
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:236: * @param score 分数
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:237: * @param topN  前 N 名
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:238: * @return 是否为高分
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:247: * 清除所有排行榜数据
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:255: // ==================== 持久化 ====================
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:258: * 保存到 Preferences
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:274: * 从 Preferences 加载
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/LeaderboardManager.java:297: * 获取排行榜条目总数
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SaveManager.java:34: // 所有的存档都放在 saves 文件夹下
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SaveManager.java:38: * 保存游戏，允许指定文件名
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SaveManager.java:40: * @param state    游戏状态
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SaveManager.java:41: * @param filename 用户输入的文件名 (不需要带 .json 后缀)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SaveManager.java:45: // 关键设置：输出标准的 JSON 格式
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SaveManager.java:48: // 确保文件夹存在
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SaveManager.java:53: // 自动加上 .json 后缀
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SaveManager.java:66: * 兼容方法：默认保存 (保存为 auto_save.json)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SaveManager.java:106: * 读取指定文件名的存档
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SaveManager.java:133: * 兼容方法：默认读取 (读取 auto_save.json)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SaveManager.java:140: * 获取所有存档文件，并按修改时间倒序排列（最新的在最前面）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SaveManager.java:141: * 供 GameScreen 的读档列表使用
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SaveManager.java:150: // 获取所有 .json 结尾的文件
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SaveManager.java:153: // 按时间排序 (最新的排前面)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SaveManager.java:191: * 保存无尽模式游戏状态
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SaveManager.java:193: * @param state    无尽模式游戏状态
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SaveManager.java:194: * @param filename 文件名 (不需要带 .json 后缀)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SaveManager.java:200: // 确保无尽模式存档文件夹存在
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SaveManager.java:205: // 自动加上 .json 后缀
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SaveManager.java:218: * 默认保存无尽模式 (endless_auto_save.json)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SaveManager.java:225: * 读取无尽模式存档
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SaveManager.java:252: * 默认读取无尽模式存档
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SaveManager.java:259: * 获取所有无尽模式存档文件
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SaveManager.java:280: * 删除无尽模式存档
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SaveManager.java:303: * 检查是否有无尽模式存档
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:14: * MapGenerator - 地图生成器
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:16: * 核心功能：
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:17: * 1. 边界墙自动生成（2格宽）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:18: * 2. 房间+走廊算法替代完美迷宫
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:19: * 3. 每次放置墙体后验证路径连通性
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:20: * 4. 多次重试机制确保生成成功
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:33: // 格子状态：0 = 可放墙, 1 = 地板（通道）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:36: // 所有墙体
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:39: // 安全区（起点、终点、钥匙周围）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:43: * 内嵌地图配置类 (替代原 RandomMapConfig)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:136: // 初始化尺寸
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:146: // 1. 初始化：全部设为地板
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:153: // 2. 生成边界墙
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:156: // 3. 确定起点、终点、钥匙位置
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:160: // 标记安全区
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:165: // 4. 生成内部迷宫墙体（房间+走廊算法）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:168: // 5. 验证路径连通性
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:171: return null; // 重试
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:174: // 6. 收集墙体
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:177: // 7. 放置敌人和陷阱
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:185: * 随机决定起点和终点
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:186: * 确保两者之间有足够的距离，并且都在可游玩区域内
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:193: // 随机生成两个点（避开边界附近的缓冲）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:210: // Fallback: 对角线附近
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:221: * 生成边界墙（2格宽的封闭边框）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:224: // 底边界
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:230: // 顶边界
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:236: // 左边界（不含角落）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:242: // 右边界（不含角落）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:250: * 生成内部迷宫（房间+走廊算法）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:255: int maxWalls = (playableWidth * playableHeight) / 20; // 约5%覆盖率
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:257: // 墙体尺寸优先级
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:262: // 随机放置墙体
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:267: // 随机选择位置和尺寸
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:275: // 检查是否可以放置
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:286: * 检查是否可以在指定位置放置墙体
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:289: // 边界检查
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:295: // 检查是否与安全区重叠
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:300: // 检查是否已被占用
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:306: // 临时标记
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:313: // 验证放置后路径仍然连通
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:314: // （简化：只在最终验证，此处跳过以提高性能）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:320: * 添加墙体
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:334: // 标记格子被占用 (Using full visual height 'h' to prevent overlapping generation)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:363: * 标记安全区
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:380: * 验证路径连通性（BFS）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:412: * 找到钥匙位置（离起点最远的可达点）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:415: // 简化：放在地图中心偏向出口的位置
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:424: * 放置敌人和陷阱
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:458: * 保存到文件
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:508: * 回退地图生成
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:521: // 全部地板
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapGenerator.java:528: // 边界墙
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIUtils.java:19: * UI工具类 (UI Utilities)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIUtils.java:21: * 提供统一的UI辅助方法，减少各Screen中的重复代码。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIUtils.java:39: * 为ScrollPane启用hover时自动获取滚动焦点。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIUtils.java:40: * 这样用户无需先点击ScrollPane即可滚动。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIUtils.java:42: * @param scrollPane 目标ScrollPane
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIUtils.java:43: * @param stage      所属Stage
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIUtils.java:54: // 保持焦点以提供更好的用户体验
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIUtils.java:60: * 为按钮添加点击音效监听器。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIUtils.java:63: * @param button    要添加音效的按钮 (The button to add sound to)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIUtils.java:64: * @param soundName 音效名称 (Sound effect name: "menu_click" or "game_click")
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIUtils.java:71: return false; // 不消费事件，让ChangeListener继续执行
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIUtils.java:77: * 为按钮添加菜单点击音效。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIUtils.java:80: * @param button 要添加音效的按钮
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIUtils.java:87: * 为按钮添加游戏内点击音效。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIUtils.java:90: * @param button 要添加音效的按钮
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIUtils.java:97: * 🔊 全局按钮音效 - 底层解决方案
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIUtils.java:99: * 为Stage启用全局按钮点击音效。所有在此Stage中的Button（包括TextButton、ImageButton等）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIUtils.java:100: * 在被点击时都会自动播放指定的音效，无需为每个按钮单独添加监听器。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIUtils.java:107: * @param stage     要启用音效的Stage
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIUtils.java:108: * @param soundName 音效名称 ("menu_click" 或 "game_click")
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIUtils.java:114: // 检查被点击的Actor是否是Button或其子类
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIUtils.java:119: return false; // 不消费事件，让其他监听器继续处理
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIUtils.java:123: * 递归检查Actor是否是Button或Button的子元素
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIUtils.java:129: // 直接是Button
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIUtils.java:134: // 检查父级是否是Button (例如Button内的Label)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIUtils.java:148: * 为Stage启用全局菜单按钮音效 (menu_click)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIUtils.java:151: * @param stage 要启用音效的Stage
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIUtils.java:158: * 为Stage启用全局游戏内按钮音效 (game_click)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIUtils.java:161: * @param stage 要启用音效的Stage
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIUtils.java:168: * 创建纯色Drawable并管理其Texture的生命周期。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIUtils.java:169: * 使用此方法创建的Texture会在调用dispose()时被释放。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIUtils.java:171: * @param color 目标颜色
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIUtils.java:172: * @return 可用于setBackground的TextureRegionDrawable
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIUtils.java:181: // 跟踪texture以便后续dispose
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIUtils.java:188: * 创建临时纯色Drawable（不被管理，需调用者自行处理）。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIUtils.java:189: * 适用于只在特定Screen生命周期内使用的Drawable。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIUtils.java:191: * @param color 目标颜色
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIUtils.java:192: * @return Texture和Drawable的包装对象
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIUtils.java:205: * 包含Texture及其Drawable的包装类，便于调用者管理资源释放。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIUtils.java:239: * 释放单例实例（通常在游戏退出时调用）。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AchievementUnlockInfo.java:4: * Achievement Unlock Info - 成就解锁信息
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AchievementUnlockInfo.java:6: * 封装解锁成就的完整信息，用于 UI 显示
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChunkManager.java:10: * 分块加载管理器 (Chunk Manager)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChunkManager.java:12: * 管理无尽模式地图的分块加载和卸载。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChunkManager.java:14: * 功能:
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChunkManager.java:15: * - 根据玩家位置动态加载周围区块
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChunkManager.java:16: * - 卸载远离玩家的区块以节省内存
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChunkManager.java:17: * - LRU缓存已生成的区块
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChunkManager.java:19: * 遵循单一职责原则：仅处理区块的加载/卸载逻辑。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChunkManager.java:23: /** 区块大小 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChunkManager.java:26: /** 所有已生成的区块 (chunkId -> MapChunk) */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChunkManager.java:29: /** 当前加载的区块ID集合 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChunkManager.java:32: /** 地图生成器 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChunkManager.java:35: /** 最大缓存区块数 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChunkManager.java:38: /** 监听器：区块加载/卸载时回调 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChunkManager.java:42: * 区块事件监听器接口
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChunkManager.java:45: /** 区块加载时调用 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChunkManager.java:48: /** 区块卸载时调用 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChunkManager.java:60: * 设置区块事件监听器
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChunkManager.java:67: * 根据玩家位置更新活跃区块
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChunkManager.java:69: * @param playerX 玩家X坐标（格子单位）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChunkManager.java:70: * @param playerY 玩家Y坐标（格子单位）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChunkManager.java:78: // 收集需要加载的区块
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChunkManager.java:86: // 检查是否在地图范围内
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChunkManager.java:94: // 如果区块未加载，加载它
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChunkManager.java:101: // 卸载不再需要的区块
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChunkManager.java:113: // 清理缓存
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChunkManager.java:118: * 加载指定区块
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChunkManager.java:126: // 区块未生成，生成它
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChunkManager.java:144: * 卸载指定区块
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChunkManager.java:160: * 清理超出缓存限制的区块
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChunkManager.java:167: // LRU: LinkedHashMap 按访问顺序排列，最早访问的在前
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChunkManager.java:175: // 不移除当前加载的区块
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChunkManager.java:185: * 检查区块位置是否有效
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChunkManager.java:194: * 获取区块唯一标识符
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChunkManager.java:201: * 获取指定位置的区块
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChunkManager.java:203: * @return 区块，如果不存在或未加载返回null
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChunkManager.java:215: * 获取指定世界坐标所在的区块
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChunkManager.java:224: * 获取所有已加载区块的墙体
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChunkManager.java:238: * 获取所有已加载的区块
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChunkManager.java:252: * 检查指定区块是否已加载
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChunkManager.java:259: * 获取已加载区块数量
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChunkManager.java:266: * 获取已缓存区块数量
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChunkManager.java:273: * 获取中心区块坐标（用于玩家出生点）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChunkManager.java:280: * 强制重新生成所有区块
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/ChunkManager.java:288: * 释放所有资源
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DustParticleSystem.java:9: * 尘土/脚印粒子系统 - Dust Particle System
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DustParticleSystem.java:10: * 在玩家移动时产生地面尘土效果，颜色根据地形变化
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DustParticleSystem.java:15: * 单个尘土粒子
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DustParticleSystem.java:18: float x, y; // 位置
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DustParticleSystem.java:19: float vx, vy; // 速度
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DustParticleSystem.java:20: float life; // 剩余生命
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DustParticleSystem.java:21: float maxLife; // 最大生命
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DustParticleSystem.java:22: float size; // 大小
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DustParticleSystem.java:23: Color color; // 颜色
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DustParticleSystem.java:26: * @param spawnX     生成位置 X
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DustParticleSystem.java:27: * @param spawnY     生成位置 Y
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DustParticleSystem.java:28: * @param themeColor 地形颜色
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DustParticleSystem.java:34: // 随机速度方向 - 向上喷射或随机扩散
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DustParticleSystem.java:36: float speed = MathUtils.random(5f, 15f); // 速度较慢
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DustParticleSystem.java:38: this.vy = MathUtils.sin(angle) * speed + 5f; // 轻微向上趋势
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DustParticleSystem.java:40: // 短生命周期 (缩短)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DustParticleSystem.java:44: // 小尺寸 (更小一点)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DustParticleSystem.java:47: // 颜色 (基于地形颜色，带随机变体，并加深)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DustParticleSystem.java:48: float darkenFactor = 0.6f; // 变暗系数
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DustParticleSystem.java:52: this.color = new Color(r, g, b, 1.0f); // 不透明
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DustParticleSystem.java:59: // 快速减速
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DustParticleSystem.java:65: // 保持不透明，直接消失
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DustParticleSystem.java:84: * 在玩家脚下生成尘土
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DustParticleSystem.java:86: * @param x          玩家X (tiles)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DustParticleSystem.java:87: * @param y          玩家Y (tiles)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DustParticleSystem.java:88: * @param themeColor 地形主色调
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DustParticleSystem.java:94: // 转换为像素坐标 (生成在脚底附近)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DustParticleSystem.java:96: float pixelY = y * UNIT_SCALE + 2f; // 脚底稍微偏上一点
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DustParticleSystem.java:121: // 开启混合模式以支持半透明
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapLoader.java:12: * 工具类：负责读取 .properties 文件并将其转换为 GameMap 对象。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapLoader.java:14: * 支持的元数据配置键：
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapLoader.java:15: * - damageType: PHYSICAL 或 MAGICAL（关卡敌人伤害类型）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapLoader.java:16: * - enemyShieldEnabled: true/false（敌人是否有护盾）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapLoader.java:17: * - levelDifficulty: 1-5（关卡难度）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapLoader.java:18: * - suggestedArmor: PHYSICAL 或 MAGICAL（推荐护甲类型）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapLoader.java:22: // 元数据配置键
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapLoader.java:30: * 关卡配置信息类
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapLoader.java:41: * 加载结果：包含地图和配置
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapLoader.java:54: * 加载指定路径的地图文件（返回完整结果）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapLoader.java:75: // 1. 解析元数据配置
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapLoader.java:80: // 2. 解析地图尺寸并初始化
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapLoader.java:85: // 3. 遍历 Properties 中的每一个 Key
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapLoader.java:88: // 过滤掉非坐标格式的行 (必须包含逗号)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapLoader.java:106: // 如果是敌人
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapLoader.java:110: // 统一使用第一关的怪物素材 (BOAR)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapLoader.java:113: // 2. 如果护盾启用，设置护盾和攻击属性
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapLoader.java:116: enemy.setShield(config.damageType, 3); // 默认3点护盾
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapLoader.java:147: * 加载指定路径的地图文件（向后兼容，只返回 GameMap）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapLoader.java:154: * 解析元数据配置
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapLoader.java:159: // 解析伤害类型
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapLoader.java:167: // 解析敌人护盾
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapLoader.java:171: // 解析难度
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/MapLoader.java:179: // 解析推荐护甲
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AchievementCategory.java:4: * 成就分类枚举 (Achievement Category Enum)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AchievementCategory.java:6: * 定义成就的类别，用于：
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AchievementCategory.java:7: * - 在成就列表 UI 中进行分类筛选
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AchievementCategory.java:8: * - 统计各类别成就的解锁进度
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AchievementCategory.java:9: * - 帮助玩家理解成就的获取方式
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AchievementCategory.java:13: * 武器相关成就
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AchievementCategory.java:14: * 包括：武器拾取、武器精通、武器收集
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AchievementCategory.java:19: * 护甲相关成就
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AchievementCategory.java:20: * 包括：护甲装备、防御里程碑、护盾策略
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AchievementCategory.java:25: * 战斗相关成就
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AchievementCategory.java:26: * 包括：击杀里程碑、连杀、首杀
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AchievementCategory.java:31: * 探索/关卡相关成就
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AchievementCategory.java:32: * 包括：区域通关、全图探索、发现隐藏区域
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AchievementCategory.java:37: * 经济相关成就
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AchievementCategory.java:38: * 包括：金币收集、商店购买、财富积累
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AchievementCategory.java:43: * 挑战类成就
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AchievementCategory.java:44: * 包括：无伤通关、速通、极限挑战
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AchievementCategory.java:59: * 获取分类的显示名称
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AchievementCategory.java:66: * 获取分类的图标（用于 UI 显示）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/AchievementCategory.java:73: * 获取分类的描述
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SpatialHashGrid.java:11: * 空间哈希网格 (Spatial Hash Grid)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SpatialHashGrid.java:13: * 用于优化大规模实体的邻近查询，将 O(N) 线性扫描降至 O(1) 摊销查询。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SpatialHashGrid.java:15: * 原理：将2D空间划分为固定大小的单元格，每个实体根据位置存入对应单元格。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SpatialHashGrid.java:16: * 查询邻近实体时只需检查相关单元格，无需遍历全部实体。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SpatialHashGrid.java:18: * @param <T> 实体类型（必须实现 Positioned 接口或提供坐标访问方式）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SpatialHashGrid.java:22: /** 单元格大小（世界单位） */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SpatialHashGrid.java:25: /** 哈希表：cellKey -> 该单元格内的实体集合 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SpatialHashGrid.java:28: /** 反向索引：实体 -> 当前所在单元格Key */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SpatialHashGrid.java:32: * 构造函数
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SpatialHashGrid.java:34: * @param cellSize 单元格大小（建议与渲染半径匹配，如16或32）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SpatialHashGrid.java:43: * 计算单元格Key
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SpatialHashGrid.java:48: // 使用长整型组合两个int，避免碰撞
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SpatialHashGrid.java:53: * 插入实体
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SpatialHashGrid.java:55: * @param entity 实体对象
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SpatialHashGrid.java:56: * @param x      当前X坐标
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SpatialHashGrid.java:57: * @param y      当前Y坐标
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SpatialHashGrid.java:66: * 移除实体
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SpatialHashGrid.java:68: * @param entity 实体对象
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SpatialHashGrid.java:84: * 更新实体位置
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SpatialHashGrid.java:86: * @param entity 实体对象
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SpatialHashGrid.java:87: * @param newX   新X坐标
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SpatialHashGrid.java:88: * @param newY   新Y坐标
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SpatialHashGrid.java:94: // 如果还在同一个单元格，无需更新
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SpatialHashGrid.java:99: // 从旧单元格移除
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SpatialHashGrid.java:110: // 插入新单元格
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SpatialHashGrid.java:116: * 获取指定位置周围的实体
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SpatialHashGrid.java:118: * @param centerX 中心X坐标
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SpatialHashGrid.java:119: * @param centerY 中心Y坐标
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SpatialHashGrid.java:120: * @param radius  查询半径
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SpatialHashGrid.java:121: * @return 半径内的实体列表
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SpatialHashGrid.java:126: // 确定需要检查的单元格范围
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SpatialHashGrid.java:134: // 遍历相关单元格
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SpatialHashGrid.java:149: * 获取指定位置周围的实体（带精确距离过滤）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SpatialHashGrid.java:151: * 此方法需要实体提供坐标，使用 PositionProvider 接口
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SpatialHashGrid.java:153: * @param centerX          中心X坐标
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SpatialHashGrid.java:154: * @param centerY          中心Y坐标
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SpatialHashGrid.java:155: * @param radius           查询半径
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SpatialHashGrid.java:156: * @param positionProvider 坐标提供器
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SpatialHashGrid.java:157: * @return 精确距离内的实体列表
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SpatialHashGrid.java:178: * 清空所有实体
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SpatialHashGrid.java:186: * 获取当前实体总数
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SpatialHashGrid.java:193: * 坐标提供器接口
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SpatialHashGrid.java:200: return 0; // 将由调用者实现完整版本
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SpatialHashGrid.java:205: * 完整的坐标提供器接口
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/SpatialHashGrid.java:214: * 获取指定位置周围的实体（带精确距离过滤，使用完整坐标提供器）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DialogFactory.java:11: * Dialog工厂类 (Dialog Factory)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DialogFactory.java:13: * 提供统一风格的对话框创建方法，确保UI一致性。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DialogFactory.java:18: } // 防止实例化
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DialogFactory.java:21: * 创建并显示一个带自动消失功能的信息提示对话框。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DialogFactory.java:23: * @param stage           目标Stage
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DialogFactory.java:24: * @param skin            皮肤
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DialogFactory.java:25: * @param title           标题（可为空字符串）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DialogFactory.java:26: * @param message         消息内容
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DialogFactory.java:27: * @param autoHideSeconds 自动消失时间（秒），0表示不自动消失
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DialogFactory.java:28: * @return 创建的Dialog实例
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DialogFactory.java:50: * 创建并显示一个警告对话框（标题为红色）。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DialogFactory.java:52: * @param stage   目标Stage
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DialogFactory.java:53: * @param skin    皮肤
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DialogFactory.java:54: * @param title   标题
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DialogFactory.java:55: * @param message 消息内容
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DialogFactory.java:56: * @return 创建的Dialog实例
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DialogFactory.java:70: * 创建并显示一个确认对话框（带确认和取消按钮）。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DialogFactory.java:72: * @param stage     目标Stage
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DialogFactory.java:73: * @param skin      皮肤
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DialogFactory.java:74: * @param title     标题
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DialogFactory.java:75: * @param message   消息内容
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DialogFactory.java:76: * @param onConfirm 确认回调
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DialogFactory.java:77: * @param onCancel  取消回调（可为null）
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DialogFactory.java:78: * @return 创建的Dialog实例
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DialogFactory.java:104: * 创建并显示一个余额不足对话框（商店专用）。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DialogFactory.java:106: * @param stage        目标Stage
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DialogFactory.java:107: * @param skin         皮肤
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DialogFactory.java:108: * @param itemPrice    物品价格
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DialogFactory.java:109: * @param currentCoins 当前金币
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DialogFactory.java:110: * @return 创建的Dialog实例
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DeveloperConsole.java:13: * 开发者控制台 (Developer Console)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DeveloperConsole.java:15: * 允许玩家在游戏中输入命令修改游戏状态。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DeveloperConsole.java:16: * 使用 HashMap 存储动态变量，支持多种内置命令和别名。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DeveloperConsole.java:18: * 使用方法:
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DeveloperConsole.java:19: * - 在 GameScreen 中按 ~ 或 F3 键打开控制台
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DeveloperConsole.java:20: * - 输入命令并按 Enter 执行
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DeveloperConsole.java:21: * - 按 ESC 关闭控制台
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DeveloperConsole.java:23: * 命令分类:
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DeveloperConsole.java:32: /** 存储动态变量的 HashMap */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DeveloperConsole.java:35: /** 命令别名映射 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DeveloperConsole.java:38: /** 控制台输出历史 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DeveloperConsole.java:41: /** 命令输入历史 (用于上下键切换) */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DeveloperConsole.java:45: /** 游戏世界引用，用于执行命令 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DeveloperConsole.java:48: /** 关卡切换监听器 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DeveloperConsole.java:51: /** 控制台是否可见 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DeveloperConsole.java:54: /** 最大历史记录数 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DeveloperConsole.java:57: /** 时间流速倍率 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DeveloperConsole.java:60: /** FPS显示开关 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DeveloperConsole.java:63: /** 无尽模式标志 - 启用后禁用level/skip/win命令 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DeveloperConsole.java:66: /** 无尽模式数据引用 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DeveloperConsole.java:70: * 关卡切换监听器接口
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DeveloperConsole.java:83: * 创建开发者控制台实例
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DeveloperConsole.java:86: // 初始化默认变量
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DeveloperConsole.java:92: // 初始化别名
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DeveloperConsole.java:99: * 初始化命令别名
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DeveloperConsole.java:128: * 设置游戏世界引用
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DeveloperConsole.java:135: * 设置关卡切换监听器
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DeveloperConsole.java:142: * 解析并执行命令
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DeveloperConsole.java:151: // 添加到命令历史
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DeveloperConsole.java:158: // 记录输入
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DeveloperConsole.java:161: // 解析命令，处理别名
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DeveloperConsole.java:267: * 解析别名
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DeveloperConsole.java:564: // 同时增加 coinsCollected，确保通关时会被保存
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DeveloperConsole.java:1055: * 无尽模式数据接口 - 用于控制台交互
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DeveloperConsole.java:1103: * 设置无尽模式
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DeveloperConsole.java:1118: * 处理无尽模式命令
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DeveloperConsole.java:1239: log("【状态查看】");
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DeveloperConsole.java:1245: log("【分数系统】");
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DeveloperConsole.java:1250: log("【RAGE系统】");
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DeveloperConsole.java:1254: log("【敌人控制】");
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/DeveloperConsole.java:1259: log("【移动】");
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/EntityFactory.java:10: * 实体工厂类 (Factory Pattern)。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/EntityFactory.java:11: * 负责根据 ID 创建对应的游戏对象实例。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/EntityFactory.java:12: * 实现了注册机制，方便扩展新类型的物体而无需修改核心加载逻辑。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/EntityFactory.java:16: // 使用函数式接口 BiFunction<Float, Float, GameObject>
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/EntityFactory.java:17: // 接收 x, y 坐标，返回 GameObject
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/EntityFactory.java:21: // === 注册默认实体 ===
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/EntityFactory.java:39: // 注册宝箱 (Treasure Chest - Simple touch-to-open)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/EntityFactory.java:47: // 注意：ID 1 (Entry) 通常不生成实体对象，而是设置玩家起始位置，
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/EntityFactory.java:48: // 所以这里不注册它，或者注册一个空操作（视 MapLoader 逻辑而定）。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/EntityFactory.java:49: // MapLoader 目前特殊处理了 ID 1。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/EntityFactory.java:53: * 注册一个新的实体类型。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/EntityFactory.java:55: * @param id      地图文件中的 ID
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/EntityFactory.java:56: * @param creator 创建函数，例如 Enemy::new
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/EntityFactory.java:63: * 根据 ID 和坐标创建实体。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/EntityFactory.java:65: * @param id 对象 ID
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/EntityFactory.java:66: * @param x  X 坐标
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/EntityFactory.java:67: * @param y  Y 坐标
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/EntityFactory.java:68: * @return 新创建的 GameObject，如果 ID 未注册则返回 null
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/EntityFactory.java:81: * 检查 ID 是否已注册
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:6: * UI常量类 (UI Constants)
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:8: * 定义全局统一的UI尺寸、颜色等常量，确保界面一致性。
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:13: } // 防止实例化
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:15: // ==================== 按钮尺寸 ====================
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:17: /** 大按钮宽度（主菜单按钮、主要操作按钮） */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:19: /** 大按钮高度 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:22: /** 中等按钮宽度（对话框按钮、次要操作） */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:24: /** 中等按钮高度 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:27: /** 小按钮宽度（工具栏按钮、标签页） */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:29: /** 小按钮高度 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:34: /** 标准虚拟宽度 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:36: /** 标准虚拟高度 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:39: // ==================== 背景颜色 ====================
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:41: /** 默认深色背景 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:43: /** 菜单背景 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:45: /** 商店背景 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:47: /** 设置背景 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:49: /** 胜利背景（深绿） */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:51: /** 失败背景（深红） */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:54: // ==================== 卡片/面板颜色 ====================
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:56: /** 卡片背景（半透明深灰） */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:58: /** 卡片边框颜色 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:61: // ==================== 间距 ====================
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:63: /** 标准内边距 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:65: /** 小内边距 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:67: /** 大内边距 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:70: // ==================== 稀有度颜色 ====================
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:72: /** 普通稀有度 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:74: /** 稀有 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:76: /** 史诗 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:78: /** 传说 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:81: // ==================== Help Screen 颜色 ====================
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:83: /** 帮助界面科技蓝边框 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:86: /** 帮助界面导航项选中背景 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:89: /** 帮助界面导航项默认背景 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:92: /** 警告/危险提示颜色 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:95: /** 帮助界面内容卡片背景 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:98: /** 帮助标题颜色 (金色) */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:101: // ==================== Victory Screen 颜色 ====================
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:103: /** Victory 主标题金色 (温暖柔和) */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:106: /** Victory 边框渐变起始色 (暖金) */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:109: /** Victory 边框渐变结束色 (科技蓝) */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:112: /** Victory 卡片背景 (玻璃质感) */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:115: /** Victory 次要文字颜色 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:118: /** Victory 分割线颜色 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:121: // Rank 发光颜色
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:122: /** S级 - 璀璨金 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:124: /** A级 - 科技蓝 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:126: /** B级 - 翡翠绿 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:128: /** C级 - 柠檬黄 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:130: /** D级 - 暖橙 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:133: /** 主要按钮背景渐变起始 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:135: /** 主要按钮背景渐变结束 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:138: /** 次要按钮边框颜色 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:141: // ==================== Armor Select Screen 颜色 ====================
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:143: /** 物理护甲主色 (钢铁蓝) */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:146: /** 魔法护甲主色 (神秘紫) */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:149: /** 推荐护甲发光色 (璀璨金) */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:152: /** 护甲卡片背景 (玻璃黑) */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:155: /** 护甲卡片边框 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:158: /** 危险警告色 (物理威胁) */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:161: /** 危险警告色 (魔法威胁) */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:164: // ==================== Settings Screen 常量 ====================
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:166: /** 设置面板最大宽度 (避免过宽) */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:169: /** 区块内容左右内边距 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:172: /** 标题下方间距 */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:175: /** 设置界面区块标题颜色 (金色) */
+/Users/papersiii/fopws2526projectfop-amazeing/core/src/de/tum/cit/fop/maze/utils/UIConstants.java:178: /** 设置界面分割线颜色 */

@@ -345,6 +345,7 @@ public class AudioManager implements Disposable {
     public static String getAttackSoundForWeapon(String weaponClassName) {
         switch (weaponClassName) {
             case "Sword":
+                return "attack_sword";
             case "Crossbow":
                 return "attack_bow";
             case "Bow":

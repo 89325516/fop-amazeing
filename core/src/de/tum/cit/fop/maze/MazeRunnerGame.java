@@ -36,7 +36,7 @@ public class MazeRunnerGame extends Game {
 
         this.loadCharacterAnimation();
 
-        // 加载用户自定义的默认参数
+        // Load user-defined default settings
         GameSettings.loadUserDefaults();
 
         // Initialize Audio Manager
@@ -55,12 +55,13 @@ public class MazeRunnerGame extends Game {
     }
 
     /**
-     * 进入游戏，先通过加载画面预加载资源
+     * Enter the game, first preloading resources through the loading screen.
      * 
-     * @param saveFilePath 存档文件路径。如果是 null，代表开始新游戏。
+     * @param saveFilePath Path to the save file. If null, starts a new game.
      */
     public void goToGame(String saveFilePath) {
-        // 先进入加载画面预加载资源，完成后自动跳转到GameScreen
+        // Enter loading screen to preload resources, after completion it automatically
+        // jumps to GameScreen
         this.setScreen(new de.tum.cit.fop.maze.screens.LoadingScreen(this, saveFilePath));
         if (menuScreen != null) {
             menuScreen.dispose();

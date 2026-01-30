@@ -36,10 +36,11 @@ public class SettingsUI {
     private TextButton btnUp, btnDown, btnLeft, btnRight, btnAttack, btnSwitchWeapon;
     private String remappingKeyName = null;
 
-    // 关键！标签列宽度要足够大，避免被控件覆盖
+    // Important: Label column width must be large enough to prevent being covered
+    // by controls
     private static final float LABEL_WIDTH = 230f;
     private static final float SLIDER_WIDTH = 200f;
-    private static final float SLIDER_HEIGHT = 36f; // 增加高度使触摸区域更大
+    private static final float SLIDER_HEIGHT = 36f; // Increased height for larger touch area
     private static final float VALUE_WIDTH = 50f;
     private static final float BTN_WIDTH = 100f;
     private static final float KEY_LABEL_WIDTH = 90f;
@@ -59,7 +60,7 @@ public class SettingsUI {
      */
     public Table build() {
         contentTable = new Table();
-        contentTable.pad(50, 40, 20, 40); // 上50 左右40 下20
+        contentTable.pad(50, 40, 20, 40); // Top 50, Left/Right 40, Bottom 20
 
         buildContent();
         return contentTable;
@@ -78,23 +79,24 @@ public class SettingsUI {
      * Uses a dark opaque overlay to fully cover the game, then displays settings
      * content.
      * 
-     * @param screenshotTexture 游戏暂停时的截图纹理 (不再使用，改为深色遮罩)
+     * @param screenshotTexture Screenshot texture when game is paused (no longer
+     *                          used, replaced with dark overlay)
      */
     public Table buildWithBackground(Texture screenshotTexture) {
-        // 创建外层容器 - 使用完全不透明的深色背景
+        // Create outer container - use fully opaque dark background
         Table outerContainer = new Table();
         outerContainer.setFillParent(true);
 
-        // 使用完全不透明的深色背景遮罩游戏画面
+        // Use fully opaque dark background to mask the game screen
         outerContainer.setBackground(skin.newDrawable("white", 0.05f, 0.05f, 0.08f, 1.0f));
 
-        // 内层内容表格
+        // Inner content table
         contentTable = new Table();
-        contentTable.pad(50, 40, 20, 40); // 上50 左右40 下20
+        contentTable.pad(50, 40, 20, 40); // Top 50, Left/Right 40, Bottom 20
 
         buildContent();
 
-        // 将内容表格添加到外层容器中
+        // Add content table to outer container
         outerContainer.add(contentTable).expand().center();
 
         return outerContainer;
@@ -128,7 +130,7 @@ public class SettingsUI {
         addCameraRow();
         addFogRow();
         addAttackRangeRow();
-        addMouseAimingRow(); // 添加鼠标瞄准开关
+        addMouseAimingRow(); // Add mouse aiming toggle
         addHint();
 
         // ===== Controls Section =====

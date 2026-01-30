@@ -4,103 +4,104 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 无尽模式存档状态类 (Endless Game State)
+ * Endless Game State save class.
  * 
- * 与关卡模式的 GameState 分开存储，用于无尽模式的存档和读档。
- * 支持JSON序列化（LibGDX Json）。
+ * Stored separately from the level-mode GameState, used for saving and loading
+ * in Endless Mode.
+ * Supports JSON serialization (LibGDX Json).
  */
 public class EndlessGameState {
 
-    // ========== 玩家状态 ==========
+    // ========== Player Status ==========
 
-    /** 玩家X坐标 */
+    /** Player X coordinate */
     public float playerX;
 
-    /** 玩家Y坐标 */
+    /** Player Y coordinate */
     public float playerY;
 
-    /** 玩家生命值 */
+    /** Player lives */
     public int playerLives;
 
-    /** 玩家最大生命值 */
+    /** Player maximum lives */
     public int playerMaxLives;
 
-    /** 玩家当前护甲类型 (null = 无护甲) */
+    /** Current armor type (null = no armor) */
     public String armorType;
 
-    /** 护甲剩余耐久 */
+    /** Remaining armor durability */
     public int armorDurability;
 
-    // ========== 游戏进度 ==========
+    // ========== Game Progress ==========
 
-    /** 生存时间（秒） */
+    /** Survival time (seconds) */
     public float survivalTime;
 
-    /** 总击杀数 */
+    /** Total kills */
     public int totalKills;
 
-    /** 当前COMBO */
+    /** Current COMBO */
     public int currentCombo;
 
-    /** 历史最高COMBO */
+    /** Historical maximum COMBO */
     public int maxCombo;
 
-    /** 当前RAGE值 (0-100) */
+    /** Current RAGE level (0-100) */
     public float rageLevel;
 
-    /** 当前波次 */
+    /** Current wave */
     public int currentWave;
 
-    /** 当前得分 */
+    /** Current score */
     public int score;
 
-    // ========== 武器状态 ==========
+    // ========== Weapon Status ==========
 
-    /** 当前装备的武器类型 */
+    /** Type of currently equipped weapon */
     public String equippedWeapon;
 
-    /** 已解锁的武器列表 */
+    /** List of unlocked weapons */
     public List<String> unlockedWeapons;
 
-    /** 武器经验/临时加成 */
+    /** Weapon experience / temporary bonuses */
     public int weaponBonus;
 
-    // ========== 位置信息 ==========
+    // ========== Location Information ==========
 
-    /** 当前所在区域主题 */
+    /** Current zone theme */
     public String currentZone;
 
-    /** 当前区块X */
+    /** Current chunk X */
     public int currentChunkX;
 
-    /** 当前区块Y */
+    /** Current chunk Y */
     public int currentChunkY;
 
-    // ========== 收集物 ==========
+    // ========== Collectibles ==========
 
-    /** 已收集的金币 */
+    /** Collected coins */
     public int collectedCoins;
 
-    /** 库存中的药水数量 */
+    /** Number of potions in inventory */
     public int potionCount;
 
-    // ========== 元数据 ==========
+    // ========== Metadata ==========
 
-    /** 存档时间戳 */
+    /** Save timestamp */
     public long saveTimestamp;
 
-    /** 存档版本（用于兼容性检查） */
+    /** Save version (for compatibility checks) */
     public int saveVersion = 1;
 
     /**
-     * 默认构造函数 (JSON反序列化需要)
+     * Default constructor (required for JSON deserialization)
      */
     public EndlessGameState() {
         this.unlockedWeapons = new ArrayList<>();
     }
 
     /**
-     * 从当前游戏状态创建存档
+     * Creates a save state from the current game state.
      */
     public static EndlessGameState createFromGame(
             Player player,
@@ -115,19 +116,19 @@ public class EndlessGameState {
 
         EndlessGameState state = new EndlessGameState();
 
-        // 玩家状态
+        // Player status
         state.playerX = player.getX();
         state.playerY = player.getY();
         state.playerLives = player.getLives();
         state.playerMaxLives = player.getMaxHealth();
 
-        // 护甲状态
+        // Armor status
         if (player.getEquippedArmor() != null) {
             state.armorType = player.getEquippedArmor().getClass().getSimpleName();
             state.armorDurability = player.getEquippedArmor().getCurrentShield();
         }
 
-        // 武器状态
+        // Weapon status
         if (player.getCurrentWeapon() != null) {
             state.equippedWeapon = player.getCurrentWeapon().getName();
         }
@@ -136,7 +137,7 @@ public class EndlessGameState {
             state.unlockedWeapons.add(weapon.getName());
         }
 
-        // 游戏进度
+        // Game progress
         state.survivalTime = survivalTime;
         state.totalKills = totalKills;
         state.currentCombo = currentCombo;
@@ -146,17 +147,17 @@ public class EndlessGameState {
         state.score = score;
         state.currentZone = currentZone;
 
-        // 收集物
+        // Collectibles
         state.collectedCoins = player.getCoins();
 
-        // 元数据
+        // Metadata
         state.saveTimestamp = System.currentTimeMillis();
 
         return state;
     }
 
     /**
-     * 获取格式化的生存时间 (MM:SS)
+     * Gets formatted survival time (MM:SS).
      */
     public String getFormattedSurvivalTime() {
         int minutes = (int) (survivalTime / 60);
@@ -165,7 +166,7 @@ public class EndlessGameState {
     }
 
     /**
-     * 获取格式化的存档时间
+     * Gets formatted save time.
      */
     public String getFormattedSaveTime() {
         java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm");
@@ -173,7 +174,7 @@ public class EndlessGameState {
     }
 
     /**
-     * 获取存档摘要（用于UI显示）
+     * Gets save summary (for UI display).
      */
     public String getSummary() {
         return String.format("Time: %s | Kills: %d | Score: %,d",

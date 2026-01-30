@@ -11,13 +11,13 @@ import de.tum.cit.fop.maze.model.DamageType;
 import java.util.*;
 
 /**
- * MapGenerator - 地图生成器
+ * MapGenerator - Procedural Map Generator
  * 
- * 核心功能：
- * 1. 边界墙自动生成（2格宽）
- * 2. 房间+走廊算法替代完美迷宫
- * 3. 每次放置墙体后验证路径连通性
- * 4. 多次重试机制确保生成成功
+ * Core Features:
+ * 1. Automatic border wall generation (2 grids wide)
+ * 2. Room + Corridor algorithm instead of perfect maze
+ * 3. Path connectivity validation after each wall placement
+ * 4. Multi-retry mechanism to ensure generation success
  */
 public class MapGenerator {
 
@@ -30,17 +30,17 @@ public class MapGenerator {
     private int totalHeight;
     private MapConfig config;
 
-    // 格子状态：0 = 可放墙, 1 = 地板（通道）
+    // Grid status: 0 = Wall/Blocked, 1 = Floor/Path
     private int[][] grid;
 
-    // 所有墙体
+    // All wall entities
     private List<WallEntity> walls;
 
-    // 安全区（起点、终点、钥匙周围）
+    // Safe zones (around spawn, exit, keys)
     private Set<Long> safeZone;
 
     /**
-     * 内嵌地图配置类 (替代原 RandomMapConfig)
+     * Inner Map Config class
      */
     public static class MapConfig {
         public int width = 150;
@@ -133,7 +133,7 @@ public class MapGenerator {
     private GenerationResult generate() {
         GenerationResult result = new GenerationResult();
 
-        // 初始化尺寸
+        // Initialize dimensions
         this.playableWidth = config.width;
         this.playableHeight = config.height;
         this.totalWidth = playableWidth + 2 * BORDER_WIDTH;
@@ -143,38 +143,38 @@ public class MapGenerator {
         this.walls = new ArrayList<>();
         this.safeZone = new HashSet<>();
 
-        // 1. 初始化：全部设为地板
+        // 1. Initialize: Set all to floor
         for (int x = 0; x < totalWidth; x++) {
             for (int y = 0; y < totalHeight; y++) {
                 grid[x][y] = 1;
             }
         }
 
-        // 2. 生成边界墙
+        // 2. Generate border walls
         generateBorderWalls();
 
-        // 3. 确定起点、终点、钥匙位置
+        // 3. Determine start, exit, and key positions
         determineStartAndExit(result);
         result.keyPos = findKeyPosition(result.playerStart, result.exitPos);
 
-        // 标记安全区
+        // Mark safe zones
         markSafeZone(result.playerStart, 5);
         markSafeZone(result.exitPos, 5);
         markSafeZone(result.keyPos, 3);
 
-        // 4. 生成内部迷宫墙体（房间+走廊算法）
+        // 4. Generate internal maze walls (Room + Corridor algorithm)
         generateInternalMaze();
 
-        // 5. 验证路径连通性
+        // 5. Validate path connectivity
         if (!validatePath(result.playerStart, result.keyPos) ||
                 !validatePath(result.keyPos, result.exitPos)) {
-            return null; // 重试
+            return null; // Retry
         }
 
-        // 6. 收集墙体
+        // 6. Collect walls
         result.walls.addAll(walls);
 
-        // 7. 放置敌人和陷阱
+        // 7. Place enemies and traps
         placeEntities(result);
 
         result.isValid = true;
@@ -182,15 +182,15 @@ public class MapGenerator {
     }
 
     /**
-     * 随机决定起点和终点
-     * 确保两者之间有足够的距离，并且都在可游玩区域内
+     * Randomly determine start and exit points.
+     * Ensure enough distance between them and that both are in playable area.
      */
     private void determineStartAndExit(GenerationResult result) {
         int minDistance = (playableWidth + playableHeight) / 3;
         int maxAttempts = 50;
 
         for (int i = 0; i < maxAttempts; i++) {
-            // 随机生成两个点（避开边界附近的缓冲）
+            // Randomly generate two points (avoiding buffer near borders)
             int x1 = BORDER_WIDTH + 2 + MathUtils.random(playableWidth - 5);
             int y1 = BORDER_WIDTH + 2 + MathUtils.random(playableHeight - 5);
 
@@ -207,7 +207,7 @@ public class MapGenerator {
             }
         }
 
-        // Fallback: 对角线附近
+        // Fallback: Near diagonals
         if (MathUtils.randomBoolean()) {
             result.playerStart = new Vector2(BORDER_WIDTH + 3, BORDER_WIDTH + 3);
             result.exitPos = new Vector2(totalWidth - BORDER_WIDTH - 4, totalHeight - BORDER_WIDTH - 4);
@@ -218,28 +218,28 @@ public class MapGenerator {
     }
 
     /**
-     * 生成边界墙（2格宽的封闭边框）
+     * Generate border walls (2-grid wide enclosed border)
      */
     private void generateBorderWalls() {
-        // 底边界
+        // Bottom border
         for (int x = 0; x < totalWidth; x += 2) {
             int w = Math.min(2, totalWidth - x);
             addWall(x, 0, w, BORDER_WIDTH, true);
         }
 
-        // 顶边界
+        // Top border
         for (int x = 0; x < totalWidth; x += 2) {
             int w = Math.min(2, totalWidth - x);
             addWall(x, totalHeight - BORDER_WIDTH, w, BORDER_WIDTH, true);
         }
 
-        // 左边界（不含角落）
+        // Left border (excluding corners)
         for (int y = BORDER_WIDTH; y < totalHeight - BORDER_WIDTH; y += 2) {
             int h = Math.min(2, totalHeight - BORDER_WIDTH - y);
             addWall(0, y, BORDER_WIDTH, h, true);
         }
 
-        // 右边界（不含角落）
+        // Right border (excluding corners)
         for (int y = BORDER_WIDTH; y < totalHeight - BORDER_WIDTH; y += 2) {
             int h = Math.min(2, totalHeight - BORDER_WIDTH - y);
             addWall(totalWidth - BORDER_WIDTH, y, BORDER_WIDTH, h, true);
@@ -247,24 +247,23 @@ public class MapGenerator {
     }
 
     /**
-     * 生成内部迷宫（房间+走廊算法）
+     * Generate internal maze (Room + Corridor algorithm)
      */
     private void generateInternalMaze() {
         int roomCount = config.roomCount;
         int wallsPlaced = 0;
-        int maxWalls = (playableWidth * playableHeight) / 20; // 约5%覆盖率
-
-        // 墙体尺寸优先级
+        int maxWalls = (playableWidth * playableHeight) / 20; // Approx 5% coverage
+        // Wall size priorities
         int[][] sizes = {
                 { 4, 4 }, { 3, 3 }, { 4, 2 }, { 2, 4 }, { 3, 2 }, { 2, 3 }, { 2, 2 }
         };
 
-        // 随机放置墙体
+        // Randomly place walls
         int attempts = 0;
         while (wallsPlaced < maxWalls && attempts < maxWalls * 10) {
             attempts++;
 
-            // 随机选择位置和尺寸
+            // Randomly select position and size
             int sizeIdx = MathUtils.random(sizes.length - 1);
             int w = sizes[sizeIdx][0];
             int h = sizes[sizeIdx][1];
@@ -272,52 +271,50 @@ public class MapGenerator {
             int x = BORDER_WIDTH + MathUtils.random(playableWidth - w);
             int y = BORDER_WIDTH + MathUtils.random(playableHeight - h);
 
-            // 检查是否可以放置
+            // Check if it can be placed
             if (canPlaceWall(x, y, w, h)) {
                 addWall(x, y, w, h, false);
                 wallsPlaced++;
             }
         }
-
         GameLogger.info("MapGenerator", "Placed " + wallsPlaced + " internal walls");
     }
 
     /**
-     * 检查是否可以在指定位置放置墙体
+     * Check if a wall can be placed at specified position
      */
     private boolean canPlaceWall(int x, int y, int w, int h) {
-        // 边界检查
+        // Boundary check
         if (x < BORDER_WIDTH || x + w > totalWidth - BORDER_WIDTH)
             return false;
         if (y < BORDER_WIDTH || y + h > totalHeight - BORDER_WIDTH)
             return false;
 
-        // 检查是否与安全区重叠
+        // Check for overlap with safe zones
         for (int dx = 0; dx < w; dx++) {
             for (int dy = 0; dy < h; dy++) {
                 if (isInSafeZone(x + dx, y + dy))
                     return false;
-                // 检查是否已被占用
+                // Check if already occupied
                 if (grid[x + dx][y + dy] == 0)
                     return false;
             }
         }
 
-        // 临时标记
+        // Temporary mark
         for (int dx = 0; dx < w; dx++) {
             for (int dy = 0; dy < h; dy++) {
                 grid[x + dx][y + dy] = 0;
             }
         }
 
-        // 验证放置后路径仍然连通
-        // （简化：只在最终验证，此处跳过以提高性能）
-
+        // Validate path connectivity after placement
+        // (Simplified: only validation at the final step, skipped here for performance)
         return true;
     }
 
     /**
-     * 添加墙体
+     * Add wall
      */
     private void addWall(int x, int y, int w, int h, boolean isBorder) {
         int typeId = getTypeIdForSize(w, h);
@@ -331,7 +328,8 @@ public class MapGenerator {
         WallEntity wall = new WallEntity(x, y, w, h, typeId, isBorder, collisionHeight);
         walls.add(wall);
 
-        // 标记格子被占用 (Using full visual height 'h' to prevent overlapping generation)
+        // Mark tiles as occupied (Using full visual height 'h' to prevent overlapping
+        // generation)
         for (int dx = 0; dx < w; dx++) {
             for (int dy = 0; dy < h; dy++) {
                 if (x + dx < totalWidth && y + dy < totalHeight) {
@@ -360,7 +358,7 @@ public class MapGenerator {
     }
 
     /**
-     * 标记安全区
+     * Mark safe zone
      */
     private void markSafeZone(Vector2 center, int radius) {
         int cx = (int) center.x;
@@ -377,7 +375,7 @@ public class MapGenerator {
     }
 
     /**
-     * 验证路径连通性（BFS）
+     * Validate path connectivity (BFS)
      */
     private boolean validatePath(Vector2 from, Vector2 to) {
         int fx = (int) from.x, fy = (int) from.y;
@@ -409,10 +407,10 @@ public class MapGenerator {
     }
 
     /**
-     * 找到钥匙位置（离起点最远的可达点）
+     * Find key position (reachable point furthest from start)
      */
     private Vector2 findKeyPosition(Vector2 start, Vector2 exit) {
-        // 简化：放在地图中心偏向出口的位置
+        // Simplified: place near center leaning towards exit
         int kx = (int) (start.x + exit.x) / 2 + MathUtils.random(-5, 5);
         int ky = (int) (start.y + exit.y) / 2 + MathUtils.random(-5, 5);
         kx = Math.max(BORDER_WIDTH + 3, Math.min(totalWidth - BORDER_WIDTH - 3, kx));
@@ -421,7 +419,7 @@ public class MapGenerator {
     }
 
     /**
-     * 放置敌人和陷阱
+     * Place enemies and traps
      */
     private void placeEntities(GenerationResult result) {
         int floorCount = 0;
@@ -455,7 +453,7 @@ public class MapGenerator {
     }
 
     /**
-     * 保存到文件
+     * Save to file
      */
     private void saveToFile(String fileName, GenerationResult result) {
         StringBuilder sb = new StringBuilder();
@@ -505,7 +503,7 @@ public class MapGenerator {
     }
 
     /**
-     * 回退地图生成
+     * Fallback map generation
      */
     private GenerationResult generateFallback() {
         GenerationResult result = new GenerationResult();
@@ -518,14 +516,14 @@ public class MapGenerator {
         this.walls = new ArrayList<>();
         this.safeZone = new HashSet<>();
 
-        // 全部地板
+        // All floor
         for (int x = 0; x < totalWidth; x++) {
             for (int y = 0; y < totalHeight; y++) {
                 grid[x][y] = 1;
             }
         }
 
-        // 边界墙
+        // Border walls
         generateBorderWalls();
 
         result.playerStart = new Vector2(BORDER_WIDTH + 3, BORDER_WIDTH + 3);
