@@ -152,6 +152,10 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         this.playerRenderer = new de.tum.cit.fop.maze.utils.PlayerRenderer(game.getSpriteBatch(), textureManager,
                 UNIT_SCALE);
 
+        // 在 initGameWorld 之前保存 freshStart 状态
+        // 因为 GameWorld 的构造函数会消耗（consume）这个标志
+        boolean isFreshGameStart = de.tum.cit.fop.maze.shop.LoadoutManager.getInstance().isFreshStart();
+
         initGameWorld(this.currentLevelPath);
 
         if (loadPersistentStats) {
@@ -185,7 +189,12 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
                         state.getKnockbackMultiplier(),
                         state.getCooldownReduction(),
                         state.getSpeedBonus());
-                p.setInventoryFromTypes(state.getInventoryWeaponTypes());
+
+                // 只有在非新游戏开始时才从存档恢复武器（继续下一关）
+                // 新游戏开始时使用 LoadoutManager 的选择（已在 GameWorld 中初始化）
+                if (!isFreshGameStart) {
+                    p.setInventoryFromTypes(state.getInventoryWeaponTypes());
+                }
 
                 // Also ensure ShopManager is synced (just in case)
                 de.tum.cit.fop.maze.shop.ShopManager.importState(state.getCoins(), state.getPurchasedItemIds());
@@ -231,7 +240,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
                 Color iceColor = new Color(0.6f, 0.9f, 1.0f, 1.0f);
                 bloodParticles.spawn(x, y, 12, 0, 0, 2.0f, iceColor);
             } else if (effect == de.tum.cit.fop.maze.model.weapons.WeaponEffect.BURN) {
-                // Fire Staff: 橙红色粒子
+                // Machine Gun: 橙红色粒子
                 Color fireColor = new Color(1.0f, 0.4f, 0.1f, 1.0f);
                 bloodParticles.spawn(x, y, 5, 0, 0, 0.8f, fireColor);
             }
@@ -417,7 +426,11 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         if (saveFile == null)
             saveFile = "auto_save_victory.json";
 
-        // === PERSIST SHOP STATE ===
+        // === 先同步本关收集的金币到 ShopManager ===
+        // 这样 getPlayerCoins() 返回的值才包含本关收集的金币
+        de.tum.cit.fop.maze.shop.ShopManager.syncCoinsFromGame(gameWorld.getCoinsCollected());
+
+        // === PERSIST SHOP STATE (包含累加后的金币) ===
         state.setCoins(de.tum.cit.fop.maze.shop.ShopManager.getPlayerCoins());
         state.setPurchasedItemIds(de.tum.cit.fop.maze.shop.ShopManager.getPurchasedItemIds());
 
@@ -521,7 +534,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
                 }
             }
 
-            // === Fire Staff 开火粒子效果 ===
+            // === Machine Gun 开火粒子效果 ===
             if (gameWorld.consumeFireEvent()) {
                 // 使用橙红色火焰粒子
                 Color fireColor = new Color(1.0f, 0.4f, 0.1f, 1.0f);
@@ -670,12 +683,25 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
                     itemTex = textureManager.coinRegion;
                     break;
                 case WEAPON:
-                    // 尝试使用商店素材贴图
+                    // 使用 Idle 状态动画作为武器掉落物显示
                     de.tum.cit.fop.maze.model.weapons.Weapon weapon = (de.tum.cit.fop.maze.model.weapons.Weapon) item
                             .getPayload();
-                    itemTex = getWeaponTexture(weapon.getName());
+                    // 尝试从 CustomElementManager 获取 Idle 动画第一帧
+                    String weaponIdForDrop = findCustomWeaponId(weapon.getName());
+                    if (weaponIdForDrop != null) {
+                        com.badlogic.gdx.graphics.g2d.Animation<TextureRegion> idleAnim = de.tum.cit.fop.maze.custom.CustomElementManager
+                                .getInstance()
+                                .getAnimation(weaponIdForDrop, "Idle");
+                        if (idleAnim != null) {
+                            itemTex = idleAnim.getKeyFrame(0);
+                        }
+                    }
+                    // 回退到商店贴图
+                    if (itemTex == null) {
+                        itemTex = getWeaponTexture(weapon.getName());
+                    }
                     if (itemTex == null)
-                        itemTex = textureManager.coinRegion; // 回退（避免使用钥匙纹理）
+                        itemTex = textureManager.coinRegion; // 最终回退
                     break;
                 case ARMOR:
                     de.tum.cit.fop.maze.model.items.Armor armor = (de.tum.cit.fop.maze.model.items.Armor) item
@@ -717,13 +743,65 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
 
             com.badlogic.gdx.graphics.g2d.Animation<TextureRegion> enemyAnim = null;
             boolean isCustom = false;
+            boolean enableFlip = false;
 
             if (e.getCustomElementId() != null) {
-                String action = e.isDead() ? "Death" : "Move";
-                enemyAnim = de.tum.cit.fop.maze.custom.CustomElementManager.getInstance()
-                        .getAnimation(e.getCustomElementId(), action);
-                if (enemyAnim != null)
+                de.tum.cit.fop.maze.custom.CustomElementManager mgr = de.tum.cit.fop.maze.custom.CustomElementManager
+                        .getInstance();
+                String action = "Move";
+
+                if (e.isDead()) {
+                    action = "Death";
+                    enemyAnim = mgr.getAnimation(e.getCustomElementId(), action);
+                } else {
+                    // Custom Directional Logic
+                    String targetAction;
+                    if (Math.abs(vx) > Math.abs(vy)) {
+                        targetAction = vx > 0 ? "MoveRight" : "MoveLeft";
+                    } else {
+                        targetAction = vy > 0 ? "MoveUp" : "MoveDown";
+                    }
+
+                    // Try specific directional action first
+                    enemyAnim = mgr.getAnimation(e.getCustomElementId(), targetAction);
+
+                    if (enemyAnim != null) {
+                        // Found specific directional animation - DISABLE auto-flip
+                        // because the asset is already facing the correct direction
+                        // We will handle this by setting a flag or using specific logic below
+                        isCustom = false; // Hack: Set isCustom to false to prevent the generic "isCustom && vx < 0"
+                                          // flip at the bottom
+                        // But we need to ensure isCustom is true for other things?
+                        // Let's look at how isCustom is used.
+                        // It is used for:
+                        // 1. "boolean flipX = isCustom && e.getVelocityX() < 0;"
+                        // 2. "if (isCustom && e.isDead())" -> Dead frame handling
+                    } else {
+                        // Fallback to generic "Move"
+                        enemyAnim = mgr.getAnimation(e.getCustomElementId(), "Move");
+                        isCustom = true; // Enable auto-flip for generic "Move"
+                    }
+                }
+
+                if (enemyAnim == null && e.isDead()) {
+                    // Fallback to generic "Move" if "Death" missing (unlikely but safe)
+                    // Actually better fallback to "Move" or just keep null and let textureManager
+                    // handle it?
+                    // CustomElementManager "Death"
+                    // If death missing, maybe just stop animation?
+                    enemyAnim = mgr.getAnimation(e.getCustomElementId(), "Move");
+                }
+
+                // Re-evaluate isCustom for flipping purposes
+                if (enemyAnim != null) {
+                    // Check if it's the generic "Move" animation
+                    if (mgr.getAnimation(e.getCustomElementId(), "Move") == enemyAnim && !e.isDead()) {
+                        enableFlip = true;
+                    }
+                    // Set valid custom animation flag for frame retrieval
+                    // We need to know if it's a "custom element" regardless of flip
                     isCustom = true;
+                }
             }
 
             if (enemyAnim == null) {
@@ -807,9 +885,8 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
                 float drawX = e.getX() * UNIT_SCALE - (drawWidth - UNIT_SCALE) / 2;
                 float drawY = e.getY() * UNIT_SCALE - (drawHeight - UNIT_SCALE) / 2;
 
-                // Flip if moving left, BUT ONLY for custom elements (Standard mobs have
-                // directional sprites)
-                boolean flipX = isCustom && e.getVelocityX() < 0;
+                // Flip if moving left, ONLY if enableFlip is true (generic Move fallback)
+                boolean flipX = enableFlip && e.getVelocityX() < 0;
 
                 if (flipX) {
                     game.getSpriteBatch().draw(currentFrame, drawX + drawWidth, drawY, -drawWidth, drawHeight);
@@ -873,6 +950,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
                 // 使用统一的 getAttackAngle() 方法，支持鼠标和8向键盘攻击
                 attackRangeRenderer.render(camera, player.getX(), player.getY(),
                         gameWorld.getAttackAngle(), currentWeapon.getRange(),
+                        currentWeapon.getAttackArc(),
                         currentWeapon.isRanged(), progress);
             }
             game.getSpriteBatch().begin(); // 恢复 SpriteBatch
@@ -1207,7 +1285,12 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
                 state.getKnockbackMultiplier(),
                 state.getCooldownReduction(),
                 state.getSpeedBonus());
-        player.setInventoryFromTypes(state.getInventoryWeaponTypes());
+
+        // 只有在非新游戏开始时才从存档恢复武器（继续下一关）
+        // 新游戏开始时使用 LoadoutManager 的选择（在 GameWorld 中初始化）
+        if (!de.tum.cit.fop.maze.shop.LoadoutManager.getInstance().isFreshStart()) {
+            player.setInventoryFromTypes(state.getInventoryWeaponTypes());
+        }
 
         // === RESTORE GLOBAL SHOP STATE FOR THIS SAVE SLOT ===
         de.tum.cit.fop.maze.shop.ShopManager.importState(state.getCoins(), state.getPurchasedItemIds());
@@ -1377,11 +1460,15 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         settingsUI = new de.tum.cit.fop.maze.ui.SettingsUI(game, uiStage, () -> {
             // On Back -> Hide settings, show pause menu
             settingsTable.setVisible(false);
+            // 禁用触摸事件，防止隐藏的按钮仍然响应点击
+            settingsTable.setTouchable(com.badlogic.gdx.scenes.scene2d.Touchable.disabled);
             pauseTable.setVisible(true);
         });
         // 使用不透明深色背景（不再使用截图）
         settingsTable = settingsUI.buildWithBackground(null);
         settingsTable.setVisible(true);
+        // 启用触摸事件
+        settingsTable.setTouchable(com.badlogic.gdx.scenes.scene2d.Touchable.enabled);
         settingsTable.setFillParent(true);
         uiStage.addActor(settingsTable);
         settingsTable.toFront();

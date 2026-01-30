@@ -10,12 +10,12 @@ public class MagicStaff extends Weapon {
     public MagicStaff(float x, float y) {
         // High damage, medium range, fast cooldown for rapid fire, Burn effect
         // Fully initialized as Ranged: isRanged=true, speed 12
-        super(x, y, "Fire Staff", 2, 6.0f, 0.25f, WeaponEffect.BURN, DamageType.MAGICAL, true, 1.2f, 12f);
+        super(x, y, "Machine Gun", 2, 6.0f, 0.25f, WeaponEffect.BURN, DamageType.MAGICAL, true, 1.2f, 12f);
 
         // Override with custom values if available
         de.tum.cit.fop.maze.custom.CustomElementManager manager = de.tum.cit.fop.maze.custom.CustomElementManager
                 .getInstance();
-        de.tum.cit.fop.maze.custom.CustomElementDefinition def = manager.getElementByName("Fire Staff");
+        de.tum.cit.fop.maze.custom.CustomElementDefinition def = manager.getElementByName("Machine Gun");
 
         if (def != null && def.getType() == de.tum.cit.fop.maze.custom.ElementType.WEAPON) {
             this.damage = def.getIntProperty("damage");

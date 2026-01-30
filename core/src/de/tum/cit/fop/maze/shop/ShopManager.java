@@ -31,28 +31,22 @@ public class ShopManager {
         allItems = new ArrayList<>();
 
         // === 武器 ===
-        allItems.add(new ShopItem(
-                "weapon_sword",
-                "Steel Sword",
-                "A reliable melee weapon. Balanced damage and speed.",
-                50,
-                "steel_sword",
-                ShopItem.ItemCategory.WEAPON));
+        // Steel Sword 移除
 
         allItems.add(new ShopItem(
                 "weapon_bow",
                 "Ice Bow",
                 "Freezes enemies on hit. Medium range.",
                 100,
-                "ice_bow",
+                "custom_images/5f27fc68/idle_0",
                 ShopItem.ItemCategory.WEAPON));
 
         allItems.add(new ShopItem(
                 "weapon_staff",
-                "Fire Staff",
+                "Machine Gun",
                 "Burns enemies over time. High damage.",
                 120,
-                "fire_staff",
+                "custom_images/95ffc313/idle_0",
                 ShopItem.ItemCategory.WEAPON));
 
         allItems.add(new ShopItem(
@@ -60,7 +54,7 @@ public class ShopManager {
                 "Crossbow",
                 "Powerful ranged physical weapon. Slow reload.",
                 150,
-                "crossbow",
+                "custom_images/d6ec4815/idle_0",
                 ShopItem.ItemCategory.WEAPON));
 
         allItems.add(new ShopItem(
@@ -68,7 +62,7 @@ public class ShopManager {
                 "Magic Wand",
                 "Fast magical attacks with burn effect.",
                 130,
-                "magic_wand",
+                "custom_images/6c204c4d/idle_0",
                 ShopItem.ItemCategory.WEAPON));
 
         // === 护甲 ===

@@ -75,8 +75,8 @@ public class GameConfig {
     public static final String WEAPON_SWORD = "Sword";
     /** ID for the Ice Bow weapon type. */
     public static final String WEAPON_BOW = "Ice Bow";
-    /** ID for the Fire Staff weapon type. */
-    public static final String WEAPON_STAFF = "Fire Staff";
+    /** ID for the Machine Gun weapon type. */
+    public static final String WEAPON_STAFF = "Machine Gun";
     /** ID for the Crossbow weapon type. */
     public static final String WEAPON_CROSSBOW = "Crossbow";
     /** ID for the Magic Wand weapon type. */

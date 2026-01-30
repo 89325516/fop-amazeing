@@ -107,6 +107,8 @@ public class Enemy extends GameObject {
     private int maxShield = 0;
     private int currentShield = 0;
 
+    private int attackDamage = 1; // Default damage
+
     // Custom Element Support
     private String customElementId = null;
 
@@ -133,6 +135,14 @@ public class Enemy extends GameObject {
         this.customElementId = id;
     }
 
+    public void setAttackDamage(int damage) {
+        this.attackDamage = damage;
+    }
+
+    public int getAttackDamage() {
+        return attackDamage;
+    }
+
     public void setEnemyType(EnemyType type) {
         this.type = type;
     }
@@ -143,6 +153,17 @@ public class Enemy extends GameObject {
 
     public void setDamageListener(BloodParticleSystem.DamageListener listener) {
         this.damageListener = listener;
+    }
+
+    private float speedOverride = -1f;
+    private boolean ignorePatrolPenalty = false;
+
+    public void setMoveSpeed(float speed) {
+        this.speedOverride = speed;
+    }
+
+    public void setIgnorePatrolPenalty(boolean ignore) {
+        this.ignorePatrolPenalty = ignore;
     }
 
     /**
@@ -657,7 +678,16 @@ public class Enemy extends GameObject {
         }
 
         // 2. Calculate target velocity based on AI state (Inertia System)
-        float maxSpeed = (state == EnemyState.CHASE) ? GameSettings.enemyChaseSpeed : GameSettings.enemyPatrolSpeed;
+        float maxSpeed;
+        if (speedOverride > 0) {
+            maxSpeed = speedOverride;
+            // Restore 60% patrol speed unless ignored
+            if (state == EnemyState.PATROL && !ignorePatrolPenalty) {
+                maxSpeed *= 0.6f;
+            }
+        } else {
+            maxSpeed = (state == EnemyState.CHASE) ? GameSettings.enemyChaseSpeed : GameSettings.enemyPatrolSpeed;
+        }
         // Apply slow effect multiplier
         if (currentEffect == WeaponEffect.SLOW) {
             maxSpeed *= slowMultiplier;

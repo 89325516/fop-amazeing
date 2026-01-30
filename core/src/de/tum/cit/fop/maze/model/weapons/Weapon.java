@@ -28,6 +28,9 @@ public abstract class Weapon extends GameObject {
     protected float currentReloadTimer = 0f; // Current reload progress
     protected boolean isReloading = false;
 
+    // === Attack Arc Configuration ===
+    protected float attackArc = 45f; // Half-angle of attack cone in degrees (90° total by default)
+
     // Texture identifier for inventory/HUD display
     protected String textureKey = "default_weapon";
 
@@ -168,6 +171,14 @@ public abstract class Weapon extends GameObject {
 
     public String getTextureKey() {
         return textureKey;
+    }
+
+    /**
+     * Get attack arc half-angle in degrees.
+     * Default is 45° (90° total cone). Override in subclasses for different arcs.
+     */
+    public float getAttackArc() {
+        return attackArc;
     }
 
     /**

@@ -55,7 +55,7 @@ public class HelpScreen implements Screen {
     private static final String[][] WEAPONS = {
             { "Iron Sword", "Melee", "PHYSICAL", "1", "2.2", "0.3s", "None" },
             { "Ice Bow", "Ranged", "PHYSICAL", "1", "5.0", "0.8s", "Freeze" },
-            { "Fire Staff", "Ranged", "MAGICAL", "2", "3.0", "1.2s", "Burn DoT" },
+            { "Machine Gun", "Ranged", "MAGICAL", "2", "3.0", "1.2s", "Burn DoT" },
             { "Crossbow", "Ranged", "PHYSICAL", "2", "6.0", "1.5s", "High Penetration" },
             { "Magic Wand", "Ranged", "MAGICAL", "1", "5.0", "1.0s", "Burn" }
     };

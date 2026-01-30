@@ -561,6 +561,8 @@ public class DeveloperConsole {
             case "gold":
             case "money":
                 player.addCoins(count);
+                // 同时增加 coinsCollected，确保通关时会被保存
+                gameWorld.addCoinsCollected(count);
                 log("[OK] Gave " + count + " coins. Total: " + player.getCoins());
                 break;
             case "lives":
@@ -713,6 +715,7 @@ public class DeveloperConsole {
             case "coins":
                 // Note: Currently adds coins directly. Use 'give coins' for the same effect.
                 gameWorld.getPlayer().addCoins(count);
+                gameWorld.addCoinsCollected(count);
                 log("[OK] Added " + count + " coins directly to player.");
                 log("  (Tip: Use 'give coins' for the same effect)");
                 break;

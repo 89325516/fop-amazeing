@@ -198,6 +198,46 @@ public class EndlessGameScreen implements Screen {
 
         // 设置系统监听器
         setupSystemListeners();
+
+        // Initialize Grayscale Shader
+        String vertexShader = "attribute vec4 "
+                + com.badlogic.gdx.graphics.glutils.ShaderProgram.POSITION_ATTRIBUTE + ";\n"
+                + "attribute vec4 " + com.badlogic.gdx.graphics.glutils.ShaderProgram.COLOR_ATTRIBUTE
+                + ";\n"
+                + "attribute vec2 " + com.badlogic.gdx.graphics.glutils.ShaderProgram.TEXCOORD_ATTRIBUTE
+                + "0;\n"
+                + "uniform mat4 u_projTrans;\n"
+                + "varying vec4 v_color;\n"
+                + "varying vec2 v_texCoords;\n"
+                + "\n"
+                + "void main()\n"
+                + "{\n"
+                + "   v_color = " + com.badlogic.gdx.graphics.glutils.ShaderProgram.COLOR_ATTRIBUTE
+                + ";\n"
+                + "   v_color.a = v_color.a * (255.0/254.0);\n"
+                + "   v_texCoords = "
+                + com.badlogic.gdx.graphics.glutils.ShaderProgram.TEXCOORD_ATTRIBUTE
+                + "0;\n"
+                + "   gl_Position =  u_projTrans * "
+                + com.badlogic.gdx.graphics.glutils.ShaderProgram.POSITION_ATTRIBUTE + ";\n"
+                + "}\n";
+        String fragmentShader = "#ifdef GL_ES\n"
+                + "precision mediump float;\n"
+                + "#endif\n"
+                + "varying vec4 v_color;\n"
+                + "varying vec2 v_texCoords;\n"
+                + "uniform sampler2D u_texture;\n"
+                + "void main()\n"
+                + "{\n"
+                + "  vec4 c = v_color * texture2D(u_texture, v_texCoords);\n"
+                + "  float gray = dot(c.rgb, vec3(0.299, 0.587, 0.114));\n"
+                + "  gl_FragColor = vec4(gray, gray, gray, c.a);\n"
+                + "}";
+        grayscaleShader = new com.badlogic.gdx.graphics.glutils.ShaderProgram(vertexShader,
+                fragmentShader);
+        if (!grayscaleShader.isCompiled()) {
+            GameLogger.error("EndlessGameScreen", "Shader compile failed: " + grayscaleShader.getLog());
+        }
     }
 
     private void setupSystemListeners() {
@@ -1073,26 +1113,91 @@ public class EndlessGameScreen implements Screen {
             if (!canSpawnAt(spawnX, spawnY))
                 continue; // 尝试下一个位置
 
-            // 使用与关卡模式一致的血量（基础3HP），然后乘以波次倍率
-            int baseHealth = (int) (3 * waveSystem.getEnemyHealthMultiplier());
-            if (baseHealth < 1)
-                baseHealth = 1; // 最少1HP
-            Enemy enemy = new Enemy(spawnX, spawnY, baseHealth, DamageType.PHYSICAL, null, 0);
+            // === Random Custom Enemy Selection ===
+            de.tum.cit.fop.maze.custom.CustomElementManager mgr = de.tum.cit.fop.maze.custom.CustomElementManager
+                    .getInstance();
+            java.util.Collection<de.tum.cit.fop.maze.custom.CustomElementDefinition> allDefs = mgr.getAllElements();
 
-            // 根据生成位置的主题分配敌人类型
-            String theme = EndlessModeConfig.getThemeForPosition((int) spawnX, (int) spawnY);
-            enemy.setType(getEnemyTypeForTheme(theme));
+            // Filter only ENEMY types
+            java.util.List<de.tum.cit.fop.maze.custom.CustomElementDefinition> enemyDefs = new ArrayList<>();
+            for (de.tum.cit.fop.maze.custom.CustomElementDefinition def : allDefs) {
+                if (def.getType() == de.tum.cit.fop.maze.custom.ElementType.ENEMY) {
+                    enemyDefs.add(def);
+                }
+            }
 
-            enemies.add(enemy);
-            enemyGrid.insert(enemy, spawnX, spawnY); // 插入空间网格
-            // 绑定墙壁检测回调 (用于击退碰撞检测)
-            enemy.setWallChecker(this::isWallAt);
-            // 绑定溅血粒子监听器
-            enemy.setDamageListener(
-                    (x, y, amount, dirX, dirY, knockback) -> bloodParticles.spawn(x, y, amount, dirX, dirY, knockback));
+            if (enemyDefs.isEmpty()) {
+                // Fallback if no custom enemies defined
+                int baseHealth = (int) (3 * waveSystem.getEnemyHealthMultiplier());
+                Enemy enemy = new Enemy(spawnX, spawnY, Math.max(1, baseHealth), DamageType.PHYSICAL, null, 0);
+                enemy.setType(Enemy.EnemyType.BOAR);
+                addEnemyToWorld(enemy, spawnX, spawnY);
+                return;
+            }
+
+            // Pick random custom enemy
+            de.tum.cit.fop.maze.custom.CustomElementDefinition selectedDef = enemyDefs
+                    .get(spawnRandom.nextInt(enemyDefs.size()));
+
+            // Extract Stats
+            int baseHealth = 3;
+            float moveSpeed = 1.5f;
+            int attackDamage = 1;
+            int defense = 0;
+
+            try {
+                Object hVal = selectedDef.getProperties().get("health");
+                if (hVal instanceof Number)
+                    baseHealth = ((Number) hVal).intValue();
+
+                Object sVal = selectedDef.getProperties().get("moveSpeed");
+                if (sVal instanceof Number)
+                    moveSpeed = ((Number) sVal).floatValue();
+
+                Object dVal = selectedDef.getProperties().get("attackDamage");
+                if (dVal instanceof Number)
+                    attackDamage = ((Number) dVal).intValue();
+
+                Object defVal = selectedDef.getProperties().get("defense");
+                if (defVal instanceof Number)
+                    defense = ((Number) defVal).intValue();
+            } catch (Exception e) {
+                // Ignore parsing errors, use defaults
+            }
+
+            // Apply Wave Scaling
+            int scaledHealth = (int) (baseHealth * waveSystem.getEnemyHealthMultiplier());
+            if (scaledHealth < 1)
+                scaledHealth = 1;
+
+            // Create Enemy
+            DamageType shieldType = defense > 0 ? DamageType.PHYSICAL : null;
+            Enemy enemy = new Enemy(spawnX, spawnY, scaledHealth, DamageType.PHYSICAL, shieldType, defense);
+
+            // Apply Custom Properties
+            enemy.setCustomElementId(selectedDef.getId());
+            enemy.setAttackDamage(attackDamage);
+
+            if (moveSpeed > 0) {
+                enemy.setMoveSpeed(moveSpeed);
+                // Special Rule: Alien ignores patrol penalty
+                if ("Alien".equals(selectedDef.getName())) {
+                    enemy.setIgnorePatrolPenalty(true);
+                }
+            }
+
+            // Add to world
+            addEnemyToWorld(enemy, spawnX, spawnY);
+
             return; // 生成成功，退出
         }
-        // 5次都失败，放弃这次生成
+    }
+
+    private void addEnemyToWorld(Enemy enemy, float x, float y) {
+        enemies.add(enemy);
+        enemyGrid.insert(enemy, x, y);
+        enemy.setWallChecker(this::isWallAt);
+        enemy.setDamageListener((ex, ey, amount, dx, dy, kb) -> bloodParticles.spawn(ex, ey, amount, dx, dy, kb));
     }
 
     private void spawnBossNearPlayer() {
@@ -1111,24 +1216,81 @@ public class EndlessGameScreen implements Screen {
             if (!canSpawnAt(spawnX, spawnY))
                 continue; // 尝试下一个位置
 
-            // BOSS有更高的血量，带护盾
-            int bossHealth = 300 + (int) (waveSystem.getEnemyHealthMultiplier() * 100);
+            // === Random Boss Selection ===
+            de.tum.cit.fop.maze.custom.CustomElementManager mgr = de.tum.cit.fop.maze.custom.CustomElementManager
+                    .getInstance();
+            java.util.Collection<de.tum.cit.fop.maze.custom.CustomElementDefinition> allDefs = mgr.getAllElements();
+
+            java.util.List<de.tum.cit.fop.maze.custom.CustomElementDefinition> enemyDefs = new ArrayList<>();
+            for (de.tum.cit.fop.maze.custom.CustomElementDefinition def : allDefs) {
+                if (def.getType() == de.tum.cit.fop.maze.custom.ElementType.ENEMY) {
+                    enemyDefs.add(def);
+                }
+            }
+
+            // Stats
+            int baseHealth = 100; // Fallback
+            int attackDamage = 5;
+            String customId = null;
+            String name = "BOSS";
+            float moveSpeed = 2.0f; // Boss is faster
+            boolean isAlien = false;
+
+            if (!enemyDefs.isEmpty()) {
+                de.tum.cit.fop.maze.custom.CustomElementDefinition def = enemyDefs
+                        .get(spawnRandom.nextInt(enemyDefs.size()));
+                customId = def.getId();
+                name = def.getName();
+
+                try {
+                    Object hVal = def.getProperties().get("health");
+                    if (hVal instanceof Number)
+                        baseHealth = ((Number) hVal).intValue();
+
+                    Object dVal = def.getProperties().get("attackDamage");
+                    if (dVal instanceof Number)
+                        attackDamage = ((Number) dVal).intValue();
+
+                    // Boss uses its own speed logic usually, but let's base it on type
+                    Object sVal = def.getProperties().get("moveSpeed");
+                    if (sVal instanceof Number)
+                        moveSpeed = ((Number) sVal).floatValue();
+
+                    if ("Alien".equals(name))
+                        isAlien = true;
+
+                } catch (Exception e) {
+                }
+            }
+
+            // Boss Scaling
+            // Health: Base * 10 * WaveMultiplier + Fixed Bonus
+            int bossHealth = (baseHealth * 10) + (int) (waveSystem.getEnemyHealthMultiplier() * 100);
+
+            // Damage: Base * 2
+            int bossDamage = attackDamage * 2;
+
             Enemy boss = new Enemy(spawnX, spawnY, bossHealth, DamageType.MAGICAL, DamageType.PHYSICAL, 50);
 
-            // 根据生成位置的主题分配敌人类型
-            String theme = EndlessModeConfig.getThemeForPosition((int) spawnX, (int) spawnY);
-            boss.setType(getEnemyTypeForTheme(theme));
+            if (customId != null) {
+                boss.setCustomElementId(customId);
+                boss.setAttackDamage(bossDamage);
+                if (moveSpeed > 0) {
+                    boss.setMoveSpeed(moveSpeed); // Boss moves at creature's speed (maybe + rage?)
+                    if (isAlien)
+                        boss.setIgnorePatrolPenalty(true);
+                }
+            } else {
+                // Fallback
+                String theme = EndlessModeConfig.getThemeForPosition((int) spawnX, (int) spawnY);
+                boss.setType(getEnemyTypeForTheme(theme));
+            }
 
-            enemies.add(boss);
-            enemyGrid.insert(boss, spawnX, spawnY); // 插入空间网格
-            // 绑定墙壁检测回调 (用于击退碰撞检测)
-            boss.setWallChecker(this::isWallAt);
-            // 绑定溅血粒子监听器
-            boss.setDamageListener(
-                    (x, y, amount, dirX, dirY, knockback) -> bloodParticles.spawn(x, y, amount, dirX, dirY, knockback));
+            // Add to world
+            addEnemyToWorld(boss, spawnX, spawnY);
 
             floatingTexts.add(new FloatingText(
-                    spawnX, spawnY + 1, "BOSS!", Color.RED));
+                    spawnX, spawnY + 1, name + " BOSS!", Color.RED));
             return; // 生成成功，退出
         }
         // 5次都失败，放弃这次生成
@@ -1401,11 +1563,40 @@ public class EndlessGameScreen implements Screen {
         // 1. Custom Element Support
         com.badlogic.gdx.graphics.g2d.Animation<TextureRegion> enemyAnim = null;
         boolean isCustom = false;
+        boolean enableFlip = false;
 
         if (e.getCustomElementId() != null) {
-            String action = e.isDead() ? "Death" : "Move";
-            enemyAnim = de.tum.cit.fop.maze.custom.CustomElementManager.getInstance()
-                    .getAnimation(e.getCustomElementId(), action);
+            de.tum.cit.fop.maze.custom.CustomElementManager mgr = de.tum.cit.fop.maze.custom.CustomElementManager
+                    .getInstance();
+
+            if (e.isDead()) {
+                enemyAnim = mgr.getAnimation(e.getCustomElementId(), "Death");
+            } else {
+                // Directional Logic
+                float vx = e.getVelocityX();
+                float vy = e.getVelocityY();
+                String targetAction;
+
+                if (Math.abs(vx) > Math.abs(vy)) {
+                    targetAction = vx > 0 ? "MoveRight" : "MoveLeft";
+                } else {
+                    targetAction = vy > 0 ? "MoveUp" : "MoveDown";
+                }
+
+                enemyAnim = mgr.getAnimation(e.getCustomElementId(), targetAction);
+
+                if (enemyAnim != null) {
+                    // Found specific direction
+                    enableFlip = false; // Don't flip specific directional anims
+                } else {
+                    // Fallback to generic Move
+                    enemyAnim = mgr.getAnimation(e.getCustomElementId(), "Move");
+                    if (enemyAnim != null) {
+                        enableFlip = true; // Allow flipping for generic Move
+                    }
+                }
+            }
+
             if (enemyAnim != null)
                 isCustom = true;
         }
@@ -1419,21 +1610,25 @@ public class EndlessGameScreen implements Screen {
         // 2. Grayscale Shader for Dead Enemies
         if (e.isDead()) {
             game.getSpriteBatch().setShader(grayscaleShader);
+            // Ensure color is white for dead enemies so shader works purely
+            game.getSpriteBatch().setColor(Color.WHITE);
         }
 
-        // 状态着色（受伤、中毒、冰冻、燃烧）
-        if (e.isHurt()) {
-            game.getSpriteBatch().setColor(1, 0, 0, 1); // Red flash
-        } else if (e.getCurrentEffect() == WeaponEffect.POISON) {
-            game.getSpriteBatch().setColor(0, 1, 0, 1); // Green tint
-        } else if (e.getCurrentEffect() == WeaponEffect.FREEZE) {
-            game.getSpriteBatch().setColor(0, 0.5f, 1, 1); // Blue tint
-        } else if (e.getCurrentEffect() == WeaponEffect.BURN) {
-            game.getSpriteBatch().setColor(1, 0.5f, 0, 1); // Orange tint
+        // 状态着色（受伤、中毒、冰冻、燃烧） - Only when ALIVE
+        if (!e.isDead()) {
+            if (e.isHurt()) {
+                game.getSpriteBatch().setColor(1, 0, 0, 1); // Red flash
+            } else if (e.getCurrentEffect() == WeaponEffect.POISON) {
+                game.getSpriteBatch().setColor(0, 1, 0, 1); // Green tint
+            } else if (e.getCurrentEffect() == WeaponEffect.FREEZE) {
+                game.getSpriteBatch().setColor(0, 0.5f, 1, 1); // Blue tint
+            } else if (e.getCurrentEffect() == WeaponEffect.BURN) {
+                game.getSpriteBatch().setColor(1, 0.5f, 0, 1); // Orange tint
+            }
         }
 
-        // Flip if moving left (only for custom elements)
-        boolean flipX = isCustom && e.getVelocityX() < 0;
+        // Flip if moving left (only if enabled for generic animations)
+        boolean flipX = enableFlip && e.getVelocityX() < 0;
 
         if (flipX) {
             game.getSpriteBatch().draw(enemyFrame, drawX + drawWidth, drawY, -drawWidth, drawHeight);
@@ -1764,10 +1959,14 @@ public class EndlessGameScreen implements Screen {
         settingsUI = new de.tum.cit.fop.maze.ui.SettingsUI(game, uiStage, () -> {
             // On Back -> Hide settings, show pause menu
             settingsTable.setVisible(false);
+            // 禁用触摸事件，防止隐藏的按钮仍然响应点击
+            settingsTable.setTouchable(com.badlogic.gdx.scenes.scene2d.Touchable.disabled);
             pauseTable.setVisible(true);
         });
         settingsTable = settingsUI.buildWithBackground(settingsScreenshotTexture);
         settingsTable.setVisible(true);
+        // 启用触摸事件
+        settingsTable.setTouchable(com.badlogic.gdx.scenes.scene2d.Touchable.enabled);
         settingsTable.setFillParent(true);
         uiStage.addActor(settingsTable);
         settingsTable.toFront();

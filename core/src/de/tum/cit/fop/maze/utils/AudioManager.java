@@ -346,7 +346,7 @@ public class AudioManager implements Disposable {
         switch (weaponClassName) {
             case "Sword":
             case "Crossbow":
-                return "attack_sword";
+                return "attack_bow";
             case "Bow":
                 return "attack_bow";
             case "Wand":

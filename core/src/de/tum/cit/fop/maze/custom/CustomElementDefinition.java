@@ -15,7 +15,7 @@ public class CustomElementDefinition {
     private Map<String, String[]> spritePaths; // action -> frame paths
     private Map<String, Object> properties;
     private Set<Integer> assignedLevels;
-    private Map<Integer, Float> levelProbabilities; // level -> probability (0.0 - 1.0)
+    private Map<String, Float> levelProbabilities; // level -> probability (0.0 - 1.0)
     private float spawnProbability; // Default/Global fallback
     private int spawnCount = 1;
 
@@ -168,18 +168,21 @@ public class CustomElementDefinition {
         assignedLevels.add(level);
         if (levelProbabilities == null)
             levelProbabilities = new HashMap<>();
-        levelProbabilities.put(level, probability);
+        levelProbabilities.put(String.valueOf(level), probability);
     }
 
     public void removeFromLevel(int level) {
         assignedLevels.remove(level);
         if (levelProbabilities != null)
-            levelProbabilities.remove(level);
+            levelProbabilities.remove(String.valueOf(level));
     }
 
     public float getSpawnProbability(int level) {
-        if (levelProbabilities != null && levelProbabilities.containsKey(level)) {
-            return levelProbabilities.get(level);
+        if (levelProbabilities != null) {
+            String key = String.valueOf(level);
+            if (levelProbabilities.containsKey(key)) {
+                return levelProbabilities.get(key);
+            }
         }
         // Fallback or default
         if (assignedLevels.contains(level)) {
@@ -188,15 +191,21 @@ public class CustomElementDefinition {
         return 0f;
     }
 
-    public Map<Integer, Float> getLevelProbabilities() {
+    public Map<String, Float> getLevelProbabilities() {
         return levelProbabilities;
     }
 
-    public void setLevelProbabilities(Map<Integer, Float> levelProbabilities) {
+    public void setLevelProbabilities(Map<String, Float> levelProbabilities) {
         this.levelProbabilities = levelProbabilities;
         // Sync assigned levels?
         if (levelProbabilities != null) {
-            this.assignedLevels.addAll(levelProbabilities.keySet());
+            for (String key : levelProbabilities.keySet()) {
+                try {
+                    this.assignedLevels.add(Integer.parseInt(key));
+                } catch (NumberFormatException e) {
+                    // Ignore invalid keys
+                }
+            }
         }
     }
 
@@ -225,6 +234,24 @@ public class CustomElementDefinition {
      */
     public boolean isComplete() {
         for (String action : type.getActions()) {
+            // Optional actions validation
+            if (type == ElementType.ENEMY) {
+                // If checking MoveUp or MoveDown
+                if (action.equals("MoveUp") || action.equals("MoveDown")) {
+                    // Check if we have the generic "Move"
+                    String[] movePaths = spritePaths.get("Move");
+                    boolean hasMove = (movePaths != null && movePaths.length > 0 && movePaths[0] != null
+                            && !movePaths[0].isEmpty());
+
+                    // If we have generic Move, we can skip specific directional checks if they are
+                    // missing
+                    String[] paths = spritePaths.get(action);
+                    if (hasMove && (paths == null || paths.length == 0 || paths[0] == null || paths[0].isEmpty())) {
+                        continue; // Skip strict check for this optional action
+                    }
+                }
+            }
+
             String[] paths = spritePaths.get(action);
             if (paths == null)
                 return false;

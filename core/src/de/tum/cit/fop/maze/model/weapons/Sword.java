@@ -7,6 +7,8 @@ public class Sword extends Weapon {
 
     public Sword(float x, float y) {
         super(x, y, "Iron Sword", 10, 2.2f, 0.3f, WeaponEffect.NONE);
+        // Wide 220° arc (110° half-angle) - covers front but not directly behind
+        this.attackArc = 110f;
 
         // Override with custom values if available
         de.tum.cit.fop.maze.custom.CustomElementManager manager = de.tum.cit.fop.maze.custom.CustomElementManager

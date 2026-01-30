@@ -311,7 +311,7 @@ public class AchievementManager {
             case "Bow":
                 achievementName = "Bow Hunter";
                 break;
-            case "Fire Staff":
+            case "Machine Gun":
             case "MagicStaff":
                 achievementName = "Staff Wielder";
                 break;

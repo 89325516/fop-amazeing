@@ -166,7 +166,13 @@ public class ShopScreen implements Screen {
         iconStack.add(bgImage);
 
         // 加载物品图标贴图
-        String iconPath = "images/items/shop/" + item.getTextureKey() + ".png";
+        String textureKey = item.getTextureKey();
+        String iconPath;
+        if (textureKey.startsWith("custom_images") || textureKey.contains("/")) {
+            iconPath = textureKey + ".png";
+        } else {
+            iconPath = "images/items/shop/" + textureKey + ".png";
+        }
         try {
             Texture iconTexture = new Texture(Gdx.files.internal(iconPath));
             iconTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
@@ -339,6 +345,34 @@ public class ShopScreen implements Screen {
 
     @Override
     public void hide() {
+        // 离开商店时，同步购买信息到当前存档文件
+        syncPurchasesToSaveFile();
+    }
+
+    /**
+     * 将当前购买状态同步到存档文件
+     */
+    private void syncPurchasesToSaveFile() {
+        String saveFilePath = game.getCurrentSaveFilePath();
+        if (saveFilePath == null) {
+            // 尝试使用默认存档
+            saveFilePath = "auto_save_victory";
+        }
+
+        // 加载现有存档
+        de.tum.cit.fop.maze.model.GameState state = de.tum.cit.fop.maze.utils.SaveManager.loadGame(saveFilePath);
+        if (state == null) {
+            // 如果没有存档，创建一个新的最小存档
+            state = new de.tum.cit.fop.maze.model.GameState();
+        }
+
+        // 更新金币和购买信息
+        state.setCoins(ShopManager.getPlayerCoins());
+        state.setPurchasedItemIds(ShopManager.getPurchasedItemIds());
+
+        // 保存回文件
+        de.tum.cit.fop.maze.utils.SaveManager.saveGame(state, saveFilePath);
+        GameLogger.info("ShopScreen", "Synced purchases to save file: " + saveFilePath);
     }
 
     @Override

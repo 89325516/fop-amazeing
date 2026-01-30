@@ -292,9 +292,8 @@ public class LevelSelectScreen implements Screen {
     }
 
     private void startGame(int level) {
-        String path = "maps/level-" + level + ".properties";
-        // 使用LoadingScreen预加载资源后再进入游戏
-        game.setScreen(new LoadingScreen(game, path));
+        // 先进入装备选择界面，再进入关卡
+        game.setScreen(new LoadoutScreen(game, level));
     }
 
     private void showUnlockDialog(int level) {

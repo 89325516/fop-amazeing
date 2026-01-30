@@ -23,8 +23,7 @@ public class AttackRangeRenderer {
     private final ShapeRenderer shapeRenderer;
     private static final float UNIT_SCALE = 16f;
 
-    // 扇形参数 (与攻击判定逻辑一致 - 60度锥形)
-    private static final float ARC_ANGLE = 60f; // 扇形角度
+    // 扇形参数 (现在由武器属性决定)
     private static final int ARC_SEGMENTS = 20; // 扇形平滑度
 
     // 视觉效果参数
@@ -52,16 +51,17 @@ public class AttackRangeRenderer {
      * @param attackProgress 攻击进度 (0.0 ~ 1.0)，用于淡出效果
      */
     public void render(OrthographicCamera camera, float playerX, float playerY,
-            float aimAngle, float range, boolean isRanged, float attackProgress) {
+            float aimAngle, float range, float attackArc, boolean isRanged, float attackProgress) {
 
         // 远程武器不显示扇形（弹道有自己的视觉效果）
         if (isRanged) {
             return;
         }
 
-        // 计算新的攻击范围
-        float innerRadius = range * 0.8f; // 360度全方位攻击半径
-        float outerRadius = range * 1.2f; // 朝向扇形扩展半径
+        // 计算攻击范围 (与GameWorld一致)
+        float outerRadius = range * 1.2f; // 全射程
+        float halfRadius = outerRadius * 0.5f; // 半射程
+        float frontHalfAngle = 45f; // 正前方区域半角
 
         // 设置混合模式实现透明效果
         Gdx.gl.glEnable(GL20.GL_BLEND);
@@ -77,19 +77,31 @@ public class AttackRangeRenderer {
         // 淡出效果：攻击结束时逐渐变透明
         float fadeAlpha = 1f - attackProgress * 0.7f;
 
-        // === 绘制内圈: 360度全方位攻击圈 (0.8R) ===
-        float innerRadiusPixels = innerRadius * UNIT_SCALE;
-        Color innerColor = new Color(0.5f, 0.8f, 0.5f, INDICATOR_ALPHA * fadeAlpha * 0.7f); // 淡绿色
-        drawCircle(centerX, centerY, innerRadiusPixels, innerColor);
+        // === 阶梯式攻击范围可视化 ===
+        float fullRadiusPixels = outerRadius * UNIT_SCALE;
+        float halfRadiusPixels = halfRadius * UNIT_SCALE;
 
-        // === 绘制外圈扇形: 朝向扇形扩展 (1.2R) ===
-        float outerRadiusPixels = outerRadius * UNIT_SCALE;
-        float startAngle = aimAngle - ARC_ANGLE / 2f;
-        Color outerColor = MELEE_COLOR.cpy();
-        outerColor.a = INDICATOR_ALPHA * fadeAlpha;
+        // 颜色设置
+        Color frontColor = MELEE_COLOR.cpy();
+        frontColor.a = INDICATOR_ALPHA * fadeAlpha;
+        Color sideColor = new Color(1f, 0.8f, 0.4f, INDICATOR_ALPHA * fadeAlpha * 0.7f); // 浅橙色
 
-        // 只绘制外圈中超出内圈的部分 (环形扇形)
-        drawArcRing(centerX, centerY, innerRadiusPixels, outerRadiusPixels, startAngle, ARC_ANGLE, outerColor);
+        // 1. 绘制正前方扇形 (±45度, 全射程)
+        float frontStartAngle = aimAngle - frontHalfAngle;
+        drawArc(centerX, centerY, fullRadiusPixels, frontStartAngle, frontHalfAngle * 2f, frontColor);
+
+        // 2. 绘制左侧扇形 (45~attackArc度, 半射程)
+        float leftStartAngle = aimAngle + frontHalfAngle;
+        float sideArcAngle = attackArc - frontHalfAngle;
+        if (sideArcAngle > 0) {
+            drawArc(centerX, centerY, halfRadiusPixels, leftStartAngle, sideArcAngle, sideColor);
+        }
+
+        // 3. 绘制右侧扇形 (-45~-attackArc度, 半射程)
+        float rightStartAngle = aimAngle - attackArc;
+        if (sideArcAngle > 0) {
+            drawArc(centerX, centerY, halfRadiusPixels, rightStartAngle, sideArcAngle, sideColor);
+        }
 
         shapeRenderer.end();
 
@@ -98,28 +110,51 @@ public class AttackRangeRenderer {
         Color borderColor = new Color(1f, 1f, 1f, 0.4f * fadeAlpha);
         shapeRenderer.setColor(borderColor);
 
-        // 内圈边框
-        drawCircleOutline(centerX, centerY, innerRadiusPixels);
+        // 正前方扇形边框
+        float frontEndAngle = aimAngle + frontHalfAngle;
+        float frontStartRad = frontStartAngle * com.badlogic.gdx.math.MathUtils.degreesToRadians;
+        float frontEndRad = frontEndAngle * com.badlogic.gdx.math.MathUtils.degreesToRadians;
 
-        // 外圈扇形边框
-        float endAngle = startAngle + ARC_ANGLE;
-        float startRad = startAngle * com.badlogic.gdx.math.MathUtils.degreesToRadians;
-        float endRad = endAngle * com.badlogic.gdx.math.MathUtils.degreesToRadians;
+        // 正前方的两条长边线
+        shapeRenderer.line(centerX, centerY,
+                centerX + fullRadiusPixels * (float) Math.cos(frontStartRad),
+                centerY + fullRadiusPixels * (float) Math.sin(frontStartRad));
+        shapeRenderer.line(centerX, centerY,
+                centerX + fullRadiusPixels * (float) Math.cos(frontEndRad),
+                centerY + fullRadiusPixels * (float) Math.sin(frontEndRad));
 
-        // 两条边线（从内圈边缘到外圈边缘）
-        shapeRenderer.line(
-                centerX + innerRadiusPixels * (float) Math.cos(startRad),
-                centerY + innerRadiusPixels * (float) Math.sin(startRad),
-                centerX + outerRadiusPixels * (float) Math.cos(startRad),
-                centerY + outerRadiusPixels * (float) Math.sin(startRad));
-        shapeRenderer.line(
-                centerX + innerRadiusPixels * (float) Math.cos(endRad),
-                centerY + innerRadiusPixels * (float) Math.sin(endRad),
-                centerX + outerRadiusPixels * (float) Math.cos(endRad),
-                centerY + outerRadiusPixels * (float) Math.sin(endRad));
+        // 正前方弧线
+        drawArcOutline(centerX, centerY, fullRadiusPixels, frontStartAngle, frontHalfAngle * 2f);
 
-        // 外圈弧线
-        drawArcOutline(centerX, centerY, outerRadiusPixels, startAngle, ARC_ANGLE);
+        // 侧面区域边框
+        if (sideArcAngle > 0) {
+            // 左侧弧线
+            drawArcOutline(centerX, centerY, halfRadiusPixels, leftStartAngle, sideArcAngle);
+            // 右侧弧线
+            drawArcOutline(centerX, centerY, halfRadiusPixels, rightStartAngle, sideArcAngle);
+
+            // 左右最外侧边线
+            float leftEndRad = (aimAngle + attackArc) * com.badlogic.gdx.math.MathUtils.degreesToRadians;
+            float rightStartRad = (aimAngle - attackArc) * com.badlogic.gdx.math.MathUtils.degreesToRadians;
+            shapeRenderer.line(centerX, centerY,
+                    centerX + halfRadiusPixels * (float) Math.cos(leftEndRad),
+                    centerY + halfRadiusPixels * (float) Math.sin(leftEndRad));
+            shapeRenderer.line(centerX, centerY,
+                    centerX + halfRadiusPixels * (float) Math.cos(rightStartRad),
+                    centerY + halfRadiusPixels * (float) Math.sin(rightStartRad));
+
+            // 阶梯连接线 (从正前方边缘到侧面边缘)
+            shapeRenderer.line(
+                    centerX + fullRadiusPixels * (float) Math.cos(frontEndRad),
+                    centerY + fullRadiusPixels * (float) Math.sin(frontEndRad),
+                    centerX + halfRadiusPixels * (float) Math.cos(frontEndRad),
+                    centerY + halfRadiusPixels * (float) Math.sin(frontEndRad));
+            shapeRenderer.line(
+                    centerX + fullRadiusPixels * (float) Math.cos(frontStartRad),
+                    centerY + fullRadiusPixels * (float) Math.sin(frontStartRad),
+                    centerX + halfRadiusPixels * (float) Math.cos(frontStartRad),
+                    centerY + halfRadiusPixels * (float) Math.sin(frontStartRad));
+        }
 
         shapeRenderer.end();
 
@@ -129,13 +164,15 @@ public class AttackRangeRenderer {
     /**
      * 渲染攻击范围扇形指示器 (兼容旧版离散方向)
      * 
-     * @deprecated 使用 render(camera, x, y, aimAngle, range, isRanged, progress) 代替
+     * @deprecated 使用 render(camera, x, y, aimAngle, range, attackArc, isRanged,
+     *             progress) 代替
      */
     @Deprecated
     public void render(OrthographicCamera camera, float playerX, float playerY,
             int direction, float range, boolean isRanged, float attackProgress) {
         float aimAngle = getBaseAngle(direction);
-        render(camera, playerX, playerY, aimAngle, range, isRanged, attackProgress);
+        // 默认使用45度半角（90度全角）作为后备
+        render(camera, playerX, playerY, aimAngle, range, 45f, isRanged, attackProgress);
     }
 
     /**

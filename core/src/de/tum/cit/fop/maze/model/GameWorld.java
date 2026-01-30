@@ -99,31 +99,38 @@ public class GameWorld {
         this.collisionManager = new CollisionManager(gameMap);
         this.player = new Player(gameMap.getPlayerStartX(), gameMap.getPlayerStartY());
 
-        // Auto-equip purchased weapons
-        java.util.List<String> purchasedItems = de.tum.cit.fop.maze.shop.ShopManager.getPurchasedItemIds();
-        for (String itemId : purchasedItems) {
-            switch (itemId) {
-                case "weapon_sword":
-                    // Default sword is already equipped by Player constructor
-                    break;
-                case "weapon_bow":
-                    this.player.addWeapon(
-                            new de.tum.cit.fop.maze.model.weapons.Bow(this.player.getX(), this.player.getY()));
-                    break;
-                case "weapon_staff":
-                    this.player.addWeapon(
-                            new de.tum.cit.fop.maze.model.weapons.MagicStaff(this.player.getX(), this.player.getY()));
-                    break;
-                case "weapon_crossbow":
-                    this.player.addWeapon(
-                            new de.tum.cit.fop.maze.model.weapons.Crossbow(this.player.getX(), this.player.getY()));
-                    break;
-                case "weapon_wand":
-                    this.player.addWeapon(
-                            new de.tum.cit.fop.maze.model.weapons.Wand(this.player.getX(), this.player.getY()));
-                    break;
+        // 只有在新游戏开始时（从 LoadoutScreen 进入）才使用 LoadoutManager 的武器选择
+        // 继续下一关时武器会从存档恢复（在 GameScreen 中处理）
+        de.tum.cit.fop.maze.shop.LoadoutManager loadoutManager = de.tum.cit.fop.maze.shop.LoadoutManager.getInstance();
+        if (loadoutManager.consumeFreshStart()) {
+            // 新游戏开始，使用 LoadoutManager 的武器选择
+            java.util.List<String> selectedWeapons = loadoutManager.getSelectedWeaponIds();
+            for (String itemId : selectedWeapons) {
+                switch (itemId) {
+                    case "weapon_sword":
+                        // Default sword is already equipped by Player constructor
+                        break;
+                    case "weapon_bow":
+                        this.player.addWeapon(
+                                new de.tum.cit.fop.maze.model.weapons.Bow(this.player.getX(), this.player.getY()));
+                        break;
+                    case "weapon_staff":
+                        this.player.addWeapon(
+                                new de.tum.cit.fop.maze.model.weapons.MagicStaff(this.player.getX(),
+                                        this.player.getY()));
+                        break;
+                    case "weapon_crossbow":
+                        this.player.addWeapon(
+                                new de.tum.cit.fop.maze.model.weapons.Crossbow(this.player.getX(), this.player.getY()));
+                        break;
+                    case "weapon_wand":
+                        this.player.addWeapon(
+                                new de.tum.cit.fop.maze.model.weapons.Wand(this.player.getX(), this.player.getY()));
+                        break;
+                }
             }
         }
+        // 非 freshStart 时，武器会在 GameScreen 中从存档恢复
         this.enemies = new ArrayList<>();
         this.mobileTraps = new ArrayList<>();
         this.floatingTexts = new ArrayList<>();
@@ -133,10 +140,11 @@ public class GameWorld {
         // Populate lists from map
         for (GameObject obj : gameMap.getDynamicObjects()) {
             if (obj instanceof Enemy) {
-                Enemy enemy = (Enemy) obj;
-                // 统一使用第一关的怪物素材 (BOAR)
-                enemy.setEnemyType(Enemy.EnemyType.BOAR);
-                enemies.add(enemy);
+                // DISABLED: Do not load hardcoded enemies from map (User Request)
+                // Enemy enemy = (Enemy) obj;
+                // // 统一使用第一关的怪物素材 (BOAR)
+                // enemy.setEnemyType(Enemy.EnemyType.BOAR);
+                // enemies.add(enemy);
             } else if (obj instanceof MobileTrap)
                 mobileTraps.add((MobileTrap) obj);
         }
@@ -189,6 +197,32 @@ public class GameWorld {
                     "Elements matching level " + levelNumber + ": " + elements.size());
 
             for (de.tum.cit.fop.maze.custom.CustomElementDefinition element : elements) {
+                if (element.getName().equals("Snow Monster") || element.getId().equals("9d8e7f6a")) {
+                    de.tum.cit.fop.maze.utils.GameLogger.info("GameWorld", ">>> DEBUG SNOW MONSTER <<<");
+                    de.tum.cit.fop.maze.utils.GameLogger.info("GameWorld",
+                            "  - Element found in list for level " + levelNumber);
+                    de.tum.cit.fop.maze.utils.GameLogger.info("GameWorld", "  - Type: " + element.getType());
+                    de.tum.cit.fop.maze.utils.GameLogger.info("GameWorld",
+                            "  - Spawn Count: " + element.getSpawnCount());
+                    de.tum.cit.fop.maze.utils.GameLogger.info("GameWorld",
+                            "  - Spawn Prob: " + element.getSpawnProbability(levelNumber));
+                    de.tum.cit.fop.maze.utils.GameLogger.info("GameWorld", "  - Is Complete: " + element.isComplete());
+                    if (!element.isComplete()) {
+                        de.tum.cit.fop.maze.utils.GameLogger.error("GameWorld", "  - MISSING ACTIONS: ");
+                        for (String action : element.getType().getActions()) {
+                            String[] paths = element.getSpritePaths().get(action);
+                            boolean hasPaths = paths != null && paths.length > 0;
+                            if (paths != null) {
+                                for (String p : paths)
+                                    if (p == null)
+                                        hasPaths = false;
+                            }
+                            de.tum.cit.fop.maze.utils.GameLogger.error("GameWorld",
+                                    "    * " + action + ": " + (hasPaths ? "OK" : "MISSING"));
+                        }
+                    }
+                }
+
                 if (element.getType() == de.tum.cit.fop.maze.custom.ElementType.ENEMY) {
                     spawnCustomEnemy(element, levelNumber);
                 }
@@ -272,6 +306,16 @@ public class GameWorld {
             Enemy customEnemy = new Enemy(spawnX, spawnY, health,
                     de.tum.cit.fop.maze.model.DamageType.PHYSICAL, shieldType, shieldAmount);
             customEnemy.setCustomElementId(element.getId());
+            if (moveSpeed > 0) {
+                de.tum.cit.fop.maze.utils.GameLogger.info("GameWorld",
+                        "Setting custom speed for " + element.getName() + ": " + moveSpeed);
+                customEnemy.setMoveSpeed(moveSpeed);
+                // Special case for Alien: Disable patrol penalty
+                if (element.getName().equals("Alien")) {
+                    customEnemy.setIgnorePatrolPenalty(true);
+                }
+            }
+            customEnemy.setAttackDamage(attackDamage);
 
             // Set Enemy Type if defined
             String typeStr = element.getProperty("enemyType", String.class);
@@ -580,11 +624,9 @@ public class GameWorld {
 
             // Logic moved from GameScreen (Melee)
             // === 新攻击范围逻辑 (New Attack Range Logic) ===
-            // 360度全方位攻击圈: innerRadius = R0 × 0.8
-            // 朝向扇形扩展: outerRadius = R0 × 1.2
+            // 整个攻击范围内都使用武器的攻击扇形进行角度判定
             float attackRange = currentWeapon.getRange();
-            float innerRadius = attackRange * 0.8f; // 360度全方位攻击半径
-            float outerRadius = attackRange * 1.2f; // 朝向扇形扩展半径
+            float outerRadius = attackRange * 1.2f; // 攻击范围
             float outerRadiusSq = outerRadius * outerRadius; // 用于快速预过滤
             Iterator<Enemy> iter = enemies.iterator();
             while (iter.hasNext()) {
@@ -600,44 +642,45 @@ public class GameWorld {
 
                 float dist = (float) Math.sqrt(dx * dx + dy * dy);
 
-                // === 新判定逻辑 ===
-                // 条件1: 在innerRadius内 → 360度全方位命中
-                // 条件2: 在innerRadius~outerRadius范围内 → 需要在朝向扇形内才能命中
+                // === 新判定逻辑：阶梯式攻击范围 ===
+                // 正前方 ±45度 (90度): 全射程
+                // 侧面 ±45~±110度: 半射程
+                // 背后 ±110度以外: 无法攻击
                 boolean canHit = false;
 
-                if (dist < innerRadius) {
-                    // 360度全方位攻击圈内，直接命中
-                    canHit = true;
-                } else if (dist < outerRadius) {
-                    // 在扇形扩展范围内，需要检查角度
-                    float enemyAngle = MathUtils.atan2(dy, dx) * MathUtils.radDeg;
-                    if (enemyAngle < 0)
-                        enemyAngle += 360;
+                // 计算敌人相对于玩家的角度
+                float enemyAngle = MathUtils.atan2(dy, dx) * MathUtils.radDeg;
+                if (enemyAngle < 0)
+                    enemyAngle += 360;
 
-                    // === 根据设置选择攻击角度和锥形范围 ===
-                    float attackAngle;
-                    float coneHalfAngle;
-                    if (GameSettings.isUseMouseAiming()) {
-                        // 鼠标模式: 使用 aimAngle, 60度锥形
-                        attackAngle = aimAngle;
-                        coneHalfAngle = 30f;
-                    } else {
-                        // 键盘模式: 使用 aimDirection 向量计算8向攻击角度, 45度锥形
-                        attackAngle = MathUtils.atan2(aimDirection.y, aimDirection.x) * MathUtils.radDeg;
-                        if (attackAngle < 0) {
-                            attackAngle += 360;
-                        }
-                        coneHalfAngle = 45f; // 8向攻击，每个方向90度覆盖，半角45度
+                // 获取攻击角度
+                float attackAngle;
+                float coneHalfAngle = currentWeapon.getAttackArc(); // 总半角 (如 Iron Sword = 110°)
+                if (GameSettings.isUseMouseAiming()) {
+                    attackAngle = aimAngle;
+                } else {
+                    attackAngle = MathUtils.atan2(aimDirection.y, aimDirection.x) * MathUtils.radDeg;
+                    if (attackAngle < 0) {
+                        attackAngle += 360;
                     }
+                }
 
-                    float angleDiff = enemyAngle - attackAngle;
-                    while (angleDiff > 180)
-                        angleDiff -= 360;
-                    while (angleDiff < -180)
-                        angleDiff += 360;
+                float angleDiff = enemyAngle - attackAngle;
+                while (angleDiff > 180)
+                    angleDiff -= 360;
+                while (angleDiff < -180)
+                    angleDiff += 360;
+                float absAngleDiff = Math.abs(angleDiff);
 
-                    // 攻击锥形半角判定
-                    canHit = Math.abs(angleDiff) <= coneHalfAngle;
+                // 阶梯式范围判定
+                float frontHalfAngle = 45f; // 正前方区域半角
+                if (absAngleDiff <= frontHalfAngle) {
+                    // 正前方 ±45度: 全射程
+                    canHit = dist < outerRadius;
+                } else if (absAngleDiff <= coneHalfAngle) {
+                    // 侧面 (45~110度): 半射程
+                    float halfRadius = outerRadius * 0.5f;
+                    canHit = dist < halfRadius;
                 }
 
                 if (canHit) {
@@ -692,7 +735,7 @@ public class GameWorld {
             if (Vector2.dst(player.getX(), player.getY(), enemy.getX(), enemy.getY()) < GameSettings.hitDistance) {
                 if (enemy.isDead())
                     continue;
-                if (player.damage(1)) {
+                if (player.damage(enemy.getAttackDamage())) {
                     playerTookDamage = true; // Track for flawless victory
                     player.knockback(enemy.getX(), enemy.getY(), 2.0f);
                     AudioManager.getInstance().playSound("hit");
@@ -1310,6 +1353,13 @@ public class GameWorld {
         return coinsCollected;
     }
 
+    /**
+     * 增加本关收集的金币数量（用于开发者控制台等外部来源）
+     */
+    public void addCoinsCollected(int amount) {
+        this.coinsCollected += amount;
+    }
+
     public List<String> getNewAchievements() {
         return newAchievements;
     }
@@ -1443,9 +1493,10 @@ public class GameWorld {
         projectiles.add(p);
         AudioManager.getInstance().playSound("spell_shoot");
 
-        // === Fire Staff 后坐力效果 ===
-        // 对 Fire Staff 和其他法杖类武器应用后坐力
-        if (weapon.getName().contains("Staff") || weapon.getName().contains("staff")) {
+        // === Machine Gun 后坐力效果 ===
+        // 对 Machine Gun 和其他法杖类武器应用后坐力
+        if (weapon.getName().contains("Gun") || weapon.getName().contains("Staff")
+                || weapon.getName().contains("staff")) {
             float recoilStrength = 8.0f; // 后坐力强度 (增强)
             // 向反方向施加速度脉冲
             float recoilVx = -aimDirection.x * recoilStrength;

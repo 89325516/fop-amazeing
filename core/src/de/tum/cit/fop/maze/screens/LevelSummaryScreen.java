@@ -49,9 +49,8 @@ public class LevelSummaryScreen implements Screen {
         this.skin = game.getSkin();
         this.stage = new Stage(new FitViewport(1920, 1080), game.getSpriteBatch());
 
-        // === 金币同步到商店系统 ===
-        // 将本关卡收集的金币持久化到 Preferences，供商店使用
-        de.tum.cit.fop.maze.shop.ShopManager.syncCoinsFromGame(data.getCoinsCollected());
+        // === 金币已在 GameScreen.onVictory 中同步到商店系统 ===
+        // 不再需要在这里重复同步，避免金币被累加两次
 
         // === 金币累加到成就系统并检查成就 ===
         // 在关卡结束时统一处理，避免逐个金币累加导致的重复计数
