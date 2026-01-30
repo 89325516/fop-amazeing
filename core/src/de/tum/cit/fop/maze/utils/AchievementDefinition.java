@@ -40,8 +40,8 @@ public class AchievementDefinition {
     /**
      * Converts this definition to an Achievement instance.
      * 
-     * @return A new Achievement object based on this definition
-     * @throws IllegalArgumentException if rarity or category values are invalid
+     * @return A new Achievement object based on this definition.
+     * @throws IllegalArgumentException if rarity or category values are invalid.
      */
     public Achievement toAchievement() {
         AchievementRarity rarityEnum = AchievementRarity.valueOf(rarity);

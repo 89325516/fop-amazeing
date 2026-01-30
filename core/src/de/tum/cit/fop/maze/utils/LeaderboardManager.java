@@ -9,16 +9,18 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
- * 排行榜管理器 (Leaderboard Manager)
- * 
- * 管理本地高分存储和查询。
- * 使用 LibGDX Preferences 进行持久化存储。
- * 
- * 功能：
- * - 提交分数 (带玩家名称、关卡、日期)
- * - 获取排行榜前 N 名
- * - 按关卡筛选排行榜
- * - 计算分数公式
+ * Leaderboard Manager.
+ * <p>
+ * Manages local high score storage and retrieval.
+ * Uses LibGDX Preferences for persistent storage.
+ * <p>
+ * Features:
+ * <ul>
+ * <li>Submit scores (with player name, level, date)</li>
+ * <li>Get top N scores</li>
+ * <li>Filter leaderboard by level</li>
+ * <li>Calculate score formula</li>
+ * </ul>
  */
 public class LeaderboardManager {
 
@@ -30,7 +32,7 @@ public class LeaderboardManager {
     private List<LeaderboardEntry> entries;
 
     /**
-     * 排行榜条目
+     * Leaderboard Entry.
      */
     public static class LeaderboardEntry implements Comparable<LeaderboardEntry> {
         public String playerName;
@@ -40,7 +42,9 @@ public class LeaderboardManager {
         public int kills;
         public float completionTime;
 
-        // 无参构造函数 (JSON 反序列化需要)
+        /**
+         * No-arg constructor (required for JSON deserialization).
+         */
         public LeaderboardEntry() {
         }
 
@@ -56,12 +60,14 @@ public class LeaderboardManager {
 
         @Override
         public int compareTo(LeaderboardEntry other) {
-            // 降序排列 (分数高的在前)
+            // Descending order (higher score first)
             return Integer.compare(other.score, this.score);
         }
 
         /**
-         * 获取格式化的日期字符串
+         * Gets the formatted date string.
+         *
+         * @return The formatted date.
          */
         public String getFormattedDate() {
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
@@ -69,7 +75,9 @@ public class LeaderboardManager {
         }
 
         /**
-         * 获取关卡显示名称
+         * Gets the display name of the level.
+         *
+         * @return The level display name.
          */
         public String getLevelDisplayName() {
             if (levelPath == null)
@@ -84,7 +92,9 @@ public class LeaderboardManager {
         }
 
         /**
-         * 获取格式化的时间 (MM:SS)
+         * Gets the formatted time (MM:SS).
+         *
+         * @return The formatted time string.
          */
         public String getFormattedTime() {
             int minutes = (int) (completionTime / 60);
@@ -99,7 +109,9 @@ public class LeaderboardManager {
     }
 
     /**
-     * 获取单例实例
+     * Gets the singleton instance.
+     *
+     * @return The singleton instance of LeaderboardManager.
      */
     public static LeaderboardManager getInstance() {
         if (instance == null) {
@@ -109,20 +121,22 @@ public class LeaderboardManager {
     }
 
     /**
-     * 计算分数
+     * Calculates the score based on game performance.
+     * <p>
+     * Formula:
+     * <ul>
+     * <li>Base Score: 1000</li>
+     * <li>Time Bonus: max(0, 500 - time * 2) (faster is better)</li>
+     * <li>Kill Bonus: kills * 50</li>
+     * <li>Coin Bonus: coins * 10</li>
+     * <li>Perfect Bonus: +200 (if no damage taken)</li>
+     * </ul>
      * 
-     * 公式:
-     * - 基础分: 1000
-     * - 时间加成: max(0, 500 - time * 2) (越快分越高)
-     * - 击杀加成: kills * 50
-     * - 金币加成: coins * 10
-     * - 完美加成: +200 (无伤通关)
-     * 
-     * @param timeSeconds 完成时间 (秒)
-     * @param kills       击杀数
-     * @param coins       收集的金币
-     * @param tookDamage  是否受到伤害
-     * @return 计算后的分数
+     * @param timeSeconds Completion time in seconds.
+     * @param kills       Number of kills.
+     * @param coins       Number of coins collected.
+     * @param tookDamage  Whether the player took damage.
+     * @return The calculated score.
      */
     public static int calculateScore(float timeSeconds, int kills, int coins, boolean tookDamage) {
         int baseScore = 1000;
@@ -134,13 +148,13 @@ public class LeaderboardManager {
     }
 
     /**
-     * 提交分数
+     * Submits a score.
      * 
-     * @param playerName     玩家名称
-     * @param score          分数
-     * @param levelPath      关卡路径
-     * @param kills          击杀数
-     * @param completionTime 完成时间
+     * @param playerName     The player's name.
+     * @param score          The score achieved.
+     * @param levelPath      The path of the level played.
+     * @param kills          The number of kills.
+     * @param completionTime The completion time in seconds.
      */
     public void submitScore(String playerName, int score, String levelPath,
             int kills, float completionTime) {
@@ -154,7 +168,7 @@ public class LeaderboardManager {
         entries.add(entry);
         Collections.sort(entries);
 
-        // 保留前 MAX_ENTRIES 名
+        // Keep top MAX_ENTRIES
         while (entries.size() > MAX_ENTRIES) {
             entries.remove(entries.size() - 1);
         }
@@ -164,10 +178,10 @@ public class LeaderboardManager {
     }
 
     /**
-     * 获取前 N 名
+     * Gets the top N scores.
      * 
-     * @param limit 返回的最大数量
-     * @return 排行榜条目列表
+     * @param limit The maximum number of scores to return.
+     * @return A list of leaderboard entries.
      */
     public List<LeaderboardEntry> getTopScores(int limit) {
         int count = Math.min(limit, entries.size());
@@ -175,17 +189,19 @@ public class LeaderboardManager {
     }
 
     /**
-     * 获取所有分数
+     * Gets all scores.
+     *
+     * @return A list of all leaderboard entries.
      */
     public List<LeaderboardEntry> getAllScores() {
         return new ArrayList<>(entries);
     }
 
     /**
-     * 按关卡筛选分数
+     * Filters scores by level.
      * 
-     * @param levelPath 关卡路径
-     * @return 该关卡的排行榜条目
+     * @param levelPath The level path to filter by.
+     * @return A list of leaderboard entries for the specified level.
      */
     public List<LeaderboardEntry> getScoresByLevel(String levelPath) {
         List<LeaderboardEntry> filtered = new ArrayList<>();
@@ -198,10 +214,10 @@ public class LeaderboardManager {
     }
 
     /**
-     * 获取玩家的最高分
+     * Gets the player's best score.
      * 
-     * @param playerName 玩家名称
-     * @return 最高分条目，如果没有则返回 null
+     * @param playerName The player's name.
+     * @return The best leaderboard entry for the player, or null if not found.
      */
     public LeaderboardEntry getPlayerBest(String playerName) {
         for (LeaderboardEntry entry : entries) {
@@ -213,10 +229,10 @@ public class LeaderboardManager {
     }
 
     /**
-     * 获取某个分数的排名
+     * Gets the rank of a specific score.
      * 
-     * @param score 分数
-     * @return 排名 (1-based)
+     * @param score The score to check.
+     * @return The rank (1-based).
      */
     public int getRank(int score) {
         int rank = 1;
@@ -231,11 +247,11 @@ public class LeaderboardManager {
     }
 
     /**
-     * 检查分数是否进入前 N 名
+     * Checks if a score qualifies for the top N.
      * 
-     * @param score 分数
-     * @param topN  前 N 名
-     * @return 是否为高分
+     * @param score The score to check.
+     * @param topN  The number of top positions to check against.
+     * @return True if the score is a high score, false otherwise.
      */
     public boolean isHighScore(int score, int topN) {
         if (entries.size() < topN)
@@ -244,7 +260,7 @@ public class LeaderboardManager {
     }
 
     /**
-     * 清除所有排行榜数据
+     * Clears all leaderboard data.
      */
     public void clearAll() {
         entries.clear();
@@ -252,10 +268,10 @@ public class LeaderboardManager {
         GameLogger.info("Leaderboard", "Leaderboard cleared");
     }
 
-    // ==================== 持久化 ====================
+    // ==================== Persistence ====================
 
     /**
-     * 保存到 Preferences
+     * Saves leaderboard to Preferences.
      */
     private void save() {
         try {
@@ -271,7 +287,7 @@ public class LeaderboardManager {
     }
 
     /**
-     * 从 Preferences 加载
+     * Loads leaderboard from Preferences.
      */
     @SuppressWarnings("unchecked")
     private void load() {
@@ -294,7 +310,9 @@ public class LeaderboardManager {
     }
 
     /**
-     * 获取排行榜条目总数
+     * Gets the total number of leaderboard entries.
+     *
+     * @return The entry count.
      */
     public int getEntryCount() {
         return entries.size();

@@ -4,9 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Level Summary Data - 关卡结算数据封装
+ * Level Summary Data.
  * 
- * 统一胜利/失败关卡模式的结算数据。
+ * Encapsulation of level result data.
+ * Unified result data for Victory/Defeat level modes.
  */
 public class LevelSummaryData {
 

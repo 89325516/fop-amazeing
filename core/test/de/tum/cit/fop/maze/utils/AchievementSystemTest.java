@@ -22,6 +22,10 @@ public class AchievementSystemTest {
 
     // === Achievement Model Tests ===
 
+    /**
+     * Tests the creation of an Achievement object.
+     * Verifies that all fields are correctly initialized.
+     */
     @Test
     public void testAchievementCreation() {
         Achievement achievement = new Achievement(
@@ -39,6 +43,11 @@ public class AchievementSystemTest {
         assertEquals(0, achievement.getCurrentProgress());
     }
 
+    /**
+     * Tests the progress tracking mechanism of an Achievement.
+     * Verifies that progress is updated correctly and the achievement unlocks when
+     * the target is reached.
+     */
     @Test
     public void testAchievementProgress() {
         Achievement achievement = new Achievement(
@@ -67,6 +76,10 @@ public class AchievementSystemTest {
         assertEquals(1.0f, achievement.getProgressPercentage(), 0.01f);
     }
 
+    /**
+     * Tests that an achievement can only be unlocked once.
+     * Verifies that subsequent unlock attempts return false.
+     */
     @Test
     public void testAchievementUnlockOnce() {
         Achievement achievement = new Achievement(
@@ -86,6 +99,9 @@ public class AchievementSystemTest {
 
     // === Rarity Tests ===
 
+    /**
+     * Tests the gold reward values associated with different achievement rarities.
+     */
     @Test
     public void testRarityGoldRewards() {
         assertEquals(10, AchievementRarity.COMMON.getGoldReward());
@@ -94,6 +110,9 @@ public class AchievementSystemTest {
         assertEquals(300, AchievementRarity.LEGENDARY.getGoldReward());
     }
 
+    /**
+     * Tests the display names of achievement rarities.
+     */
     @Test
     public void testRarityDisplayName() {
         assertEquals("Common", AchievementRarity.COMMON.getDisplayName());
@@ -104,6 +123,9 @@ public class AchievementSystemTest {
 
     // === Category Tests ===
 
+    /**
+     * Tests the properties (display name and icon) of achievement categories.
+     */
     @Test
     public void testCategoryProperties() {
         assertEquals("Weapons", AchievementCategory.WEAPON.getDisplayName());
@@ -118,6 +140,11 @@ public class AchievementSystemTest {
 
     // === Achievement Definitions Tests ===
 
+    /**
+     * Tests that all predefined achievements are initialized.
+     * Checks for a minimum total count and the existence of specific key
+     * achievements.
+     */
     @Test
     public void testAllAchievementsInitialized() {
         Map<String, Achievement> achievements = AchievementManager.getAllAchievements();
@@ -133,6 +160,9 @@ public class AchievementSystemTest {
         assertTrue(achievements.containsKey("flawless_victory"), "Should have flawless_victory");
     }
 
+    /**
+     * Tests that achievements can be correctly retrieved by their category.
+     */
     @Test
     public void testAchievementsByCategory() {
         List<Achievement> weaponAchievements = AchievementManager.getAchievementsByCategory(AchievementCategory.WEAPON);
@@ -143,6 +173,11 @@ public class AchievementSystemTest {
         assertTrue(combatAchievements.size() >= 5, "Should have combat achievements");
     }
 
+    /**
+     * Tests the distribution of achievement rarities.
+     * Ensures that achievements exist for all rarity levels and that Common is the
+     * most frequent.
+     */
     @Test
     public void testAchievementRaritiesDistributed() {
         Map<String, Achievement> achievements = AchievementManager.getAllAchievements();
@@ -181,6 +216,9 @@ public class AchievementSystemTest {
 
     // === Progress Tracking Logic Tests (without Preferences) ===
 
+    /**
+     * Tests the string representation of achievement progress.
+     */
     @Test
     public void testAchievementProgressString() {
         Achievement countBased = new Achievement(
@@ -196,6 +234,9 @@ public class AchievementSystemTest {
         assertEquals("Complete", countBased.getProgressString());
     }
 
+    /**
+     * Tests the behavior of one-time achievements (Boolean logic).
+     */
     @Test
     public void testOneTimeAchievementNoProgress() {
         Achievement oneTime = new Achievement(
@@ -209,6 +250,9 @@ public class AchievementSystemTest {
         assertEquals("Complete", oneTime.getProgressString());
     }
 
+    /**
+     * Tests the percentage calculation of achievement progress.
+     */
     @Test
     public void testAchievementProgressPercentage() {
         Achievement percentTest = new Achievement(
@@ -224,6 +268,11 @@ public class AchievementSystemTest {
         assertEquals(1.0f, percentTest.getProgressPercentage(), 0.001f);
     }
 
+    /**
+     * Tests the toString method of the Achievement class.
+     * Verifies that it includes key information like rarity icon, name, and lock
+     * status.
+     */
     @Test
     public void testAchievementToString() {
         Achievement test = new Achievement(
@@ -236,6 +285,9 @@ public class AchievementSystemTest {
         assertTrue(str.contains("🔒"), "Should contain lock symbol");
     }
 
+    /**
+     * Tests that the gold reward is correctly retrieved from an achievement.
+     */
     @Test
     public void testGoldRewardFromAchievement() {
         Achievement common = new Achievement(

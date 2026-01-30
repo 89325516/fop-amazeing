@@ -28,9 +28,11 @@ import de.tum.cit.fop.maze.utils.MapLoader;
 import de.tum.cit.fop.maze.utils.UIConstants;
 
 /**
- * 护甲选择界面 - 重新设计版 (Armor Selection Screen - Redesigned)
- * 
- * 采用现代玻璃形态设计，配合AI生成的像素风格背景，提供世界级视觉体验。
+ * Armor Selection Screen - Redesigned
+ *
+ * Adopts a modern glassmorphism design with AI-generated pixel art background,
+ * providing a world-class visual experience.
+ *
  * Features:
  * - AI generated pixel art background
  * - Glassmorphism card design with gradient borders
@@ -188,14 +190,14 @@ public class ArmorSelectScreen implements Screen {
         typeLabel.setAlignment(Align.center);
         card.add(typeLabel).padBottom(10).row();
 
-        // Armor Name (主要标题)
+        // Armor Name (Main Title)
         Label nameLabel = new Label(name, game.getSkin(), "title");
         nameLabel.setColor(Color.WHITE);
         nameLabel.setFontScale(0.9f);
         nameLabel.setAlignment(Align.center);
         card.add(nameLabel).padBottom(12).row();
 
-        // Description (增大字体使其更易读)
+        // Description (larger font for better readability)
         Label descLabel = new Label(description, game.getSkin());
         descLabel.setColor(UIConstants.VICTORY_TEXT_DIM);
         descLabel.setFontScale(0.75f);
@@ -303,7 +305,10 @@ public class ArmorSelectScreen implements Screen {
     }
 
     /**
-     * 创建玻璃形态卡片背景 (Glassmorphism Card Background)
+     * Creates a glassmorphism card background.
+     * 
+     * @param borderColor The color of the border.
+     * @return The glassmorphism card background as a NinePatchDrawable.
      */
     private NinePatchDrawable createGlassCardBackground(Color borderColor) {
         int size = 24;
@@ -335,7 +340,11 @@ public class ArmorSelectScreen implements Screen {
     }
 
     /**
-     * 创建发光效果卡片背景 (Glowing Card Background for Recommended)
+     * Creates a glowing card background for recommended items.
+     *
+     * @param borderColor The color of the border.
+     * @param glowColor   The color of the glow effect.
+     * @return The glowing card background as a NinePatchDrawable.
      */
     private NinePatchDrawable createGlowingCardBackground(Color borderColor, Color glowColor) {
         int size = 32;
@@ -377,7 +386,9 @@ public class ArmorSelectScreen implements Screen {
     }
 
     /**
-     * 创建警告横幅渐变背景
+     * Creates a gradient banner background for warnings.
+     * 
+     * @return The gradient banner background as a NinePatchDrawable.
      */
     private NinePatchDrawable createGradientBannerBackground() {
         int width = 32;
@@ -402,7 +413,9 @@ public class ArmorSelectScreen implements Screen {
     }
 
     /**
-     * 创建推荐徽章背景
+     * Creates a badge background for recommendations.
+     * 
+     * @return The badge background as a NinePatchDrawable.
      */
     private NinePatchDrawable createBadgeBackground() {
         int size = 16;
@@ -426,14 +439,15 @@ public class ArmorSelectScreen implements Screen {
     }
 
     private void startGame(DamageType selectedArmorType) {
-        // 通过 LoadingScreen 进入游戏，显示加载进度条并预加载所有动画
+        // Enter the game via LoadingScreen, showing loading progress bar and preloading
+        // all animations
         game.setScreen(new LoadingScreen(game, mapPath, selectedArmorType, levelConfig.damageType));
     }
 
     @Override
     public void show() {
         Gdx.input.setInputProcessor(stage);
-        // 🔊 全局按钮音效
+        // 🔊 Global button sound
         de.tum.cit.fop.maze.utils.UIUtils.enableMenuButtonSound(stage);
     }
 

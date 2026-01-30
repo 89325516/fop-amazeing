@@ -9,53 +9,57 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * GameMap - 重构版
+ * GameMap - Refactored Version.
  * 
- * 核心改进：
- * 1. 明确区分"可游玩区域"和"边界墙"
- * 2. 使用 WallEntity 表示完整墙体
- * 3. O(1) 碰撞查询通过占用格子集合实现
+ * Core improvements:
+ * 1. Clearly distinguishes between "playable area" and "border walls".
+ * 2. Uses {@link WallEntity} to represent complete wall structures.
+ * 3. Improves collision query performance to O(1) using a set of occupied
+ * cells.
  */
 public class GameMap {
 
-    // 边界宽度（固定2格，最小墙体单元）
+    /** Border width (fixed at 2 cells, minimum wall unit size). */
     public static final int BORDER_WIDTH = 2;
 
-    // 可游玩区域尺寸（不含边界）
+    // Playable area dimensions (excluding borders)
     private int playableWidth = 0;
     private int playableHeight = 0;
 
-    // 总地图尺寸（含边界）= playable + 2 * BORDER_WIDTH
+    // Total map dimensions (including borders) = playable + 2 * BORDER_WIDTH
     private int totalWidth = 0;
     private int totalHeight = 0;
 
-    // 所有墙体实体
+    /** List of all wall entities. */
     private List<WallEntity> walls;
 
-    // 所有被墙体占用的格子（用于 O(1) 碰撞检测）
+    // All cells occupied by walls (for O(1) collision detection)
     // Key = x + (y << 16)
     private Set<Long> occupiedCells;
 
-    // 兼容旧代码：通过坐标获取墙体引用
+    // Compatibility for legacy code: Reference lookups by coordinate
     private IntMap<WallEntity> wallLookup;
 
-    // 动态对象（敌人、陷阱、钥匙等）
+    // Dynamic objects (enemies, traps, keys, etc.)
     private List<GameObject> dynamicObjects;
 
-    // 宝箱列表
+    // List of treasure chests
     private List<TreasureChest> treasureChests;
 
-    // 玩家出生点（相对于总地图，含边界偏移）
+    // Player spawn point (relative to total map, including border offset)
     private float playerStartX = BORDER_WIDTH;
     private float playerStartY = BORDER_WIDTH;
 
-    // 出口位置
+    // Exit position
     private int exitX = -1;
     private int exitY = -1;
 
-    // 主题
+    // Map theme
     private String theme = "Grassland";
 
+    /**
+     * Creates a new empty GameMap.
+     */
     public GameMap() {
         this.walls = new ArrayList<>();
         this.occupiedCells = new HashSet<>();
@@ -65,8 +69,11 @@ public class GameMap {
     }
 
     /**
-     * 初始化地图尺寸（可游玩区域）
-     * 边界墙会自动添加
+     * Initializes map dimensions (playable area).
+     * Border walls will be added automatically.
+     * 
+     * @param playableWidth  Width of the playable area.
+     * @param playableHeight Height of the playable area.
      */
     public void initializeSize(int playableWidth, int playableHeight) {
         this.playableWidth = playableWidth;
@@ -80,20 +87,22 @@ public class GameMap {
     }
 
     /**
-     * 添加墙体实体
+     * Adds a wall entity to the map.
+     * 
+     * @param wall The wall entity to add.
      */
     public void addWall(WallEntity wall) {
         walls.add(wall);
 
-        // 注册所有占用的格子
+        // Register all occupied cells
         for (Long cellKey : wall.getOccupiedCells()) {
             occupiedCells.add(cellKey);
-            // 兼容旧代码的查询方式
-            int cellIntKey = cellKey.intValue(); // 简化，假设坐标不超过16位
+            // Compatibility lookup
+            int cellIntKey = cellKey.intValue(); // Simplified, assuming coordinates fit within 16 bits
             wallLookup.put(cellIntKey, wall);
         }
 
-        // 动态更新地图尺寸（如果墙体超出当前范围）
+        // Dynamically update map dimensions if wall exceeds current bounds
         int maxX = wall.getOriginX() + wall.getGridWidth();
         int maxY = wall.getOriginY() + wall.getGridHeight();
         if (maxX > totalWidth)
@@ -103,13 +112,15 @@ public class GameMap {
     }
 
     /**
-     * 添加动态对象（敌人、陷阱等）
+     * Adds a game object (enemy, trap, etc.) to the map.
+     * 
+     * @param obj The game object to add.
      */
     public void addGameObject(GameObject obj) {
         if (obj instanceof WallEntity) {
             addWall((WallEntity) obj);
         } else if (obj instanceof Wall) {
-            // 兼容旧 Wall 类：转换为 WallEntity
+            // Compatibility for old Wall class: convert to WallEntity
             Wall oldWall = (Wall) obj;
             int typeId = getTypeIdForSize((int) oldWall.getWidth(), (int) oldWall.getHeight());
             WallEntity entity = new WallEntity(
@@ -120,18 +131,18 @@ public class GameMap {
         } else {
             dynamicObjects.add(obj);
 
-            // 缓存出口位置
+            // Cache exit position
             if (obj instanceof Exit) {
                 this.exitX = (int) obj.getX();
                 this.exitY = (int) obj.getY();
             }
 
-            // 缓存宝箱
+            // Cache treasure chests
             if (obj instanceof TreasureChest) {
                 treasureChests.add((TreasureChest) obj);
             }
 
-            // 动态更新地图尺寸
+            // Dynamically update map dimensions
             int objMaxX = (int) obj.getX() + 1;
             int objMaxY = (int) obj.getY() + 1;
             if (objMaxX > totalWidth)
@@ -142,7 +153,11 @@ public class GameMap {
     }
 
     /**
-     * 根据墙体尺寸获取类型ID
+     * Gets the wall type ID based on dimensions.
+     * 
+     * @param w Width of the wall.
+     * @param h Height of the wall.
+     * @return The corresponding object ID from GameConfig.
      */
     private int getTypeIdForSize(int w, int h) {
         if (w == 2 && h == 2)
@@ -159,11 +174,15 @@ public class GameMap {
             return de.tum.cit.fop.maze.config.GameConfig.OBJECT_ID_WALL_3X3;
         if (w == 4 && h == 4)
             return de.tum.cit.fop.maze.config.GameConfig.OBJECT_ID_WALL_4X4;
-        return de.tum.cit.fop.maze.config.GameConfig.OBJECT_ID_WALL_2X2; // 默认
+        return de.tum.cit.fop.maze.config.GameConfig.OBJECT_ID_WALL_2X2; // Default
     }
 
     /**
-     * O(1) 检查格子是否被墙体占用
+     * O(1) Check if a cell is occupied by a wall.
+     * 
+     * @param x The x-coordinate.
+     * @param y The y-coordinate.
+     * @return {@code true} if the cell is occupied.
      */
     public boolean isOccupied(int x, int y) {
         long key = x + ((long) y << 16);
@@ -171,14 +190,22 @@ public class GameMap {
     }
 
     /**
-     * 检查坐标是否在有效地图范围内
+     * Checks if coordinates are within the valid map bounds.
+     * 
+     * @param x The x-coordinate.
+     * @param y The y-coordinate.
+     * @return {@code true} if in bounds.
      */
     public boolean isInBounds(int x, int y) {
         return x >= 0 && x < totalWidth && y >= 0 && y < totalHeight;
     }
 
     /**
-     * 检查坐标是否在可游玩区域内（不含边界）
+     * Checks if coordinates are within the playable area (excluding border walls).
+     * 
+     * @param x The x-coordinate.
+     * @param y The y-coordinate.
+     * @return {@code true} if in playable area.
      */
     public boolean isInPlayableArea(int x, int y) {
         return x >= BORDER_WIDTH && x < BORDER_WIDTH + playableWidth
@@ -186,7 +213,12 @@ public class GameMap {
     }
 
     /**
-     * 获取指定位置的墙体（兼容旧代码）
+     * Gets the wall at the specified position (Legacy compatibility).
+     * 
+     * @param x The x-coordinate.
+     * @param y The y-coordinate.
+     * @return A {@link Wall} object representing the wall at the given location, or
+     *         null if none.
      */
     public Wall getWall(int x, int y) {
         if (x < 0 || y < 0)
@@ -194,7 +226,7 @@ public class GameMap {
         int key = x + (y << 16);
         WallEntity entity = wallLookup.get(key);
         if (entity != null) {
-            // 返回兼容的 Wall 对象
+            // Return compatible Wall object
             return new Wall(entity.getOriginX(), entity.getOriginY(),
                     entity.getGridWidth(), entity.getGridHeight());
         }
@@ -202,7 +234,11 @@ public class GameMap {
     }
 
     /**
-     * 获取指定位置的墙体实体
+     * Gets the WallEntity at the specified position.
+     * 
+     * @param x The x-coordinate.
+     * @param y The y-coordinate.
+     * @return The {@link WallEntity} at the location, or null if none.
      */
     public WallEntity getWallEntity(int x, int y) {
         if (x < 0 || y < 0)
@@ -212,14 +248,19 @@ public class GameMap {
     }
 
     /**
-     * 获取所有墙体实体
+     * Gets all wall entities.
+     * 
+     * @return List of all wall entities.
      */
     public List<WallEntity> getWalls() {
         return walls;
     }
 
     /**
-     * 设置玩家出生点
+     * Sets the player start position.
+     * 
+     * @param x The x-coordinate.
+     * @param y The y-coordinate.
      */
     public void setPlayerStart(float x, float y) {
         this.playerStartX = x;
@@ -281,7 +322,9 @@ public class GameMap {
     // ========== Treasure Chest Methods ==========
 
     /**
-     * 添加宝箱
+     * Adds a treasure chest to the map.
+     * 
+     * @param chest The treasure chest to add.
      */
     public void addTreasureChest(TreasureChest chest) {
         treasureChests.add(chest);
@@ -289,7 +332,9 @@ public class GameMap {
     }
 
     /**
-     * 获取所有宝箱
+     * Gets all treasure chests on the map.
+     * 
+     * @return List of treasure chests.
      */
     public List<TreasureChest> getTreasureChests() {
         return treasureChests;

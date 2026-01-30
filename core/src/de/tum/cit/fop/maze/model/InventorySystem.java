@@ -8,38 +8,41 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 背包系统 (Inventory System)
+ * Inventory System.
  * 
- * 管理玩家的武器和药水库存。
- * 此类包装并扩展 Player 的现有武器列表，同时添加药水管理功能。
+ * Manages the player's stock of weapons and potions.
+ * This class wraps and extends the player's existing weapon list while adding
+ * potion management capabilities.
  * 
- * 设计原则：
- * - 单一职责：仅负责物品管理
- * - 依赖注入：通过构造函数接收 Player 引用
- * - 开闭原则：可扩展新的物品类型而不修改核心逻辑
+ * Design Principles:
+ * - Single Responsibility: Solely responsible for item management.
+ * - Dependency Injection: Receives Player reference via constructor.
+ * - Open/Closed Principle: Extensible for new item types without modifying core
+ * logic.
  */
 public class InventorySystem {
 
-    // 容量限制
+    // Capacity limits
     private static final int MAX_WEAPONS = 4;
     private static final int MAX_POTION_SLOTS = 8;
     private static final int MAX_STACK_PER_SLOT = 5;
 
-    // 玩家引用（用于武器同步和药水使用）
+    // Player reference (for weapon synchronization and potion usage)
     private final Player player;
 
-    // 药水存储（武器已存储在 Player 中）
+    // Potion storage (Weapons are stored in Player)
     private final List<Potion> potionSlots;
 
-    // 选中的药水槽位（用于快速使用）
+    // Selected potion slot index (for quick use)
     private int selectedPotionIndex;
 
-    // UI 回调
+    // UI Callback
     private Runnable onInventoryChanged;
 
     /**
-     * 创建背包系统
-     * @param player 关联的玩家
+     * Creates a new InventorySystem.
+     * 
+     * @param player The player associated with this inventory.
      */
     public InventorySystem(Player player) {
         this.player = player;
@@ -47,32 +50,41 @@ public class InventorySystem {
         this.selectedPotionIndex = 0;
     }
 
-    // ==================== 武器管理 (Weapon Management) ====================
-    // 武器实际存储在 Player.inventory 中，这里提供统一访问接口
+    // ==================== Weapon Management ====================
+    // Weapons are actually stored in Player.inventory; this provides a unified
+    // access interface.
 
     /**
-     * 获取所有武器
+     * Gets all weapons.
+     * 
+     * @return List of weapons.
      */
     public List<Weapon> getWeapons() {
         return player.getInventory();
     }
 
     /**
-     * 获取当前装备的武器
+     * Gets the currently equipped weapon.
+     * 
+     * @return The current weapon.
      */
     public Weapon getCurrentWeapon() {
         return player.getCurrentWeapon();
     }
 
     /**
-     * 获取当前武器索引
+     * Gets the index of the currently equipped weapon.
+     * 
+     * @return The current weapon index.
      */
     public int getCurrentWeaponIndex() {
         return player.getCurrentWeaponIndex();
     }
 
     /**
-     * 切换到指定武器
+     * Switches to the specified weapon.
+     * 
+     * @param index The index of the weapon to switch to.
      */
     public void switchWeapon(int index) {
         player.switchToWeapon(index);
@@ -80,9 +92,10 @@ public class InventorySystem {
     }
 
     /**
-     * 尝试添加武器到背包
-     * @param weapon 要添加的武器
-     * @return true 如果成功添加
+     * Attempts to add a weapon to the inventory.
+     * 
+     * @param weapon The weapon to add.
+     * @return {@code true} if successfully added.
      */
     public boolean addWeapon(Weapon weapon) {
         if (getWeapons().size() >= MAX_WEAPONS) {
@@ -97,22 +110,23 @@ public class InventorySystem {
     }
 
     /**
-     * 移除指定位置的武器
-     * @param index 武器索引
-     * @return 被移除的武器，如果失败返回 null
+     * Removes the weapon at the specified index.
+     * 
+     * @param index The index of the weapon to remove.
+     * @return The removed weapon, or null if failed.
      */
     public Weapon removeWeapon(int index) {
         List<Weapon> weapons = getWeapons();
         if (index < 0 || index >= weapons.size()) {
             return null;
         }
-        // 不允许移除最后一把武器
+        // Do not allow removing the last weapon
         if (weapons.size() <= 1) {
             GameLogger.info("Inventory", "Cannot remove last weapon.");
             return null;
         }
         Weapon removed = weapons.remove(index);
-        // 调整当前武器索引
+        // Adjust current weapon index
         if (player.getCurrentWeaponIndex() >= weapons.size()) {
             player.switchToWeapon(weapons.size() - 1);
         }
@@ -120,32 +134,37 @@ public class InventorySystem {
         return removed;
     }
 
-    // ==================== 药水管理 (Potion Management) ====================
+    // ==================== Potion Management ====================
 
     /**
-     * 获取所有药水槽位
+     * Gets all potion slots.
+     * 
+     * @return List of potions.
      */
     public List<Potion> getPotions() {
         return new ArrayList<>(potionSlots);
     }
 
     /**
-     * 获取药水槽位数量
+     * Gets the number of potion slots used.
+     * 
+     * @return The count of potion slots.
      */
     public int getPotionSlotCount() {
         return potionSlots.size();
     }
 
     /**
-     * 尝试添加药水到背包
-     * @param potion 要添加的药水
-     * @return true 如果成功添加
+     * Attempts to add a potion to the inventory.
+     * 
+     * @param potion The potion to add.
+     * @return {@code true} if successfully added.
      */
     public boolean addPotion(Potion potion) {
-        // 先尝试堆叠到现有同类型药水
+        // Try to stack with existing potions of the same type
         for (Potion existing : potionSlots) {
-            if (existing.getType() == potion.getType() && 
-                existing.getStackCount() < MAX_STACK_PER_SLOT) {
+            if (existing.getType() == potion.getType() &&
+                    existing.getStackCount() < MAX_STACK_PER_SLOT) {
                 int canAdd = MAX_STACK_PER_SLOT - existing.getStackCount();
                 int toAdd = Math.min(canAdd, potion.getStackCount());
                 existing.addStack(toAdd);
@@ -155,7 +174,7 @@ public class InventorySystem {
             }
         }
 
-        // 没有可堆叠的，尝试新建槽位
+        // No stackable potion found, try to create a new slot
         if (potionSlots.size() >= MAX_POTION_SLOTS) {
             GameLogger.info("Inventory", "Potion inventory full. Cannot add: " + potion.getName());
             return false;
@@ -168,9 +187,10 @@ public class InventorySystem {
     }
 
     /**
-     * 使用指定位置的药水
-     * @param index 药水索引
-     * @return true 如果成功使用
+     * Uses the potion at the specified index.
+     * 
+     * @param index The index of the potion to use.
+     * @return {@code true} if successfully used.
      */
     public boolean usePotion(int index) {
         if (index < 0 || index >= potionSlots.size()) {
@@ -184,7 +204,7 @@ public class InventorySystem {
             GameLogger.info("Inventory", "Used potion: " + potion.getName());
             if (potion.isEmpty()) {
                 potionSlots.remove(index);
-                // 调整选中索引
+                // Adjust selected index
                 if (selectedPotionIndex >= potionSlots.size() && selectedPotionIndex > 0) {
                     selectedPotionIndex--;
                 }
@@ -195,16 +215,19 @@ public class InventorySystem {
     }
 
     /**
-     * 使用当前选中的药水
+     * Uses the currently selected potion.
+     * 
+     * @return {@code true} if successfully used.
      */
     public boolean useSelectedPotion() {
         return usePotion(selectedPotionIndex);
     }
 
     /**
-     * 移除指定位置的药水（丢弃）
-     * @param index 药水索引
-     * @return 被移除的药水，如果失败返回 null
+     * Removes the potion at the specified index (drops it).
+     * 
+     * @param index The index of the potion to remove.
+     * @return The removed potion, or null if failed.
      */
     public Potion removePotion(int index) {
         if (index < 0 || index >= potionSlots.size()) {
@@ -216,7 +239,9 @@ public class InventorySystem {
     }
 
     /**
-     * 选择药水槽位
+     * Selects a potion slot.
+     * 
+     * @param index The index of the potion slot to select.
      */
     public void selectPotionSlot(int index) {
         if (index >= 0 && index < potionSlots.size()) {
@@ -226,14 +251,18 @@ public class InventorySystem {
     }
 
     /**
-     * 获取选中的药水索引
+     * Gets the index of the currently selected potion.
+     * 
+     * @return The selected potion index.
      */
     public int getSelectedPotionIndex() {
         return selectedPotionIndex;
     }
 
     /**
-     * 获取选中的药水
+     * Gets the currently selected potion.
+     * 
+     * @return The selected potion, or null if none.
      */
     public Potion getSelectedPotion() {
         if (selectedPotionIndex >= 0 && selectedPotionIndex < potionSlots.size()) {
@@ -242,40 +271,50 @@ public class InventorySystem {
         return null;
     }
 
-    // ==================== 查询方法 ====================
+    // ==================== Query Methods ====================
 
     /**
-     * 检查武器背包是否已满
+     * Checks if the weapon inventory is full.
+     * 
+     * @return {@code true} if full.
      */
     public boolean isWeaponInventoryFull() {
         return getWeapons().size() >= MAX_WEAPONS;
     }
 
     /**
-     * 检查药水背包是否已满
+     * Checks if the potion inventory is full.
+     * 
+     * @return {@code true} if full.
      */
     public boolean isPotionInventoryFull() {
         return potionSlots.size() >= MAX_POTION_SLOTS;
     }
 
     /**
-     * 获取武器背包容量上限
+     * Gets the maximum weapon capacity.
+     * 
+     * @return Maximum number of weapons.
      */
     public int getMaxWeapons() {
         return MAX_WEAPONS;
     }
 
     /**
-     * 获取药水背包容量上限
+     * Gets the maximum potion slots.
+     * 
+     * @return Maximum number of potion slots.
      */
     public int getMaxPotionSlots() {
         return MAX_POTION_SLOTS;
     }
 
-    // ==================== 回调注册 ====================
+    // ==================== Callback Registration ====================
 
     /**
-     * 设置背包变化回调（用于 UI 更新）
+     * Sets the inventory change callback (for UI updates).
+     * 
+     * @param callback The callback to run when inventory changes.
      */
     public void setOnInventoryChanged(Runnable callback) {
         this.onInventoryChanged = callback;
@@ -287,10 +326,12 @@ public class InventorySystem {
         }
     }
 
-    // ==================== 序列化支持 ====================
+    // ==================== Serialization Support ====================
 
     /**
-     * 获取药水类型列表（用于存档）
+     * Gets a list of potion types (for saving).
+     * 
+     * @return List of strings representing potion types and counts.
      */
     public List<String> getPotionTypes() {
         List<String> types = new ArrayList<>();
@@ -301,11 +342,14 @@ public class InventorySystem {
     }
 
     /**
-     * 从类型列表恢复药水（用于读档）
+     * Restores potion inventory from a list of types (for loading).
+     * 
+     * @param types List of strings representing potion types and counts.
      */
     public void setPotionsFromTypes(List<String> types) {
         potionSlots.clear();
-        if (types == null) return;
+        if (types == null)
+            return;
 
         for (String entry : types) {
             String[] parts = entry.split(":");
@@ -314,7 +358,7 @@ public class InventorySystem {
                     Potion.PotionType type = Potion.PotionType.valueOf(parts[0]);
                     int count = parts.length > 1 ? Integer.parseInt(parts[1]) : 1;
                     Potion potion = new Potion(0, 0, type, getDefaultPotionValue(type));
-                    potion.addStack(count - 1); // 已有 1 个
+                    potion.addStack(count - 1); // Already has 1
                     potionSlots.add(potion);
                 } catch (IllegalArgumentException e) {
                     GameLogger.warn("Inventory", "Unknown potion type: " + parts[0]);
@@ -325,12 +369,18 @@ public class InventorySystem {
 
     private int getDefaultPotionValue(Potion.PotionType type) {
         switch (type) {
-            case HEALTH: return 1;
-            case ENERGY: return 50;
-            case SPEED: return 50;
-            case STRENGTH: return 25;
-            case SHIELD: return 20;
-            default: return 0;
+            case HEALTH:
+                return 1;
+            case ENERGY:
+                return 50;
+            case SPEED:
+                return 50;
+            case STRENGTH:
+                return 25;
+            case SHIELD:
+                return 20;
+            default:
+                return 0;
         }
     }
 }

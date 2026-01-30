@@ -3,57 +3,57 @@ package de.tum.cit.fop.maze.model;
 import java.util.Random;
 
 /**
- * 宝箱实体类 (Treasure Chest)
+ * Treasure Chest Entity.
  * 
- * 可交互的游戏对象，占地 1x1。
- * 支持触碰开启的普通宝箱。
+ * Interactive game object, occupying 1x1 space.
+ * Supports normal chests opened by touch.
  * 
- * 动画状态流程：
+ * Animation State Flow:
  * CLOSED -> OPENING -> OPEN
- * 关闭时反向播放：OPEN -> OPENING -> CLOSED
+ * Reverse on close: OPEN -> OPENING -> CLOSED
  */
 public class TreasureChest extends GameObject {
 
-    // ========== 状态枚举 ==========
+    // ========== State Enums ==========
 
     /**
-     * 宝箱状态
+     * Chest State.
      */
     public enum ChestState {
-        CLOSED, // 关闭状态
-        OPENING, // 开启中（播放动画）
-        OPEN // 完全开启
+        CLOSED, // Closed state
+        OPENING, // Opening (animating)
+        OPEN // Fully open
     }
 
     /**
-     * 宝箱类型
+     * Chest Type.
      */
     public enum ChestType {
-        NORMAL // 普通宝箱：触碰开启
+        NORMAL // Normal chest: Open on touch
     }
 
-    // ========== 配置常量 ==========
+    // ========== Configuration Constants ==========
 
-    /** 动画每帧持续时间（秒） */
+    /** Animation frame duration (seconds). */
     public static final float FRAME_DURATION = 0.2f;
 
-    /** 总动画时间（3帧 × 0.2秒 = 0.6秒） */
+    /** Total animation time (3 frames * 0.2s = 0.6s). */
     public static final float TOTAL_ANIMATION_TIME = FRAME_DURATION * 3f;
 
-    // ========== 成员变量 ==========
+    // ========== Member Variables ==========
 
     private ChestState state;
     private ChestType type;
-    private ChestReward reward; // 奖励
-    private float animationTimer; // 动画计时器
-    private boolean interacted; // 是否已交互（防止重复触发）
-    private boolean rewardClaimed; // 奖励是否已领取
-    private boolean reverseAnimation; // 是否正在播放关闭动画
+    private ChestReward reward; // Content reward
+    private float animationTimer; // Animation timer
+    private boolean interacted; // Has been interacted with (prevent duplicate triggers)
+    private boolean rewardClaimed; // Has reward been claimed
+    private boolean reverseAnimation; // Is playing close animation
 
-    // ========== 构造函数 ==========
+    // ========== Constructors ==========
 
     /**
-     * 创建默认普通宝箱
+     * Create default normal chest.
      */
     public TreasureChest(float x, float y) {
         super(x, y);
@@ -69,42 +69,42 @@ public class TreasureChest extends GameObject {
     }
 
     /**
-     * 创建指定类型的宝箱
+     * Create chest with specific type.
      * 
-     * @param x    X坐标
-     * @param y    Y坐标
-     * @param type 宝箱类型
+     * @param x    X coordinate
+     * @param y    Y coordinate
+     * @param type Chest type
      */
     public TreasureChest(float x, float y, ChestType type) {
         this(x, y);
         this.type = type;
     }
 
-    // ========== 静态工厂方法 ==========
+    // ========== Static Factory Methods ==========
 
     /**
-     * 创建随机宝箱
+     * Create random chest.
      * 
-     * @param x      X坐标
-     * @param y      Y坐标
-     * @param random 随机数生成器
-     * @return 新创建的宝箱
+     * @param x      X coordinate
+     * @param y      Y coordinate
+     * @param random Random instance
+     * @return Newly created chest
      */
     public static TreasureChest createRandom(float x, float y, Random random) {
         return new TreasureChest(x, y, ChestType.NORMAL);
     }
 
-    // ========== 核心方法 ==========
+    // ========== Core Methods ==========
 
     /**
-     * 更新宝箱状态（每帧调用）
+     * Update chest state (called every frame).
      * 
-     * @param delta 帧间隔时间
+     * @param delta Frame delta time
      */
     public void update(float delta) {
         if (state == ChestState.OPENING) {
             if (reverseAnimation) {
-                // 反向播放（关闭动画）
+                // Reverse play (closing)
                 animationTimer -= delta;
                 if (animationTimer <= 0f) {
                     animationTimer = 0f;
@@ -112,7 +112,7 @@ public class TreasureChest extends GameObject {
                     reverseAnimation = false;
                 }
             } else {
-                // 正向播放（开启动画）
+                // Forward play (opening)
                 animationTimer += delta;
                 if (animationTimer >= TOTAL_ANIMATION_TIME) {
                     animationTimer = TOTAL_ANIMATION_TIME;
@@ -123,7 +123,7 @@ public class TreasureChest extends GameObject {
     }
 
     /**
-     * 开始开启宝箱
+     * Start opening chest.
      */
     public void startOpening() {
         if (state == ChestState.CLOSED && !interacted) {
@@ -135,7 +135,7 @@ public class TreasureChest extends GameObject {
     }
 
     /**
-     * 开始关闭宝箱（播放反向动画）
+     * Start closing chest (reverse animation).
      */
     public void startClosing() {
         if (state == ChestState.OPEN) {
@@ -146,7 +146,7 @@ public class TreasureChest extends GameObject {
     }
 
     /**
-     * 直接设置为已开启状态（跳过动画）
+     * Force set to OPEN state (skip animation).
      */
     public void forceOpen() {
         state = ChestState.OPEN;
@@ -155,10 +155,10 @@ public class TreasureChest extends GameObject {
     }
 
     /**
-     * 领取奖励
+     * Claim reward.
      * 
-     * @param player 玩家
-     * @return true 如果成功领取
+     * @param player The player
+     * @return true if successfully claimed
      */
     public boolean claimReward(Player player) {
         if (rewardClaimed || reward == null) {
@@ -171,10 +171,10 @@ public class TreasureChest extends GameObject {
         return success;
     }
 
-    // ========== 动画相关 ==========
+    // ========== Animation Related ==========
 
     /**
-     * 获取当前动画帧索引（0-2）
+     * Get current animation frame index (0-2).
      * 0 = closed, 1 = half, 2 = open
      */
     public int getCurrentFrameIndex() {
@@ -183,7 +183,7 @@ public class TreasureChest extends GameObject {
         } else if (state == ChestState.OPEN) {
             return 2;
         } else {
-            // OPENING 状态：根据计时器计算帧
+            // OPENING state: calculate frame based on timer
             float progress = animationTimer / TOTAL_ANIMATION_TIME;
             if (progress < 0.33f) {
                 return 0;
@@ -196,7 +196,7 @@ public class TreasureChest extends GameObject {
     }
 
     /**
-     * 获取动画进度 (0.0 - 1.0)
+     * Get animation progress (0.0 - 1.0).
      */
     public float getAnimationProgress() {
         return Math.min(1f, animationTimer / TOTAL_ANIMATION_TIME);

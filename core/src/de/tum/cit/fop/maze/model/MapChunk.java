@@ -6,52 +6,52 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 地图块数据结构 (Map Chunk)
+ * Map Chunk Data Structure.
  * 
- * 表示无尽模式地图中的一个64×64区块。
- * 用于分块加载和渲染优化。
+ * Represents a 64x64 block in the endless map.
+ * Used for chunk loading and rendering optimization.
  */
 public class MapChunk {
 
-    /** 区块X坐标（区块单位，非格子单位） */
+    /** Chunk X coordinate (chunk unit). */
     private final int chunkX;
 
-    /** 区块Y坐标（区块单位） */
+    /** Chunk Y coordinate (chunk unit). */
     private final int chunkY;
 
-    /** 区块大小（格子数） */
+    /** Chunk size (tile count). */
     private final int size;
 
-    /** 区块主题 */
+    /** Chunk theme. */
     private String theme;
 
-    /** 区块内的墙体实体 */
+    /** Wall entities in chunk. */
     private List<WallEntity> walls;
 
-    /** 区块内的陷阱位置 */
+    /** Trap positions in chunk. */
     private List<Vector2> trapPositions;
 
-    /** 区块内的宝箱位置 */
+    /** Chest positions in chunk. */
     private List<Vector2> chestPositions;
 
-    /** 区块内的敌人刷新点 */
+    /** Enemy spawn points in chunk. */
     private List<Vector2> spawnPoints;
 
-    /** 是否已生成 */
+    /** Whether generated. */
     private boolean isGenerated;
 
-    /** 是否已加载到渲染系统 */
+    /** Whether loaded into rendering system. */
     private boolean isLoaded;
 
-    /** 最后访问时间（用于LRU缓存） */
+    /** Last access time (for LRU cache). */
     private long lastAccessTime;
 
     /**
-     * 构造函数
+     * Constructor.
      * 
-     * @param chunkX 区块X坐标
-     * @param chunkY 区块Y坐标
-     * @param size   区块大小
+     * @param chunkX Chunk X coordinate.
+     * @param chunkY Chunk Y coordinate.
+     * @param size   Chunk size.
      */
     public MapChunk(int chunkX, int chunkY, int size) {
         this.chunkX = chunkX;
@@ -67,35 +67,35 @@ public class MapChunk {
     }
 
     /**
-     * 获取区块在世界坐标系中的起始X（格子单位）
+     * Gets chunk start X in world coords (tile unit).
      */
     public int getWorldStartX() {
         return chunkX * size;
     }
 
     /**
-     * 获取区块在世界坐标系中的起始Y（格子单位）
+     * Gets chunk start Y in world coords (tile unit).
      */
     public int getWorldStartY() {
         return chunkY * size;
     }
 
     /**
-     * 获取区块在世界坐标系中的结束X（格子单位，不含）
+     * Gets chunk end X in world coords (tile unit, exclusive).
      */
     public int getWorldEndX() {
         return (chunkX + 1) * size;
     }
 
     /**
-     * 获取区块在世界坐标系中的结束Y（格子单位，不含）
+     * Gets chunk end Y in world coords (tile unit, exclusive).
      */
     public int getWorldEndY() {
         return (chunkY + 1) * size;
     }
 
     /**
-     * 检查指定世界坐标是否在此区块内
+     * Checks if the specified world position is inside this chunk.
      */
     public boolean containsWorldPosition(float worldX, float worldY) {
         int startX = getWorldStartX();
@@ -105,42 +105,42 @@ public class MapChunk {
     }
 
     /**
-     * 添加墙体
+     * Adds a wall.
      */
     public void addWall(WallEntity wall) {
         walls.add(wall);
     }
 
     /**
-     * 添加陷阱位置
+     * Adds a trap position.
      */
     public void addTrap(float x, float y) {
         trapPositions.add(new Vector2(x, y));
     }
 
     /**
-     * 添加宝箱位置
+     * Adds a chest position.
      */
     public void addChest(float x, float y) {
         chestPositions.add(new Vector2(x, y));
     }
 
     /**
-     * 添加敌人刷新点
+     * Adds an enemy spawn point.
      */
     public void addSpawnPoint(float x, float y) {
         spawnPoints.add(new Vector2(x, y));
     }
 
     /**
-     * 标记为已生成
+     * Marks as generated.
      */
     public void markGenerated() {
         this.isGenerated = true;
     }
 
     /**
-     * 标记为已加载
+     * Marks as loaded.
      */
     public void markLoaded() {
         this.isLoaded = true;
@@ -148,28 +148,28 @@ public class MapChunk {
     }
 
     /**
-     * 标记为已卸载
+     * Marks as unloaded.
      */
     public void markUnloaded() {
         this.isLoaded = false;
     }
 
     /**
-     * 更新访问时间
+     * Updates access time.
      */
     public void touch() {
         this.lastAccessTime = System.currentTimeMillis();
     }
 
     /**
-     * 获取唯一标识符
+     * Gets unique identifier.
      */
     public String getId() {
         return chunkX + "_" + chunkY;
     }
 
     /**
-     * 清空区块内容（释放内存）
+     * Clears chunk content (frees memory).
      */
     public void clear() {
         walls.clear();
@@ -211,7 +211,7 @@ public class MapChunk {
     }
 
     /**
-     * 获取陷阱列表（别名方法）
+     * Gets trap list (alias).
      */
     public List<Vector2> getTraps() {
         return trapPositions;
@@ -222,7 +222,7 @@ public class MapChunk {
     }
 
     /**
-     * 获取宝箱位置列表
+     * Gets chest position list.
      */
     public List<Vector2> getChestPositions() {
         return chestPositions;

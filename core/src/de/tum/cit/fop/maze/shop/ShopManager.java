@@ -8,9 +8,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 商店管理器 (Shop Manager)
- * 
- * 管理商店物品、购买记录和玩家金币的持久化存储。
+ * Shop Manager.
+ *
+ * Manages shop items, purchase history, and persistent storage of player coins.
  */
 public class ShopManager {
 
@@ -25,12 +25,12 @@ public class ShopManager {
     }
 
     /**
-     * 初始化商店物品列表
+     * Initializes the list of shop items.
      */
     private static void initializeShopItems() {
         allItems = new ArrayList<>();
 
-        // === 武器 ===
+        // === Weapons ===
         allItems.add(new ShopItem(
                 "weapon_sword",
                 "Steel Sword",
@@ -71,7 +71,7 @@ public class ShopManager {
                 "magic_wand",
                 ShopItem.ItemCategory.WEAPON));
 
-        // === 护甲 ===
+        // === Armor ===
         allItems.add(new ShopItem(
                 "armor_physical",
                 "Iron Shield",
@@ -108,7 +108,7 @@ public class ShopManager {
     }
 
     /**
-     * 获取所有商店物品
+     * Gets all shop items.
      */
     public static List<ShopItem> getAvailableItems() {
         loadPurchaseStatus();
@@ -116,7 +116,7 @@ public class ShopManager {
     }
 
     /**
-     * 获取指定类别的物品
+     * Gets items by category.
      */
     public static List<ShopItem> getItemsByCategory(ShopItem.ItemCategory category) {
         List<ShopItem> filtered = new ArrayList<>();
@@ -129,10 +129,10 @@ public class ShopManager {
     }
 
     /**
-     * 购买物品
-     * 
-     * @param itemId 物品 ID
-     * @return true 如果购买成功
+     * Purchases an item.
+     *
+     * @param itemId Item ID
+     * @return true if purchase successful
      */
     public static boolean purchaseItem(String itemId) {
         GameLogger.debug("ShopManager", "Attempting to purchase item: " + itemId);
@@ -142,18 +142,18 @@ public class ShopManager {
             if (item.getId().equals(itemId)) {
                 if (item.isPurchased()) {
                     GameLogger.info("ShopManager", "Purchase failed: Item already purchased - " + itemId);
-                    return false; // 已购买
+                    return false; // Already purchased
                 }
                 if (playerCoins < item.getPrice()) {
                     GameLogger.info("ShopManager",
                             "Purchase failed: Insufficient coins. Cost: " + item.getPrice() + ", Has: " + playerCoins);
-                    return false; // 金币不足
+                    return false; // Insufficient coins
                 }
 
-                // 扣款
+                // Deduct coins
                 setPlayerCoins(playerCoins - item.getPrice());
 
-                // 标记为已购买
+                // Mark as purchased
                 item.setPurchased(true);
                 savePurchaseStatus();
 
@@ -162,11 +162,11 @@ public class ShopManager {
             }
         }
         GameLogger.error("ShopManager", "Purchase failed: Item ID not found - " + itemId);
-        return false; // 物品不存在
+        return false; // Item not found
     }
 
     /**
-     * 获取已购买的物品 ID 列表
+     * Gets list of purchased item IDs.
      */
     public static List<String> getPurchasedItemIds() {
         Preferences prefs = Gdx.app.getPreferences(PREFS_NAME);
@@ -184,14 +184,14 @@ public class ShopManager {
     }
 
     /**
-     * 检查物品是否已购买
+     * Checks if an item is purchased.
      */
     public static boolean isItemPurchased(String itemId) {
         return getPurchasedItemIds().contains(itemId);
     }
 
     /**
-     * 获取玩家金币
+     * Gets player coins.
      */
     public static int getPlayerCoins() {
         Preferences prefs = Gdx.app.getPreferences(PREFS_NAME);
@@ -199,7 +199,7 @@ public class ShopManager {
     }
 
     /**
-     * 设置玩家金币
+     * Sets player coins.
      */
     public static void setPlayerCoins(int coins) {
         Preferences prefs = Gdx.app.getPreferences(PREFS_NAME);
@@ -210,17 +210,17 @@ public class ShopManager {
     }
 
     /**
-     * 添加金币
+     * Adds coins to player.
      */
     public static void addPlayerCoins(int amount) {
         setPlayerCoins(getPlayerCoins() + amount);
     }
 
     /**
-     * 将游戏中收集的金币同步到持久化存储
-     * 在关卡结束时调用此方法
-     * 
-     * @param coinsEarned 本关卡收集的金币数
+     * Syncs coins earned in game to persistent storage.
+     * Called at the end of a level.
+     *
+     * @param coinsEarned Coins earned in this level
      */
     public static void syncCoinsFromGame(int coinsEarned) {
         if (coinsEarned > 0) {
@@ -231,7 +231,7 @@ public class ShopManager {
     }
 
     /**
-     * 加载购买状态到内存
+     * Loads purchase status into memory.
      */
     private static void loadPurchaseStatus() {
         List<String> purchasedIds = getPurchasedItemIds();
@@ -241,7 +241,7 @@ public class ShopManager {
     }
 
     /**
-     * 保存购买状态到持久化存储
+     * Saves purchase status to persistent storage.
      */
     private static void savePurchaseStatus() {
         StringBuilder sb = new StringBuilder();
@@ -257,7 +257,7 @@ public class ShopManager {
     }
 
     /**
-     * 重置所有购买记录（用于调试）
+     * Resets all purchase records (for debugging).
      */
     public static void resetAllPurchases() {
         Preferences prefs = Gdx.app.getPreferences(PREFS_NAME);

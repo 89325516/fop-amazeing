@@ -9,10 +9,11 @@ import de.tum.cit.fop.maze.model.Player;
 import de.tum.cit.fop.maze.utils.TextureManager;
 
 /**
- * 可复用的生命值显示组件 (Reusable Health Bar Widget)
- * 
- * 从 GameHUD 和 EndlessHUD 中提取的公共逻辑。
- * 显示心形图标表示玩家生命值，支持心碎动画。
+ * Reusable Health Bar Widget.
+ * <p>
+ * Common logic extracted from GameHUD and EndlessHUD.
+ * Displays heart icons representing player health, supports heart break
+ * animation.
  */
 public class HealthBarWidget extends Table {
 
@@ -32,13 +33,23 @@ public class HealthBarWidget extends Table {
     private float heartSize = 50f;
     private float heartPadding = 4f;
 
+    /**
+     * Creates a new HealthBarWidget.
+     *
+     * @param player         The player whose health to display.
+     * @param textureManager The texture manager for retrieving heart assets.
+     */
     public HealthBarWidget(Player player, TextureManager textureManager) {
         this.player = player;
         this.textureManager = textureManager;
     }
 
     /**
-     * 设置心形图标大小
+     * Sets the size of the heart icons.
+     *
+     * @param size    The width and height of each heart icon.
+     * @param padding The padding between heart icons.
+     * @return This widget for chaining.
      */
     public HealthBarWidget setHeartSize(float size, float padding) {
         this.heartSize = size;
@@ -48,7 +59,10 @@ public class HealthBarWidget extends Table {
     }
 
     /**
-     * 更新心形显示
+     * Updates the health bar display logic.
+     * Handles health changes and animations.
+     *
+     * @param delta The time elapsed since the last frame.
      */
     public void update(float delta) {
         int actualLives = player.getLives();

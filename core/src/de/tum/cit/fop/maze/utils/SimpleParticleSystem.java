@@ -9,6 +9,9 @@ import com.badlogic.gdx.utils.Array;
 
 import java.util.Iterator;
 
+/**
+ * Simple particle system for visual effects.
+ */
 public class SimpleParticleSystem {
 
     public enum Theme {
@@ -152,17 +155,30 @@ public class SimpleParticleSystem {
     private ShapeRenderer shapeRenderer;
     private Theme currentTheme;
 
+    /**
+     * Constructor with theme.
+     * 
+     * @param theme The particle theme.
+     */
     public SimpleParticleSystem(Theme theme) {
         this.shapeRenderer = new ShapeRenderer();
         this.currentTheme = theme;
     }
 
-    // Default constructor for backward compatibility (defaults to GAME_OVER or
-    // SPACE)
+    /**
+     * Default constructor for backward compatibility (defaults to SPACE).
+     */
     public SimpleParticleSystem() {
         this(Theme.SPACE);
     }
 
+    /**
+     * Updates and draws the particles.
+     * 
+     * @param delta        Time delta.
+     * @param screenWidth  Screen width.
+     * @param screenHeight Screen height.
+     */
     public void updateAndDraw(float delta, float screenWidth, float screenHeight) {
         // Spawn logic
         int spawnRate = getSpawnRate(currentTheme);
@@ -210,10 +226,16 @@ public class SimpleParticleSystem {
         Gdx.gl.glDisable(GL20.GL_BLEND);
     }
 
-    // Refactored update/draw loop to be safe:
-    // 1. Update all
-    // 2. Draw Filled
-    // 3. Draw Lines
+    /**
+     * Refactored update/draw loop to be safe:
+     * 1. Update all
+     * 2. Draw Filled
+     * 3. Draw Lines
+     * 
+     * @param delta        Time delta.
+     * @param screenWidth  Screen width.
+     * @param screenHeight Screen height.
+     */
     public void updateAndDrawRefactored(float delta, float screenWidth, float screenHeight) {
         // Spawn
         int spawnRate = getSpawnRate(currentTheme);
@@ -272,7 +294,15 @@ public class SimpleParticleSystem {
         Gdx.gl.glDisable(GL20.GL_BLEND);
     }
 
-    // Forwarder for compatibility
+    /**
+     * Forwarder for compatibility.
+     * 
+     * @param delta  Time delta.
+     * @param w      Width.
+     * @param h      Height.
+     * @param useNew Whether to use new method (ignored, always uses refactored
+     *               logic via proper call).
+     */
     public void updateAndDraw(float delta, float w, float h, boolean useNew) {
         updateAndDrawRefactored(delta, w, h);
     }
@@ -324,6 +354,9 @@ public class SimpleParticleSystem {
         }
     }
 
+    /**
+     * Disposes resources.
+     */
     public void dispose() {
         shapeRenderer.dispose();
     }

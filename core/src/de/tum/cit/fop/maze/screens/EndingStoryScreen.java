@@ -21,25 +21,25 @@ import com.badlogic.gdx.utils.viewport.FitViewport;
 import de.tum.cit.fop.maze.MazeRunnerGame;
 
 /**
- * 結局劇情畫面 (Ending Story Screen)
- * 在打完第20關（Final Battle）後顯示結局對話
- * 對話結束後返回主菜單
+ * Ending Story Screen.
+ * Displays the ending dialogue after completing Level 20 (Final Battle).
+ * Returns to the main menu after the dialogue concludes.
  */
 public class EndingStoryScreen implements Screen {
 
     private final MazeRunnerGame game;
     private final Stage stage;
 
-    // 對話數據
+    // Dialogue Data
     private final DialogueData.LevelDialogue dialogueData;
     private int currentLineIndex = 0;
 
-    // 紋理資源
+    // Texture Resources
     private Texture backgroundTexture;
     private Texture dialogBoxTexture;
     private Texture borderTexture;
 
-    // UI 元素
+    // UI Elements
     private Label speakerLabel;
     private Label dialogueLabel;
     private Label pageIndicator;
@@ -57,19 +57,19 @@ public class EndingStoryScreen implements Screen {
     }
 
     private void loadBackgroundTexture() {
-        // 使用結局專用背景圖片
+        // Use ending specific background image
         String bgPath = "images/backgrounds/ending_scene.jpg";
         try {
             this.backgroundTexture = new Texture(Gdx.files.internal(bgPath));
             backgroundTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
         } catch (Exception e) {
             Gdx.app.error("EndingStoryScreen", "Failed to load ending background: " + bgPath, e);
-            // 如果找不到結局圖片，使用太空船場景作為備選
+            // If ending image is not found, use spaceship scene as fallback
             try {
                 this.backgroundTexture = new Texture(Gdx.files.internal("images/backgrounds/spaceship_scene.jpg"));
             } catch (Exception e2) {
                 Gdx.app.error("EndingStoryScreen", "Failed to load fallback background", e2);
-                // 創建純色備用紋理
+                // Create solid color fallback texture
                 Pixmap pm = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
                 pm.setColor(0.05f, 0.05f, 0.1f, 1f);
                 pm.fill();
@@ -80,7 +80,8 @@ public class EndingStoryScreen implements Screen {
     }
 
     private void createDialogBoxTextures() {
-        // 創建漸層對話框背景 - 使用更深沉的色調營造結局氛圍
+        // Create gradient dialog box background - use darker tones to create an ending
+        // atmosphere
         int boxHeight = 50;
         Pixmap gradientPixmap = new Pixmap(1, boxHeight, Pixmap.Format.RGBA8888);
         for (int y = 0; y < boxHeight; y++) {
@@ -91,7 +92,7 @@ public class EndingStoryScreen implements Screen {
         dialogBoxTexture = new Texture(gradientPixmap);
         gradientPixmap.dispose();
 
-        // 創建裝飾性邊框 - 使用金色調代表勝利
+        // Create decorative border - use gold tone to represent victory
         Pixmap borderPixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
         borderPixmap.setColor(0.85f, 0.68f, 0.25f, 0.8f); // 金色
         borderPixmap.fill();
@@ -106,23 +107,23 @@ public class EndingStoryScreen implements Screen {
         root.setFillParent(true);
         stage.addActor(root);
 
-        // 中間留白區域（讓背景圖片可見）
+        // Center empty space (leaving background image visible)
         root.add().expand().row();
 
-        // 底部對話框區域
+        // Bottom dialog box area
         Table dialogContainer = new Table();
 
-        // 頂部裝飾金線
+        // Top decorative gold line
         Table topBorder = new Table();
         topBorder.setBackground(new TextureRegionDrawable(new TextureRegion(borderTexture)));
         dialogContainer.add(topBorder).width(1750).height(4).padBottom(0).row();
 
-        // 對話框主體
+        // Dialog box body
         Table dialogBox = new Table();
         dialogBox.setBackground(new TextureRegionDrawable(new TextureRegion(dialogBoxTexture)));
         dialogBox.pad(45, 60, 40, 60);
 
-        // 說話者標籤
+        // Speaker Label
         BitmapFont boldFont = game.getSkin().getFont("bold");
         DialogueData.DialogueLine currentLine = getCurrentLine();
         Label.LabelStyle speakerStyle = new Label.LabelStyle(boldFont, currentLine.speaker.color);
@@ -133,7 +134,7 @@ public class EndingStoryScreen implements Screen {
         speakerContainer.add(speakerLabel).left();
         dialogBox.add(speakerContainer).left().padBottom(20).row();
 
-        // 對話內容
+        // Dialogue Content
         BitmapFont dialogFont = game.getSkin().getFont("font");
         Label.LabelStyle dialogStyle = new Label.LabelStyle(dialogFont, new Color(0.97f, 0.97f, 0.97f, 1f));
         dialogueLabel = new Label(currentLine.text, dialogStyle);
@@ -143,7 +144,7 @@ public class EndingStoryScreen implements Screen {
 
         dialogBox.add(dialogueLabel).width(1580).minHeight(140).padBottom(30).left().row();
 
-        // 底部：頁碼 + 按鈕
+        // Bottom: Page Indicator + Button
         Table bottomRow = new Table();
 
         Label.LabelStyle pageStyle = new Label.LabelStyle(dialogFont, new Color(0.55f, 0.6f, 0.65f, 1f));
@@ -151,11 +152,11 @@ public class EndingStoryScreen implements Screen {
         pageIndicator.setFontScale(0.9f);
         bottomRow.add(pageIndicator).left().expandX();
 
-        // 按鈕根據是否為最後一頁切換文字
+        // Button text changes based on whether it is the last page
         String buttonText = isLastLine() ? "Return to Menu  ★" : "Continue  ▶";
         TextButton continueBtn = new TextButton(buttonText, game.getSkin());
         continueBtn.getLabel().setFontScale(0.95f);
-        // 如果是最後一頁，使用金色
+        // Use gold color if it is the last page
         if (isLastLine()) {
             continueBtn.setColor(new Color(0.95f, 0.8f, 0.3f, 1f));
         }
@@ -171,7 +172,7 @@ public class EndingStoryScreen implements Screen {
 
         dialogContainer.add(dialogBox).width(1750).row();
 
-        // 底部裝飾金線
+        // Bottom decorative gold line
         Table bottomBorder = new Table();
         bottomBorder.setBackground(new TextureRegionDrawable(new TextureRegion(borderTexture)));
         dialogContainer.add(bottomBorder).width(1750).height(4).padTop(0);
@@ -197,7 +198,7 @@ public class EndingStoryScreen implements Screen {
     private void onContinueClicked() {
         currentLineIndex++;
         if (currentLineIndex >= dialogueData.lines.length) {
-            // 對話結束，返回主菜單
+            // Dialogue complete, return to main menu
             Gdx.app.log("EndingStoryScreen", "Ending dialogue complete. Returning to main menu.");
             game.goToMenu();
         } else {
@@ -212,14 +213,14 @@ public class EndingStoryScreen implements Screen {
         dialogueLabel.setText(currentLine.text);
         pageIndicator.setText(getPageIndicatorText());
 
-        // 重新構建 UI 以更新按鈕文字
+        // Rebuild UI to update button text
         setupUI();
     }
 
     @Override
     public void show() {
         Gdx.input.setInputProcessor(stage);
-        // 🔊 全局按钮音效
+        // 🔊 Global button sound
         de.tum.cit.fop.maze.utils.UIUtils.enableMenuButtonSound(stage);
     }
 
@@ -232,13 +233,13 @@ public class EndingStoryScreen implements Screen {
         int screenWidth = Gdx.graphics.getBackBufferWidth();
         int screenHeight = Gdx.graphics.getBackBufferHeight();
 
-        // 繪製背景圖片（覆蓋整個屏幕）
+        // Draw background image (covers the entire screen)
         Gdx.gl.glViewport(0, 0, screenWidth, screenHeight);
         batch.getProjectionMatrix().setToOrtho2D(0, 0, screenWidth, screenHeight);
         batch.begin();
         drawBackgroundCover(batch, screenWidth, screenHeight);
 
-        // 添加微暗遮罩層，讓對話框更清晰
+        // Add subtle dark mask to make dialog box clearer
         batch.setColor(0, 0, 0, 0.35f);
         batch.draw(dialogBoxTexture, 0, 0, screenWidth, screenHeight);
         batch.setColor(1, 1, 1, 1);

@@ -10,11 +10,10 @@ import de.tum.cit.fop.maze.model.ChestReward;
 import de.tum.cit.fop.maze.model.TreasureChest;
 
 /**
- * 宝箱交互UI界面 (Chest Interact UI)
+ * Chest Interaction UI.
  * <p>
- * 显示在游戏暂停时，用于处理宝箱交互：
- * - 普通宝箱：显示"打开"按钮
- * - 奖励展示
+ * Displayed when the game is paused for chest interaction.
+ * Handles normal chests (showing "Open" button) and reward display.
  */
 public class ChestInteractUI extends Table {
 
@@ -42,6 +41,13 @@ public class ChestInteractUI extends Table {
     private static final float UI_WIDTH = 480f;
     private static final float UI_HEIGHT = 360f;
 
+    /**
+     * Creates a new ChestInteractUI.
+     *
+     * @param chest    The treasure chest to interact with.
+     * @param skin     The skin for UI elements.
+     * @param listener The listener for chest events.
+     */
     public ChestInteractUI(TreasureChest chest, Skin skin, ChestUIListener listener) {
         this.chest = chest;
         this.skin = skin;
@@ -89,16 +95,16 @@ public class ChestInteractUI extends Table {
     private void createNormalInfoView() {
         normalInfoTable = new Table(skin);
 
-        Label titleLabel = new Label("发现宝箱！", skin, "title");
+        Label titleLabel = new Label("Chest Found!", skin, "title");
         titleLabel.setAlignment(Align.center);
         normalInfoTable.add(titleLabel).padBottom(30).row();
 
-        Label descLabel = new Label("一个神秘的宝箱正在等待你打开...", skin);
+        Label descLabel = new Label("A mysterious chest awaits to be opened...", skin);
         descLabel.setWrap(true);
         descLabel.setAlignment(Align.center);
         normalInfoTable.add(descLabel).width(UI_WIDTH - 60).padBottom(40).row();
 
-        TextButton openButton = new TextButton("打开宝箱", skin);
+        TextButton openButton = new TextButton("Open Chest", skin);
         openButton.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
@@ -112,18 +118,18 @@ public class ChestInteractUI extends Table {
         rewardTable = new Table(skin);
         rewardTable.setBackground(skin.newDrawable("white", new Color(0.1f, 0.25f, 0.1f, 0.5f)));
 
-        Label titleLabel = new Label("恭喜！", skin, "title");
+        Label titleLabel = new Label("Congratulations!", skin, "title");
         titleLabel.setColor(Color.GOLD);
         titleLabel.setAlignment(Align.center);
         rewardTable.add(titleLabel).padBottom(30).row();
 
-        String rewardText = currentReward != null ? currentReward.getDisplayName() : "神秘宝藏";
-        Label rewardLabel = new Label("获得: " + rewardText, skin);
+        String rewardText = currentReward != null ? currentReward.getDisplayName() : "Unknown Treasure";
+        Label rewardLabel = new Label("Received: " + rewardText, skin);
         rewardLabel.setAlignment(Align.center);
         rewardLabel.setFontScale(1.2f);
         rewardTable.add(rewardLabel).padBottom(50).row();
 
-        TextButton closeButton = new TextButton("太棒了！", skin);
+        TextButton closeButton = new TextButton("Awesome!", skin);
         closeButton.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
@@ -143,6 +149,10 @@ public class ChestInteractUI extends Table {
         showView(rewardTable);
     }
 
+    /**
+     * Forces the UI to close.
+     * Triggers failure callback if reward was not shown.
+     */
     public void forceClose() {
         if (listener != null) {
             if (!showingReward) {
@@ -155,10 +165,20 @@ public class ChestInteractUI extends Table {
 
     // === Getters ===
 
+    /**
+     * Checks if the reward view is currently showing.
+     *
+     * @return true if reward is showing.
+     */
     public boolean isShowingReward() {
         return showingReward;
     }
 
+    /**
+     * Gets the associated treasure chest.
+     *
+     * @return The treasure chest.
+     */
     public TreasureChest getChest() {
         return chest;
     }

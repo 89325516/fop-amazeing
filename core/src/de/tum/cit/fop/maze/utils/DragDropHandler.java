@@ -11,7 +11,15 @@ import java.util.List;
  */
 public class DragDropHandler {
 
+    /**
+     * Listener interface for drag and drop events.
+     */
     public interface DropListener {
+        /**
+         * Called when files are dropped into the window.
+         *
+         * @param filePaths Array of absolute paths of dropped files.
+         */
         void onFilesDropped(String[] filePaths);
     }
 
@@ -104,6 +112,8 @@ public class DragDropHandler {
     /**
      * Set the current drop listener.
      * Only one listener can be active at a time.
+     * 
+     * @param listener The listener to set.
      */
     public static void setDropListener(DropListener listener) {
         currentListener = listener;
@@ -117,7 +127,10 @@ public class DragDropHandler {
     }
 
     /**
-     * Check if a file is an image based on extension
+     * Check if a file is an image based on extension.
+     * 
+     * @param path The file path to check.
+     * @return true if the file has a supported image extension.
      */
     public static boolean isImageFile(String path) {
         if (path == null)
@@ -129,7 +142,10 @@ public class DragDropHandler {
     }
 
     /**
-     * Filter dropped files to only include images
+     * Filter dropped files to only include images.
+     * 
+     * @param paths Array of file paths.
+     * @return Array of file paths containing only images.
      */
     public static String[] filterImageFiles(String[] paths) {
         List<String> images = new ArrayList<>();

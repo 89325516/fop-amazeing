@@ -4,9 +4,14 @@ package de.tum.cit.fop.maze.model.weapons;
  * Combat styling and status effects for weapons.
  */
 public enum WeaponEffect {
+    /** No special effect. */
     NONE,
-    FREEZE, // Slows or stops enemy
-    BURN, // Damage over time
-    POISON, // Damage over time, maybe slower than burn
-    SLOW // Reduces enemy movement speed
+    /** Slows or stops enemy movement. */
+    FREEZE,
+    /** Deals damage over time continually. */
+    BURN,
+    /** Deals damage over time, potentially at a slower rate than burn. */
+    POISON,
+    /** Reduces enemy movement speed. */
+    SLOW
 }

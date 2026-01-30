@@ -80,6 +80,18 @@ public class GameHUD implements Disposable {
     // === Achievement Popup ===
     private AchievementPopup achievementPopup;
 
+    /**
+     * Creates a new GameHUD.
+     *
+     * @param batch              The sprite batch for rendering.
+     * @param player             The player instance.
+     * @param gameViewport       The viewport of the game world (for projecting
+     *                           coordinates).
+     * @param skin               The skin for UI elements.
+     * @param tm                 The texture manager.
+     * @param onSettingsClicked  Callback for settings button.
+     * @param onInventoryClicked Callback for inventory button.
+     */
     public GameHUD(SpriteBatch batch, Player player, Viewport gameViewport, Skin skin, TextureManager tm,
             Runnable onSettingsClicked, Runnable onInventoryClicked) {
         this.player = player;
@@ -233,11 +245,22 @@ public class GameHUD implements Disposable {
         achievementPopup = new AchievementPopup(stage, skin);
     }
 
+    /**
+     * Sets the navigation target coordinates.
+     *
+     * @param x Target X.
+     * @param y Target Y.
+     */
     public void setTarget(float x, float y) {
         this.targetX = x;
         this.targetY = y;
     }
 
+    /**
+     * Updates the HUD elements.
+     *
+     * @param delta Time delta.
+     */
     public void update(float delta) {
         // 0. Update FPS Counter (every 1 second)
         fpsUpdateTimer += delta;
@@ -376,14 +399,28 @@ public class GameHUD implements Disposable {
         stage.act(delta);
     }
 
+    /**
+     * Renders the HUD.
+     */
     public void render() {
         stage.draw();
     }
 
+    /**
+     * Gets the HUD stage.
+     *
+     * @return The stage.
+     */
     public Stage getStage() {
         return stage;
     }
 
+    /**
+     * Resizes the HUD viewport.
+     *
+     * @param width  New width.
+     * @param height New height.
+     */
     public void resize(int width, int height) {
         stage.getViewport().update(width, height, true);
     }

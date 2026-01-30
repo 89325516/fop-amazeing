@@ -19,20 +19,34 @@ public abstract class Weapon extends GameObject {
     protected WeaponEffect effect;
 
     // === New: Damage Type System ===
+    /** The type of damage dealt by this weapon. */
     protected DamageType damageType = DamageType.PHYSICAL;
 
     // === New: Ranged Weapon System ===
+    /** Whether this weapon is a ranged weapon. */
     protected boolean isRanged = false;
-    protected float reloadTime = 0f; // Total time to reload (seconds)
-    protected float projectileSpeed = 10f; // Speed for projectiles
-    protected float currentReloadTimer = 0f; // Current reload progress
+    /** Total time to reload in seconds. */
+    protected float reloadTime = 0f;
+    /** Speed for projectiles if ranged. */
+    protected float projectileSpeed = 10f;
+    /** Current reload progress timer. */
+    protected float currentReloadTimer = 0f;
+    /** Whether the weapon is currently reloading. */
     protected boolean isReloading = false;
 
-    // Texture identifier for inventory/HUD display
+    /** Texture identifier for inventory/HUD display. */
     protected String textureKey = "default_weapon";
 
     /**
      * Original constructor for backward compatibility.
+     * 
+     * @param x        X coordinate.
+     * @param y        Y coordinate.
+     * @param name     Name of the weapon.
+     * @param damage   Damage dealt per hit.
+     * @param range    Attack range.
+     * @param cooldown Cooldown time between attacks.
+     * @param effect   Status effect applied.
      */
     public Weapon(float x, float y, String name, int damage, float range, float cooldown, WeaponEffect effect) {
         super(x, y);
@@ -48,6 +62,15 @@ public abstract class Weapon extends GameObject {
 
     /**
      * Extended constructor with damage type.
+     * 
+     * @param x          X coordinate.
+     * @param y          Y coordinate.
+     * @param name       Name of the weapon.
+     * @param damage     Damage dealt per hit.
+     * @param range      Attack range.
+     * @param cooldown   Cooldown time between attacks.
+     * @param effect     Status effect applied.
+     * @param damageType Type of damage dealt.
      */
     public Weapon(float x, float y, String name, int damage, float range, float cooldown,
             WeaponEffect effect, DamageType damageType) {
@@ -57,6 +80,18 @@ public abstract class Weapon extends GameObject {
 
     /**
      * Full constructor for ranged weapons.
+     * 
+     * @param x               X coordinate.
+     * @param y               Y coordinate.
+     * @param name            Name of the weapon.
+     * @param damage          Damage dealt per hit.
+     * @param range           Attack range.
+     * @param cooldown        Cooldown time between attacks.
+     * @param effect          Status effect applied.
+     * @param damageType      Type of damage dealt.
+     * @param isRanged        Whether it is a ranged weapon.
+     * @param reloadTime      Time to reload.
+     * @param projectileSpeed Speed of projectile.
      */
     public Weapon(float x, float y, String name, int damage, float range, float cooldown,
             WeaponEffect effect, DamageType damageType, boolean isRanged, float reloadTime, float projectileSpeed) {
@@ -109,6 +144,8 @@ public abstract class Weapon extends GameObject {
 
     /**
      * Get reload progress as percentage (0.0 = just fired, 1.0 = ready).
+     * 
+     * @return Reload progress from 0.0 to 1.0.
      */
     public float getReloadProgress() {
         if (!isRanged || reloadTime <= 0)
@@ -172,12 +209,17 @@ public abstract class Weapon extends GameObject {
 
     /**
      * Get unique type identifier for serialization.
+     * 
+     * @return The unique type ID string.
      */
     public String getTypeId() {
         return name.toUpperCase().replace(" ", "_");
     }
 
-    // Abstract method to allow unique behavior if needed,
-    // though for now stats might be enough.
+    /**
+     * Get description of the weapon.
+     * 
+     * @return A string description.
+     */
     public abstract String getDescription();
 }

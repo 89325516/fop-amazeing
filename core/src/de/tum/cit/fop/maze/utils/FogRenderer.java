@@ -11,13 +11,16 @@ import com.badlogic.gdx.math.MathUtils;
 import de.tum.cit.fop.maze.config.GameSettings;
 
 /**
- * 处理战争迷雾（Fog of War）效果的渲染。
- * 在玩家周围创建一个可见的圆形区域，周围是渐变到黑色的迷雾。
- * 
- * 设计原则：
- * - 可见半径固定为 VISION_RADIUS_TILES 格，不随相机缩放变化
- * - 防止玩家通过调整相机高度来获取更多地图信息
- * - 迷雾始终完全覆盖屏幕，仅在玩家周围留下固定大小的可见圆
+ * Handles the rendering of the "Fog of War" effect.
+ * Creates a visible circular area around the player, surrounded by a gradient
+ * fading to black fog.
+ * <p>
+ * Design Principles:
+ * - Visible radius is fixed at VISION_RADIUS_TILES tiles, independent of camera
+ * zoom.
+ * - Prevents players from gaining more map information by zooming out.
+ * - Fog always completely covers the screen, leaving only a fixed-size visible
+ * circle around the player.
  */
 public class FogRenderer {
 
@@ -25,14 +28,14 @@ public class FogRenderer {
     private Texture fogTexture;
     private final int textureSize = 1024;
 
-    // 可见半径（以格子为单位）- 固定值，不随相机变化
-    private static final float VISION_RADIUS_TILES = 4.0f; // 4格可见半径
-    private static final float GRADIENT_TILES = 2.0f; // 渐变区域宽度（格子数）
-    private static final float TILE_SIZE = 16f; // 每格像素
+    // Visible radius (in tiles) - Fixed value, independent of camera
+    private static final float VISION_RADIUS_TILES = 4.0f; // 4 tiles visible radius
+    private static final float GRADIENT_TILES = 2.0f; // Gradient area width (tiles)
+    private static final float TILE_SIZE = 16f; // Pixels per tile
 
-    // 纹理中的渐变参数（比例）
-    private static final float INNER_RADIUS_RATIO = 0.20f; // 完全透明的内圈比例
-    private static final float OUTER_RADIUS_RATIO = 0.35f; // 渐变结束的外圈比例
+    // Gradient parameters in texture (ratio)
+    private static final float INNER_RADIUS_RATIO = 0.20f; // Fully transparent inner circle ratio
+    private static final float OUTER_RADIUS_RATIO = 0.35f; // Gradient end outer circle ratio
 
     public FogRenderer(SpriteBatch batch) {
         this.batch = batch;
@@ -40,17 +43,17 @@ public class FogRenderer {
     }
 
     /**
-     * 创建迷雾纹理。
-     * 纹理中心是透明的，向边缘渐变为不透明黑色。
+     * Creates the fog texture.
+     * The texture center is transparent, fading to opaque black towards the edges.
      */
     private void createFogTexture() {
         Pixmap pixmap = new Pixmap(textureSize, textureSize, Pixmap.Format.RGBA8888);
 
-        // 首先填充完全不透明的黑色
+        // First fill with fully opaque black
         pixmap.setColor(0f, 0f, 0f, 1f);
         pixmap.fill();
 
-        // 禁用 Pixmap 混合，直接写入透明像素
+        // Disable Pixmap blending to write transparent pixels directly
         pixmap.setBlending(Pixmap.Blending.None);
 
         int centerX = textureSize / 2;
@@ -58,7 +61,7 @@ public class FogRenderer {
         float innerRadius = textureSize * INNER_RADIUS_RATIO;
         float outerRadius = textureSize * OUTER_RADIUS_RATIO;
 
-        // 创建径向渐变
+        // Create radial gradient
         for (int x = 0; x < textureSize; x++) {
             for (int y = 0; y < textureSize; y++) {
                 float dx = x - centerX;
@@ -67,16 +70,16 @@ public class FogRenderer {
 
                 float alpha;
                 if (distance <= innerRadius) {
-                    // 内圈：完全透明
+                    // Inner circle: fully transparent
                     alpha = 0f;
                 } else if (distance <= outerRadius) {
-                    // 渐变区域：从透明渐变到不透明
+                    // Gradient area: fade from transparent to opaque
                     float t = (distance - innerRadius) / (outerRadius - innerRadius);
-                    // Hermite 插值实现平滑过渡
+                    // Hermite interpolation for smooth transition
                     t = t * t * (3f - 2f * t);
                     alpha = MathUtils.clamp(t, 0f, 1f);
                 } else {
-                    // 外圈：完全不透明黑色
+                    // Outer circle: fully opaque black
                     alpha = 1f;
                 }
 
@@ -94,96 +97,106 @@ public class FogRenderer {
     }
 
     /**
-     * 渲染以玩家为中心的迷雾效果。
-     * 
-     * 关键设计：迷雾可见半径是固定的，不随相机缩放变化。
-     * 这防止玩家通过缩小相机（zoom out）来看到更多地图信息。
-     * 
-     * @param playerX 玩家的世界X坐标（像素）
-     * @param playerY 玩家的世界Y坐标（像素）
-     * @param camera  游戏相机（用于获取视野大小和缩放）
+     * Renders the fog effect centered on the player.
+     * <p>
+     * Key Design: The visible radius is fixed and does not change with camera zoom.
+     * This prevents players from seeing more of the map by zooming out.
+     *
+     * @param playerX Player world X coordinate (pixels).
+     * @param playerY Player world Y coordinate (pixels).
+     * @param camera  Game camera (used to get viewport size and zoom).
      */
     public void render(float playerX, float playerY, OrthographicCamera camera) {
         if (!GameSettings.isFogEnabled()) {
             return;
         }
 
-        // 保存当前的混合状态
+        // Save current blending state
         boolean wasBlendingEnabled = batch.isBlendingEnabled();
 
-        // 启用混合并设置正确的混合函数
+        // Enable blending and set correct blending function
         batch.enableBlending();
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
         batch.setColor(Color.WHITE);
 
-        // 固定的可见半径（世界像素单位）
+        // Fixed visible radius (world units/pixels)
         float visionRadiusWorld = VISION_RADIUS_TILES * TILE_SIZE;
 
-        // 计算迷雾纹理的绘制大小
-        // 纹理中透明圆的半径是 textureSize * INNER_RADIUS_RATIO
-        // 我们希望绘制后透明圆的实际半径等于 visionRadiusWorld
+        // Calculate draw size for the fog texture
+        // The transparent circle radius in texture is textureSize * INNER_RADIUS_RATIO
+        // We want the actual drawn transparent circle radius to equal visionRadiusWorld
         // drawSize * INNER_RADIUS_RATIO = visionRadiusWorld
         float drawSize = visionRadiusWorld / INNER_RADIUS_RATIO;
 
-        // 确保纹理覆盖整个可见屏幕
-        // 即使相机 zoom out，迷雾也要完全覆盖
+        // Ensure texture covers the entire visible screen
+        // Even if camera zooms out, fog must cover completely
         float viewW = camera.viewportWidth * camera.zoom;
         float viewH = camera.viewportHeight * camera.zoom;
         float screenDiagonal = (float) Math.sqrt(viewW * viewW + viewH * viewH);
 
-        // 纹理必须足够大以覆盖整个屏幕
-        // 从玩家位置到屏幕角落的最大距离
-        float maxScreenCornerDist = screenDiagonal / 2 + 50; // 额外边距
+        // Texture must be large enough to cover screen corners from player position
+        float maxScreenCornerDist = screenDiagonal / 2 + 50; // Extra margin
 
-        // 纹理外边缘必须超过屏幕边缘
-        // 纹理半径 = drawSize / 2
-        // 我们需要 drawSize / 2 >= maxScreenCornerDist
+        // Texture outer edge must extend beyond screen edge
+        // Texture radius = drawSize / 2
+        // We need drawSize / 2 >= maxScreenCornerDist
         float minDrawSize = maxScreenCornerDist * 2;
 
         if (drawSize < minDrawSize) {
-            // 纹理太小，需要放大
-            // 但放大纹理会让透明圆变大，这不是我们想要的
-            // 所以我们需要绘制额外的黑色边框来填充
-            // 关键修复：使用相机位置而非玩家位置来计算覆盖区域
+            // Texture is too small, need to scale up?
+            // But scaling up makes the transparent circle larger, which we don't want.
+            // So we draw extra black borders to fill the gap.
+            // Key Fix: Use camera position instead of player position to determine coverage
+            // area
             drawExtraBlackBorder(playerX, playerY, drawSize, camera);
         }
 
-        // 以玩家为中心绘制迷雾纹理
+        // Draw fog texture centered on player
         float drawX = playerX - drawSize / 2;
         float drawY = playerY - drawSize / 2;
         batch.draw(fogTexture, drawX, drawY, drawSize, drawSize);
 
-        // 恢复混合状态
+        // Restore blending state
         if (!wasBlendingEnabled) {
             batch.disableBlending();
         }
     }
 
     /**
-     * 绘制额外的黑色边框以填充迷雾纹理覆盖不到的屏幕区域。
-     * 这确保了即使相机 zoom out 很远，屏幕边缘也是黑色的。
-     * 
-     * 关键设计：必须使用相机位置来确定覆盖区域，因为相机可能被 clamp 到地图边界，
-     * 导致相机位置与玩家位置不一致。如果只按玩家位置绘制，当玩家在地图边缘时，
-     * 远离玩家的地图区域会暴露出来。
+     * Draws extra black borders to fill screen areas not covered by the fog
+     * texture.
+     * This ensures screen edges are black even if camera zooms out far.
+     * <p>
+     * Key Design: Must use camera position to determine coverage area, because
+     * camera
+     * might be clamped to map bounds, causing camera position to differ from player
+     * position.
+     * If we only draw based on player position, map areas far from player might be
+     * exposed
+     * when player is at map edge.
+     *
+     * @param playerX Player X.
+     * @param playerY Player Y.
+     * @param fogSize Calculated fog texture size.
+     * @param camera  The camera.
      */
     private void drawExtraBlackBorder(float playerX, float playerY, float fogSize,
             OrthographicCamera camera) {
         float halfFog = fogSize / 2;
 
-        // 使用相机的实际可见区域来计算需要覆盖的范围
+        // Use camera's actual visible area to calculate needed coverage
         float viewW = camera.viewportWidth * camera.zoom;
         float viewH = camera.viewportHeight * camera.zoom;
         float camX = camera.position.x;
         float camY = camera.position.y;
 
-        // 相机可见区域的边界（加上安全边距）
+        // Camera visible boundaries (plus safety margin)
         float camLeft = camX - viewW / 2 - 50;
         float camRight = camX + viewW / 2 + 50;
         float camBottom = camY - viewH / 2 - 50;
         float camTop = camY + viewH / 2 + 50;
 
-        // 迷雾纹理覆盖的区域（以玩家为中心）
+        // Fog texture coverage area (centered on player)
         float fogLeft = playerX - halfFog;
         float fogRight = playerX + halfFog;
         float fogBottom = playerY - halfFog;
@@ -191,17 +204,17 @@ public class FogRenderer {
 
         batch.setColor(0, 0, 0, 1);
 
-        // 上边：覆盖迷雾纹理上方到相机顶部的区域
+        // Top: Cover area from fog top to camera top
         if (camTop > fogTop) {
             drawBlackRect(camLeft, fogTop, camRight - camLeft, camTop - fogTop);
         }
 
-        // 下边：覆盖迷雾纹理下方到相机底部的区域
+        // Bottom: Cover area from fog bottom to camera bottom
         if (fogBottom > camBottom) {
             drawBlackRect(camLeft, camBottom, camRight - camLeft, fogBottom - camBottom);
         }
 
-        // 左边：覆盖迷雾纹理左侧到相机左边的区域（只覆盖迷雾高度范围内）
+        // Left: Cover area from fog left to camera left (only within fog height range)
         if (fogLeft > camLeft) {
             float rectBottom = Math.max(fogBottom, camBottom);
             float rectTop = Math.min(fogTop, camTop);
@@ -210,7 +223,8 @@ public class FogRenderer {
             }
         }
 
-        // 右边：覆盖迷雾纹理右侧到相机右边的区域（只覆盖迷雾高度范围内）
+        // Right: Cover area from fog right to camera right (only within fog height
+        // range)
         if (camRight > fogRight) {
             float rectBottom = Math.max(fogBottom, camBottom);
             float rectTop = Math.min(fogTop, camTop);
@@ -223,16 +237,17 @@ public class FogRenderer {
     }
 
     /**
-     * 绘制纯黑矩形（使用迷雾纹理的边缘部分，那里是纯黑的）
+     * Draws a solid black rectangle (using the edge of the fog texture which is
+     * black).
      */
     private void drawBlackRect(float x, float y, float width, float height) {
-        // 使用迷雾纹理的角落（纯黑区域）来绘制矩形
-        // 角落坐标：0,0 到 10,10（肯定是纯黑的）
+        // Use the corner of the fog texture (solid black area)
+        // Corner coordinates: 0,0 to 10,10 (guaranteed to be black)
         batch.draw(fogTexture, x, y, width, height, 0, 0, 10, 10, false, false);
     }
 
     /**
-     * 释放资源。
+     * Disposes resources.
      */
     public void dispose() {
         if (fogTexture != null) {

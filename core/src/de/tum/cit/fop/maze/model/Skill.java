@@ -1,5 +1,9 @@
 package de.tum.cit.fop.maze.model;
 
+/**
+ * Enumeration of available player skills.
+ * Define skill names, descriptions, and point costs.
+ */
 public enum Skill {
     SPEED_BOOST_1("Speed Up I", "Increases movement speed by 10%.", 100),
     SPEED_BOOST_2("Speed Up II", "Increases movement speed by 20%.", 200),

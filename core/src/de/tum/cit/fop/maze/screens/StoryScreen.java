@@ -21,8 +21,9 @@ import com.badlogic.gdx.utils.viewport.FitViewport;
 import de.tum.cit.fop.maze.MazeRunnerGame;
 
 /**
- * 視覺小說風格的故事畫面 (Visual Novel Style Story Screen)
- * 支援動態對話數據，可根據關卡顯示不同的對話和背景
+ * Visual Novel Style Story Screen.
+ * Supports dynamic dialogue data, displaying different dialogue and backgrounds
+ * based on the level.
  */
 public class StoryScreen implements Screen {
 
@@ -30,56 +31,56 @@ public class StoryScreen implements Screen {
     private final Stage stage;
     private final String nextMapPath;
 
-    // 對話數據 (Dialogue data)
+    // Dialogue data
     private final DialogueData.LevelDialogue dialogueData;
     private int currentLineIndex = 0;
 
-    // 背景圖片紋理 (Background texture)
+    // Background texture
     private Texture backgroundTexture;
-    // 對話框紋理 (Dialogue box textures)
+    // Dialogue box textures
     private Texture dialogBoxTexture;
     private Texture borderTexture;
 
-    // UI 元素引用
+    // UI Element References
     private Label speakerLabel;
     private Label dialogueLabel;
     private Label pageIndicator;
 
     /**
-     * 構造函數 - 使用開場對話（New Game 時）
+     * Constructor - Uses intro dialogue (for New Game).
      */
     public StoryScreen(MazeRunnerGame game, String nextMapPath) {
         this(game, nextMapPath, DialogueData.INTRO_DIALOGUE);
     }
 
     /**
-     * 構造函數 - 使用指定的對話數據
+     * Constructor - Uses specified dialogue data.
      */
     public StoryScreen(MazeRunnerGame game, String nextMapPath, DialogueData.LevelDialogue dialogueData) {
         this.game = game;
         this.nextMapPath = nextMapPath;
         this.dialogueData = dialogueData;
 
-        // 調試日誌 - 確認 StoryScreen 被創建
+        // Debug Log - Confirm StoryScreen creation
         Gdx.app.log("StoryScreen", "========== STORY SCREEN CREATED ==========");
         Gdx.app.log("StoryScreen", "Next map: " + nextMapPath);
         Gdx.app.log("StoryScreen", "Dialogue lines: " + (dialogueData != null ? dialogueData.lines.length : "NULL"));
 
-        // 使用 FitViewport 確保 UI 在不同螢幕尺寸下一致顯示
+        // Use FitViewport to ensure consistent UI display across different screen sizes
         this.stage = new Stage(new FitViewport(1920, 1080), game.getSpriteBatch());
 
-        // 載入背景圖片
+        // Load background image
         loadBackgroundTexture();
 
-        // 創建對話框視覺元素
+        // Create dialogue box visual elements
         createDialogBoxTextures();
 
-        // 設置 UI 佈局
+        // Setup UI layout
         setupUI();
     }
 
     /**
-     * 靜態工廠方法 - 根據關卡號創建對話畫面
+     * Static Factory Method - Creates conversation screen based on level number.
      */
     public static StoryScreen forLevel(MazeRunnerGame game, String mapPath) {
         int levelNumber = DialogueData.extractLevelNumber(mapPath);
@@ -88,13 +89,13 @@ public class StoryScreen implements Screen {
         if (dialogue != null) {
             return new StoryScreen(game, mapPath, dialogue);
         } else {
-            // 如果找不到對應對話，直接進入遊戲
+            // If corresponding dialogue not found, go directly to game
             return null;
         }
     }
 
     /**
-     * 載入背景圖片
+     * Loads background image.
      */
     private void loadBackgroundTexture() {
         String bgPath = dialogueData.backgroundPath;
@@ -103,16 +104,16 @@ public class StoryScreen implements Screen {
             backgroundTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
         } catch (Exception e) {
             Gdx.app.error("StoryScreen", "Failed to load background: " + bgPath, e);
-            // 使用默認背景
+            // Use default background
             this.backgroundTexture = new Texture(Gdx.files.internal("images/backgrounds/doctor_scene.jpg"));
         }
     }
 
     /**
-     * 創建對話框的視覺紋理（漸層背景 + 邊框）
+     * Creates dialogue box visual textures (gradient background + border).
      */
     private void createDialogBoxTextures() {
-        // 創建漸層對話框背景
+        // Create gradient dialogue box background
         int boxHeight = 50;
         Pixmap gradientPixmap = new Pixmap(1, boxHeight, Pixmap.Format.RGBA8888);
         for (int y = 0; y < boxHeight; y++) {
@@ -123,7 +124,7 @@ public class StoryScreen implements Screen {
         dialogBoxTexture = new Texture(gradientPixmap);
         gradientPixmap.dispose();
 
-        // 創建邊框紋理
+        // Create border texture
         Pixmap borderPixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
         borderPixmap.setColor(0.3f, 0.6f, 0.9f, 0.7f);
         borderPixmap.fill();
@@ -132,31 +133,31 @@ public class StoryScreen implements Screen {
     }
 
     /**
-     * 設置 UI 元素佈局 - 精美視覺小說風格
+     * Sets up UI element layout - Exquisite visual novel style.
      */
     private void setupUI() {
         stage.clear();
 
-        // 主容器
+        // Main container
         Table root = new Table();
         root.setFillParent(true);
         root.bottom();
         stage.addActor(root);
 
-        // 對話框外層容器
+        // Dialogue box outer container
         Table dialogContainer = new Table();
 
-        // 頂部裝飾線
+        // Top decorative line
         Table topBorder = new Table();
         topBorder.setBackground(new TextureRegionDrawable(new TextureRegion(borderTexture)));
         dialogContainer.add(topBorder).width(1750).height(3).padBottom(0).row();
 
-        // 對話框主體
+        // Dialogue box body
         Table dialogBox = new Table();
         dialogBox.setBackground(new TextureRegionDrawable(new TextureRegion(dialogBoxTexture)));
         dialogBox.pad(40, 55, 35, 55);
 
-        // --- 說話者名稱標籤 ---
+        // --- Speaker Name Label ---
         BitmapFont boldFont = game.getSkin().getFont("bold");
         DialogueData.DialogueLine currentLine = getCurrentLine();
         Label.LabelStyle speakerStyle = new Label.LabelStyle(boldFont, currentLine.speaker.color);
@@ -168,7 +169,7 @@ public class StoryScreen implements Screen {
 
         dialogBox.add(speakerContainer).left().padBottom(18).row();
 
-        // --- 對話內容標籤 ---
+        // --- Dialogue Content Label ---
         BitmapFont dialogFont = game.getSkin().getFont("font");
         Label.LabelStyle dialogStyle = new Label.LabelStyle(dialogFont, new Color(0.95f, 0.95f, 0.95f, 1f));
         dialogueLabel = new Label(currentLine.text, dialogStyle);
@@ -178,16 +179,16 @@ public class StoryScreen implements Screen {
 
         dialogBox.add(dialogueLabel).width(1580).minHeight(130).padBottom(28).left().row();
 
-        // --- 底部行：頁碼 + 按鈕 ---
+        // --- Bottom Row: Page Number + Button ---
         Table bottomRow = new Table();
 
-        // 頁碼指示器
+        // Page indicator
         Label.LabelStyle pageStyle = new Label.LabelStyle(dialogFont, new Color(0.5f, 0.6f, 0.7f, 1f));
         pageIndicator = new Label(getPageIndicatorText(), pageStyle);
         pageIndicator.setFontScale(0.85f);
         bottomRow.add(pageIndicator).left().expandX();
 
-        // 繼續按鈕
+        // Continue button
         TextButton continueBtn = new TextButton("Continue  ▶", game.getSkin());
         continueBtn.getLabel().setFontScale(0.95f);
         continueBtn.addListener(new ChangeListener() {
@@ -202,17 +203,17 @@ public class StoryScreen implements Screen {
 
         dialogContainer.add(dialogBox).width(1750).row();
 
-        // 底部裝飾線
+        // Bottom decorative line
         Table bottomBorder = new Table();
         bottomBorder.setBackground(new TextureRegionDrawable(new TextureRegion(borderTexture)));
         dialogContainer.add(bottomBorder).width(1750).height(3).padTop(0);
 
-        // 將對話框加入主容器
+        // Add dialogue box to main container
         root.add(dialogContainer).padBottom(35);
     }
 
     /**
-     * 獲取當前對話行
+     * Gets current dialogue line.
      */
     private DialogueData.DialogueLine getCurrentLine() {
         if (currentLineIndex < dialogueData.lines.length) {
@@ -222,47 +223,47 @@ public class StoryScreen implements Screen {
     }
 
     /**
-     * 獲取頁碼指示文字
+     * Gets page indicator text.
      */
     private String getPageIndicatorText() {
         return (currentLineIndex + 1) + " / " + dialogueData.lines.length;
     }
 
     /**
-     * 點擊繼續時的處理邏輯
+     * Handles continue click logic.
      */
     private void onContinueClicked() {
         currentLineIndex++;
         if (currentLineIndex >= dialogueData.lines.length) {
-            // 所有對話結束，進入裝備選擇界面
+            // All dialogue finished, go to armor selection screen
             game.setScreen(new ArmorSelectScreen(game, nextMapPath));
         } else {
-            // 更新對話內容
+            // Update dialogue content
             updateDialogue();
         }
     }
 
     /**
-     * 更新對話框內容
+     * Updates dialogue box content.
      */
     private void updateDialogue() {
         DialogueData.DialogueLine currentLine = getCurrentLine();
 
-        // 更新說話者
+        // Update speaker
         speakerLabel.setText(currentLine.speaker.displayName);
         speakerLabel.setColor(currentLine.speaker.color);
 
-        // 更新對話文字
+        // Update dialogue text
         dialogueLabel.setText(currentLine.text);
 
-        // 更新頁碼
+        // Update page number
         pageIndicator.setText(getPageIndicatorText());
     }
 
     @Override
     public void show() {
         Gdx.input.setInputProcessor(stage);
-        // 🔊 全局按钮音效
+        // 🔊 Global button sound
         de.tum.cit.fop.maze.utils.UIUtils.enableMenuButtonSound(stage);
     }
 
@@ -271,7 +272,7 @@ public class StoryScreen implements Screen {
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        // 渲染背景圖片
+        // Render background image
         SpriteBatch batch = game.getSpriteBatch();
         int screenWidth = Gdx.graphics.getBackBufferWidth();
         int screenHeight = Gdx.graphics.getBackBufferHeight();
@@ -282,14 +283,14 @@ public class StoryScreen implements Screen {
         drawBackgroundCover(batch, screenWidth, screenHeight);
         batch.end();
 
-        // 渲染 UI
+        // Render UI
         stage.getViewport().apply();
         stage.act(delta);
         stage.draw();
     }
 
     /**
-     * 以 Cover 模式繪製背景圖片
+     * Draws background image in Cover mode.
      */
     private void drawBackgroundCover(SpriteBatch batch, float screenW, float screenH) {
         float texWidth = backgroundTexture.getWidth();

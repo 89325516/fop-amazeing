@@ -7,18 +7,19 @@ import java.util.Map;
 import java.util.function.BiFunction;
 
 /**
- * 实体工厂类 (Factory Pattern)。
- * 负责根据 ID 创建对应的游戏对象实例。
- * 实现了注册机制，方便扩展新类型的物体而无需修改核心加载逻辑。
+ * Entity Factory Class (Factory Pattern).
+ * Responsible for creating game object instances based on IDs.
+ * Implements a registration mechanism to easily extend new object types without
+ * modifying the core loading logic.
  */
 public class EntityFactory {
 
-    // 使用函数式接口 BiFunction<Float, Float, GameObject>
-    // 接收 x, y 坐标，返回 GameObject
+    // Use functional interface BiFunction<Float, Float, GameObject>
+    // Receives x, y coordinates, returns GameObject
     private static final Map<Integer, BiFunction<Float, Float, GameObject>> registry = new HashMap<>();
 
     static {
-        // === 注册默认实体 ===
+        // === Register Default Entities ===
         // ID=0 now creates 2x2 walls (no more 1x1 walls)
         register(GameConfig.OBJECT_ID_WALL, (x, y) -> new Wall(x, y, 2, 2));
         register(GameConfig.OBJECT_ID_EXIT, Exit::new);
@@ -36,7 +37,7 @@ public class EntityFactory {
         register(GameConfig.OBJECT_ID_WALL_3X3, (x, y) -> new Wall(x, y, 3, 3));
         register(GameConfig.OBJECT_ID_WALL_4X4, (x, y) -> new Wall(x, y, 4, 4));
 
-        // 注册宝箱 (Treasure Chest - Simple touch-to-open)
+        // Register Treasure Chest - Simple touch-to-open
         register(GameConfig.OBJECT_ID_CHEST, (x, y) -> {
             java.util.Random random = new java.util.Random();
             TreasureChest chest = TreasureChest.createRandom(x, y, random);
@@ -44,28 +45,30 @@ public class EntityFactory {
             return chest;
         });
 
-        // 注意：ID 1 (Entry) 通常不生成实体对象，而是设置玩家起始位置，
-        // 所以这里不注册它，或者注册一个空操作（视 MapLoader 逻辑而定）。
-        // MapLoader 目前特殊处理了 ID 1。
+        // Note: ID 1 (Entry) usually does not create a game object entity, but sets the
+        // player's start position.
+        // So we don't register it here, or register a no-op (depending on MapLoader
+        // logic).
+        // MapLoader currently handles ID 1 specially.
     }
 
     /**
-     * 注册一个新的实体类型。
-     * 
-     * @param id      地图文件中的 ID
-     * @param creator 创建函数，例如 Enemy::new
+     * Registers a new entity type.
+     *
+     * @param id      The ID in the map file.
+     * @param creator The creation function, e.g., Enemy::new.
      */
     public static void register(int id, BiFunction<Float, Float, GameObject> creator) {
         registry.put(id, creator);
     }
 
     /**
-     * 根据 ID 和坐标创建实体。
-     * 
-     * @param id 对象 ID
-     * @param x  X 坐标
-     * @param y  Y 坐标
-     * @return 新创建的 GameObject，如果 ID 未注册则返回 null
+     * Creates an entity based on ID and coordinates.
+     *
+     * @param id The object ID.
+     * @param x  The X coordinate.
+     * @param y  The Y coordinate.
+     * @return The newly created GameObject, or null if the ID is not registered.
      */
     public static GameObject createEntity(int id, float x, float y) {
         BiFunction<Float, Float, GameObject> creator = registry.get(id);
@@ -78,7 +81,10 @@ public class EntityFactory {
     }
 
     /**
-     * 检查 ID 是否已注册
+     * Checks if an ID is registered.
+     *
+     * @param id The object ID.
+     * @return True if registered, false otherwise.
      */
     public static boolean isRegistered(int id) {
         return registry.containsKey(id);

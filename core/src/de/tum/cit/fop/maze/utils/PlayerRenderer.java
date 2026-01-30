@@ -10,12 +10,12 @@ import de.tum.cit.fop.maze.custom.ElementType;
 import de.tum.cit.fop.maze.model.Player;
 
 /**
- * PlayerRenderer - 统一的玩家渲染工具类
- * 
- * 抽取自 GameScreen 和 EndlessGameScreen 的共享渲染逻辑，
- * 确保两种模式下玩家渲染行为完全一致。
- * 
- * 使用方式:
+ * PlayerRenderer - Unified Utility Class for Player Rendering.
+ * <p>
+ * Extracted shared rendering logic from GameScreen and EndlessGameScreen,
+ * ensuring consistent player rendering behavior across both modes.
+ * <p>
+ * Usage:
  * 
  * <pre>
  * PlayerRenderer renderer = new PlayerRenderer(batch, textureManager, UNIT_SCALE);
@@ -28,7 +28,7 @@ public class PlayerRenderer {
     private final TextureManager textureManager;
     private final float unitScale;
 
-    // 缓存的自定义皮肤ID，避免每帧重新查找
+    // Cached custom skin ID to avoid lookups every frame
     private String cachedPlayerSkinId = null;
     private boolean skinCacheValid = false;
 
@@ -39,25 +39,26 @@ public class PlayerRenderer {
     }
 
     /**
-     * 渲染玩家精灵
+     * Renders the player sprite.
      *
-     * @param player    玩家对象
-     * @param direction 玩家朝向 (0=下, 1=上, 2=左, 3=右)
-     * @param stateTime 动画状态时间
-     * @param isMoving  玩家是否正在移动
+     * @param player    The player object.
+     * @param direction Player direction (0=Down, 1=Up, 2=Left, 3=Right).
+     * @param stateTime Animation state time.
+     * @param isMoving  Whether the player is currently moving.
      */
     public void render(Player player, int direction, float stateTime, boolean isMoving) {
         render(player, direction, stateTime, isMoving, null);
     }
 
     /**
-     * 渲染玩家精灵（带武器渲染回调）
+     * Renders the player sprite (with weapon rendering callback).
      *
-     * @param player         玩家对象
-     * @param direction      玩家朝向 (0=下, 1=上, 2=左, 3=右)
-     * @param stateTime      动画状态时间
-     * @param isMoving       玩家是否正在移动
-     * @param weaponRenderer 武器渲染回调（可选），用于在正确的层级渲染武器
+     * @param player         The player object.
+     * @param direction      Player direction (0=Down, 1=Up, 2=Left, 3=Right).
+     * @param stateTime      Animation state time.
+     * @param isMoving       Whether the player is currently moving.
+     * @param weaponRenderer Optional weapon rendering callback to render weapon at
+     *                       the correct layer.
      */
     public void render(Player player, int direction, float stateTime, boolean isMoving,
             WeaponRenderCallback weaponRenderer) {
@@ -71,13 +72,13 @@ public class PlayerRenderer {
             CustomElementManager manager = CustomElementManager.getInstance();
 
             if (player.isDead()) {
-                // 死亡动画
+                // Death Animation
                 Animation<TextureRegion> deathAnim = manager.getAnimation(playerSkinId, "Death");
                 if (deathAnim != null) {
                     playerFrame = deathAnim.getKeyFrame(player.getDeathProgress() * 0.5f, false);
                 }
             } else if (player.isAttacking()) {
-                // 攻击动画
+                // Attack Animation
                 float progress = getAttackAnimProgress(player);
                 String attackAction = getDirectionalAction("Attack", direction);
                 Animation<TextureRegion> attackAnim = manager.getAnimation(playerSkinId, attackAction);
@@ -89,7 +90,7 @@ public class PlayerRenderer {
                     flipX = (direction == 2);
                 }
             } else if (isMoving) {
-                // 移动动画
+                // Move Animation
                 String moveAction = getDirectionalAction("Move", direction);
                 Animation<TextureRegion> moveAnim = manager.getAnimation(playerSkinId, moveAction);
                 if (moveAnim == null && !moveAction.equals("Move")) {
@@ -100,7 +101,7 @@ public class PlayerRenderer {
                     flipX = (direction == 2);
                 }
             } else {
-                // 待机动画
+                // Idle Animation
                 String idleAction = getDirectionalAction("Idle", direction);
                 Animation<TextureRegion> idleAnim = manager.getAnimation(playerSkinId, idleAction);
                 if (idleAnim == null && !idleAction.equals("Idle")) {
@@ -113,28 +114,28 @@ public class PlayerRenderer {
             }
         }
 
-        // 回退到默认动画
+        // Fallback to default animations
         if (playerFrame == null) {
             playerFrame = getDefaultPlayerFrame(player, direction, stateTime, isMoving);
         }
 
-        // 保存当前颜色
+        // Save current color
         Color oldColor = batch.getColor().cpy();
 
-        // 状态着色
+        // Status coloring
         if (player.isDead()) {
             batch.setColor(0.5f, 0.5f, 0.5f, 1f);
         } else if (player.isHurt()) {
             batch.setColor(1f, 0f, 0f, 1f);
         }
 
-        // 计算绘制位置和尺寸
+        // Calculate draw position and size
         float drawX = player.getX() * unitScale;
         float drawY = player.getY() * unitScale;
         float drawWidth = playerFrame.getRegionWidth();
         float drawHeight = playerFrame.getRegionHeight();
 
-        // 自定义皮肤统一缩放
+        // Unified scaling for custom skins
         if (useCustomSkin) {
             drawWidth = unitScale;
             drawHeight = unitScale;
@@ -142,12 +143,12 @@ public class PlayerRenderer {
             drawX -= (playerFrame.getRegionWidth() - 16) / 2f;
         }
 
-        // 朝上或朝左时先渲染武器（在玩家身后）
+        // Render weapon first if facing Up or Left (behind player)
         if (weaponRenderer != null && !player.isDead() && (direction == 1 || direction == 2)) {
             weaponRenderer.renderWeapon(player, direction, stateTime);
         }
 
-        // 渲染玩家
+        // Render player
         if (player.isDead()) {
             batch.draw(playerFrame, drawX, drawY, drawWidth, drawHeight);
         } else if (flipX) {
@@ -156,17 +157,17 @@ public class PlayerRenderer {
             batch.draw(playerFrame, drawX, drawY, drawWidth, drawHeight);
         }
 
-        // 恢复颜色
+        // Restore color
         batch.setColor(oldColor);
 
-        // 其他方向时武器在玩家前面
+        // Render weapon in front for other directions
         if (weaponRenderer != null && !player.isDead() && direction != 1 && direction != 2) {
             weaponRenderer.renderWeapon(player, direction, stateTime);
         }
     }
 
     /**
-     * 获取默认玩家动画帧
+     * Gets the default player animation frame.
      */
     private TextureRegion getDefaultPlayerFrame(Player player, int direction, float stateTime, boolean isMoving) {
         if (player.isAttacking()) {
@@ -207,7 +208,7 @@ public class PlayerRenderer {
     }
 
     /**
-     * 计算攻击动画进度
+     * Calculates attack animation progress.
      */
     private float getAttackAnimProgress(Player player) {
         float total = player.getAttackAnimTotalDuration();
@@ -218,11 +219,11 @@ public class PlayerRenderer {
     }
 
     /**
-     * 根据方向获取对应的动作名称
+     * Gets the directional action name based on direction.
      *
-     * @param baseAction 基础动作名称 (Move, Idle, Attack)
-     * @param direction  方向 (0=下, 1=上, 2=左, 3=右)
-     * @return 方向性动作名称
+     * @param baseAction Base action name (Move, Idle, Attack).
+     * @param direction  Direction (0=Down, 1=Up, 2=Left, 3=Right).
+     * @return Directional action name.
      */
     public static String getDirectionalAction(String baseAction, int direction) {
         switch (direction) {
@@ -236,9 +237,9 @@ public class PlayerRenderer {
     }
 
     /**
-     * 获取当前激活的玩家皮肤元素ID
+     * Gets the currently active player skin element ID.
      *
-     * @return 第一个PLAYER类型的自定义元素ID，如果没有则返回null
+     * @return The ID of the first PLAYER type custom element, or null if none.
      */
     public String getActivePlayerSkinId() {
         if (skinCacheValid) {
@@ -257,7 +258,7 @@ public class PlayerRenderer {
     }
 
     /**
-     * 根据武器名称查找自定义武器元素ID
+     * Finds a custom weapon element ID by its name.
      */
     public static String findCustomWeaponId(String weaponName) {
         for (CustomElementDefinition def : CustomElementManager.getInstance().getAllElements()) {
@@ -270,14 +271,14 @@ public class PlayerRenderer {
     }
 
     /**
-     * 清除皮肤缓存（当自定义元素变更时调用）
+     * Invalidates the skin cache (Called when custom elements change).
      */
     public void invalidateSkinCache() {
         skinCacheValid = false;
     }
 
     /**
-     * 武器渲染回调接口
+     * Callback interface for weapon rendering.
      */
     @FunctionalInterface
     public interface WeaponRenderCallback {

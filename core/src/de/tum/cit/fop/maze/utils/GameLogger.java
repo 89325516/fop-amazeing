@@ -13,6 +13,9 @@ import java.time.format.DateTimeFormatter;
  */
 public class GameLogger {
 
+    /**
+     * Enumeration for log urgency levels.
+     */
     public enum LogLevel {
         DEBUG(0),
         INFO(1),
@@ -41,22 +44,53 @@ public class GameLogger {
         currentLogLevel = level;
     }
 
+    /**
+     * Logs a debug message.
+     * 
+     * @param tag     The tag identifying the source of the log.
+     * @param message The message to log.
+     */
     public static void debug(String tag, String message) {
         log(LogLevel.DEBUG, tag, message);
     }
 
+    /**
+     * Logs an info message.
+     * 
+     * @param tag     The tag identifying the source of the log.
+     * @param message The message to log.
+     */
     public static void info(String tag, String message) {
         log(LogLevel.INFO, tag, message);
     }
 
+    /**
+     * Logs a warning message.
+     * 
+     * @param tag     The tag identifying the source of the log.
+     * @param message The message to log.
+     */
     public static void warn(String tag, String message) {
         log(LogLevel.WARN, tag, message);
     }
 
+    /**
+     * Logs an error message.
+     * 
+     * @param tag     The tag identifying the source of the log.
+     * @param message The message to log.
+     */
     public static void error(String tag, String message) {
         log(LogLevel.ERROR, tag, message);
     }
 
+    /**
+     * Logs an error message with an associated exception.
+     * 
+     * @param tag       The tag identifying the source of the log.
+     * @param message   The message to log.
+     * @param exception The exception to include in the log.
+     */
     public static void error(String tag, String message, Throwable exception) {
         log(LogLevel.ERROR, tag, message + "\nException: " + exception.toString());
         if (currentLogLevel.value <= LogLevel.ERROR.value) {
@@ -64,6 +98,13 @@ public class GameLogger {
         }
     }
 
+    /**
+     * Internal method to handle log formatting and output.
+     * 
+     * @param level   The urgency level of the message.
+     * @param tag     The tag identifying the source.
+     * @param message The message content.
+     */
     private static void log(LogLevel level, String tag, String message) {
         if (level.value >= currentLogLevel.value) {
             String timestamp = dtf.format(LocalDateTime.now());

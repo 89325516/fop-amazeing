@@ -5,13 +5,14 @@ import de.tum.cit.fop.maze.model.Player;
 import de.tum.cit.fop.maze.model.weapons.Weapon;
 
 /**
- * 掉落物品类 (Dropped Item)
+ * Dropped Item Class.
  * 
- * 表示地面上可被玩家拾取的物品，包括：
- * - 武器掉落
- * - 护甲掉落
- * - 金币掉落
- * - 药水掉落
+ * Represents items on the ground that can be picked up by the player,
+ * including:
+ * - Weapon drops
+ * - Armor drops
+ * - Coin drops
+ * - Potion drops
  */
 public class DroppedItem extends GameObject {
 
@@ -24,15 +25,21 @@ public class DroppedItem extends GameObject {
 
     private ItemType type;
     private Object payload; // Weapon, Armor, or Integer (coin amount)
-    private float bobTimer = 0f; // 浮动动画计时器
+    /** Timer for the floating animation. */
+    private float bobTimer = 0f;
     private float bobOffset = 0f;
     private boolean pickedUp = false;
 
-    // 视觉效果
+    // Visual effect
     private String textureKey;
 
     /**
-     * 创建武器掉落物
+     * Creates a weapon drop.
+     * 
+     * @param x      X coordinate.
+     * @param y      Y coordinate.
+     * @param weapon The weapon to drop.
+     * @return A new DroppedItem instance containing the weapon.
      */
     public static DroppedItem createWeaponDrop(float x, float y, Weapon weapon) {
         DroppedItem item = new DroppedItem(x, y, ItemType.WEAPON, weapon);
@@ -41,7 +48,12 @@ public class DroppedItem extends GameObject {
     }
 
     /**
-     * 创建护甲掉落物
+     * Creates an armor drop.
+     * 
+     * @param x     X coordinate.
+     * @param y     Y coordinate.
+     * @param armor The armor to drop.
+     * @return A new DroppedItem instance containing the armor.
      */
     public static DroppedItem createArmorDrop(float x, float y, Armor armor) {
         DroppedItem item = new DroppedItem(x, y, ItemType.ARMOR, armor);
@@ -50,7 +62,12 @@ public class DroppedItem extends GameObject {
     }
 
     /**
-     * 创建金币掉落物
+     * Creates a coin drop.
+     * 
+     * @param x      X coordinate.
+     * @param y      Y coordinate.
+     * @param amount The amount of coins.
+     * @return A new DroppedItem instance containing the coins.
      */
     public static DroppedItem createCoinDrop(float x, float y, int amount) {
         DroppedItem item = new DroppedItem(x, y, ItemType.COIN, amount);
@@ -59,7 +76,12 @@ public class DroppedItem extends GameObject {
     }
 
     /**
-     * 创建药水掉落物
+     * Creates a potion drop.
+     * 
+     * @param x      X coordinate.
+     * @param y      Y coordinate.
+     * @param potion The potion to drop.
+     * @return A new DroppedItem instance containing the potion.
      */
     public static DroppedItem createPotionDrop(float x, float y, de.tum.cit.fop.maze.model.items.Potion potion) {
         DroppedItem item = new DroppedItem(x, y, ItemType.POTION, potion);
@@ -76,15 +98,20 @@ public class DroppedItem extends GameObject {
     }
 
     /**
-     * 更新掉落物状态（浮动动画）
+     * Updates the dropped item state (floating animation).
+     * 
+     * @param delta Time elapsed since last frame.
      */
     public void update(float delta) {
-        bobTimer += delta * 3f; // 浮动速度
-        bobOffset = (float) Math.sin(bobTimer) * 0.1f; // 上下浮动 0.1 单位
+        bobTimer += delta * 3f; // Bobbing speed
+        bobOffset = (float) Math.sin(bobTimer) * 0.1f; // Bobbing amplitude 0.1 units
     }
 
     /**
-     * 检查玩家是否可以拾取此物品
+     * Checks if the player is close enough to pick up this item.
+     * 
+     * @param player The player instance.
+     * @return true if within pickup range, false otherwise.
      */
     public boolean canPickUp(Player player) {
         if (pickedUp)
@@ -94,13 +121,14 @@ public class DroppedItem extends GameObject {
         float dy = player.getY() - y;
         float distance = (float) Math.sqrt(dx * dx + dy * dy);
 
-        return distance < 1.0f; // 拾取范围 1 单位
+        return distance < 1.0f; // Pickup range 1 unit
     }
 
     /**
-     * 将物品效果应用到玩家
+     * Applies the item effect to the player (picks it up).
      * 
-     * @return true 如果成功应用
+     * @param player The player instance.
+     * @return true if successfully applied/picked up.
      */
     public boolean applyToPlayer(Player player) {
         if (pickedUp)
@@ -113,7 +141,7 @@ public class DroppedItem extends GameObject {
                     pickedUp = true;
                     return true;
                 }
-                return false; // 背包已满
+                return false; // Inventory full
 
             case ARMOR:
                 Armor armor = (Armor) payload;
@@ -128,7 +156,9 @@ public class DroppedItem extends GameObject {
                 return true;
 
             case POTION:
-                // TODO: Implement potion effects
+                // TODO: Implement potion pickup logic (add to inventory via Player method)
+                // For now, assume auto-pickup if possible or just picked up
+                // Ideally: player.pickupPotion((Potion) payload)
                 pickedUp = true;
                 return true;
 
@@ -160,7 +190,9 @@ public class DroppedItem extends GameObject {
     }
 
     /**
-     * 获取显示名称（用于 UI）
+     * Gets the display name (for UI).
+     * 
+     * @return The name of the item.
      */
     public String getDisplayName() {
         switch (type) {

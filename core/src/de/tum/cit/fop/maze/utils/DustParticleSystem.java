@@ -6,63 +6,72 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Array;
 
 /**
- * 尘土/脚印粒子系统 - Dust Particle System
- * 在玩家移动时产生地面尘土效果，颜色根据地形变化
+ * Dust/Footprint Particle System.
+ * Creates ground dust effects when the player moves, with colors based on the
+ * terrain.
  */
 public class DustParticleSystem {
 
     /**
-     * 单个尘土粒子
+     * Represents a single dust particle.
      */
     private static class DustParticle {
-        float x, y; // 位置
-        float vx, vy; // 速度
-        float life; // 剩余生命
-        float maxLife; // 最大生命
-        float size; // 大小
-        Color color; // 颜色
+        float x, y; // Position
+        float vx, vy; // Velocity
+        float life; // Remaining life
+        float maxLife; // Max life
+        float size; // Size
+        Color color; // Color
 
         /**
-         * @param spawnX     生成位置 X
-         * @param spawnY     生成位置 Y
-         * @param themeColor 地形颜色
+         * Creates a new dust particle.
+         * 
+         * @param spawnX     Spawn X position.
+         * @param spawnY     Spawn Y position.
+         * @param themeColor Terrain theme color.
          */
         DustParticle(float spawnX, float spawnY, Color themeColor) {
             this.x = spawnX;
             this.y = spawnY;
 
-            // 随机速度方向 - 向上喷射或随机扩散
+            // Random velocity direction - slight upward spray or random spread
             float angle = MathUtils.random(0f, 360f) * MathUtils.degreesToRadians;
-            float speed = MathUtils.random(5f, 15f); // 速度较慢
+            float speed = MathUtils.random(5f, 15f); // Slow speed
             this.vx = MathUtils.cos(angle) * speed;
-            this.vy = MathUtils.sin(angle) * speed + 5f; // 轻微向上趋势
+            this.vy = MathUtils.sin(angle) * speed + 5f; // Slight upward trend
 
-            // 短生命周期 (缩短)
+            // Short lifespan (quick fade)
             this.maxLife = MathUtils.random(0.5f, 1.0f);
             this.life = maxLife;
 
-            // 小尺寸 (更小一点)
+            // Small scale
             this.size = MathUtils.random(0.5f, 1.5f);
 
-            // 颜色 (基于地形颜色，带随机变体，并加深)
-            float darkenFactor = 0.6f; // 变暗系数
+            // Color (based on theme, with variation, and slightly darkened)
+            float darkenFactor = 0.6f; // Darkening factor
             float r = MathUtils.clamp((themeColor.r + MathUtils.random(-0.05f, 0.05f)) * darkenFactor, 0f, 1f);
             float g = MathUtils.clamp((themeColor.g + MathUtils.random(-0.05f, 0.05f)) * darkenFactor, 0f, 1f);
             float b = MathUtils.clamp((themeColor.b + MathUtils.random(-0.05f, 0.05f)) * darkenFactor, 0f, 1f);
-            this.color = new Color(r, g, b, 1.0f); // 不透明
+            this.color = new Color(r, g, b, 1.0f); // Opaque
         }
 
+        /**
+         * Updates the particle.
+         * 
+         * @param delta Time delta.
+         * @return true if still alive.
+         */
         boolean update(float delta) {
             x += vx * delta;
             y += vy * delta;
 
-            // 快速减速
+            // Rapid deceleration
             vx *= 0.9f;
             vy *= 0.9f;
 
             life -= delta;
 
-            // 保持不透明，直接消失
+            // Keep opaque, just disappear
             // float lifeRatio = life / maxLife;
             // color.a = lifeRatio * 0.6f;
 
@@ -76,24 +85,27 @@ public class DustParticleSystem {
     private static final int MAX_PARTICLES = 100;
     private static final float UNIT_SCALE = 16f;
 
+    /**
+     * Creates a new DustParticleSystem.
+     */
     public DustParticleSystem() {
         this.shapeRenderer = new ShapeRenderer();
     }
 
     /**
-     * 在玩家脚下生成尘土
+     * Spawns dust particles at the player's feet.
      * 
-     * @param x          玩家X (tiles)
-     * @param y          玩家Y (tiles)
-     * @param themeColor 地形主色调
+     * @param x          Player X (tiles).
+     * @param y          Player Y (tiles).
+     * @param themeColor Terrain theme color.
      */
     public void spawn(float x, float y, Color themeColor) {
         if (particles.size >= MAX_PARTICLES)
             return;
 
-        // 转换为像素坐标 (生成在脚底附近)
+        // Convert to pixel coordinates (spawn near feet)
         float pixelX = x * UNIT_SCALE + UNIT_SCALE / 2f;
-        float pixelY = y * UNIT_SCALE + 2f; // 脚底稍微偏上一点
+        float pixelY = y * UNIT_SCALE + 2f; // Slightly above the bottom
 
         int count = MathUtils.random(1, 2);
         for (int i = 0; i < count; i++) {
@@ -103,6 +115,11 @@ public class DustParticleSystem {
         }
     }
 
+    /**
+     * Updates all particles.
+     * 
+     * @param delta Time delta.
+     */
     public void update(float delta) {
         for (int i = particles.size - 1; i >= 0; i--) {
             if (!particles.get(i).update(delta)) {
@@ -111,6 +128,11 @@ public class DustParticleSystem {
         }
     }
 
+    /**
+     * Renders particles.
+     * 
+     * @param projectionMatrix Camera projection matrix.
+     */
     public void render(com.badlogic.gdx.math.Matrix4 projectionMatrix) {
         if (particles.size == 0)
             return;
@@ -118,7 +140,7 @@ public class DustParticleSystem {
         shapeRenderer.setProjectionMatrix(projectionMatrix);
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
 
-        // 开启混合模式以支持半透明
+        // Enable blending for transparency support (if needed in future)
         com.badlogic.gdx.Gdx.gl.glEnable(com.badlogic.gdx.graphics.GL20.GL_BLEND);
         com.badlogic.gdx.Gdx.gl.glBlendFunc(com.badlogic.gdx.graphics.GL20.GL_SRC_ALPHA,
                 com.badlogic.gdx.graphics.GL20.GL_ONE_MINUS_SRC_ALPHA);
@@ -132,6 +154,9 @@ public class DustParticleSystem {
         com.badlogic.gdx.Gdx.gl.glDisable(com.badlogic.gdx.graphics.GL20.GL_BLEND);
     }
 
+    /**
+     * Releases resources.
+     */
     public void dispose() {
         shapeRenderer.dispose();
         particles.clear();

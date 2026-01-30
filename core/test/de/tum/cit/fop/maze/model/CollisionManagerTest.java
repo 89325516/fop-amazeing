@@ -3,41 +3,55 @@ package de.tum.cit.fop.maze.model;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Unit tests for the CollisionManager.
+ * 
+ * Verifies collision detection logic with walls and map boundaries.
+ */
 public class CollisionManagerTest {
 
+    /**
+     * Tests collision detection with walls.
+     * Verifies that the position of a wall is not walkable, while adjacent cells
+     * are.
+     */
     @Test
     public void testWallCollision() {
         GameMap map = new GameMap();
-        Wall wall = new Wall(5, 5); // 假设 Wall(x, y) 构造函数
+        Wall wall = new Wall(5, 5); // Assuming Wall(x, y) constructor
         map.addGameObject(wall);
         map.addGameObject(new Wall(10, 10)); // Expand map to ensure 6,5 is within bounds
 
         CollisionManager cm = new CollisionManager(map);
 
-        // Wall 在 5,5 (1x1 大小)
-        // 检查 Wall 所在位置
-        assertFalse(cm.isWalkable(5, 5), "Wall 所在位置不能走");
+        // Wall at 5,5 (1x1 size)
+        // Check Wall position
+        assertFalse(cm.isWalkable(5, 5), "Wall position should not be walkable");
 
-        // 检查 Wall 旁边 (应该可以走)
-        assertTrue(cm.isWalkable(4, 5), "Wall 左边应该可以走");
-        assertTrue(cm.isWalkable(6, 5), "Wall 右边应该可以走");
-        assertTrue(cm.isWalkable(5, 4), "Wall 下边应该可以走");
-        assertTrue(cm.isWalkable(5, 6), "Wall 上边应该可以走");
+        // Check adjacent cells (Should be walkable)
+        assertTrue(cm.isWalkable(4, 5), "Left of wall should be walkable");
+        assertTrue(cm.isWalkable(6, 5), "Right of wall should be walkable");
+        assertTrue(cm.isWalkable(5, 4), "Below wall should be walkable");
+        assertTrue(cm.isWalkable(5, 6), "Above wall should be walkable");
     }
 
+    /**
+     * Tests map boundary constraints.
+     * Verifies that positions outside the map boundaries are not walkable.
+     */
     @Test
     public void testMapBoundaries() {
         GameMap map = new GameMap();
-        // 添加一些东西来定义大小
-        map.addGameObject(new Wall(10, 10)); // 地图至少变成 11x11
+        // Add something to define size
+        map.addGameObject(new Wall(10, 10)); // Map becomes at least 11x11
 
         CollisionManager cm = new CollisionManager(map);
 
-        assertFalse(cm.isWalkable(-1, 0), "负数 X 应该越界");
-        assertFalse(cm.isWalkable(0, -1), "负数 Y 应该越界");
-        assertFalse(cm.isWalkable(20, 20), "远处应该越界");
+        assertFalse(cm.isWalkable(-1, 0), "Negative X should be out of bounds");
+        assertFalse(cm.isWalkable(0, -1), "Negative Y should be out of bounds");
+        assertFalse(cm.isWalkable(20, 20), "Far away position should be out of bounds");
 
-        // 边界内应该可以走 (除了有 Wall 的地方)
-        assertTrue(cm.isWalkable(0, 0), "边界内且无 Wall 应该可以走");
+        // Inside boundaries should be walkable (except where Walls are)
+        assertTrue(cm.isWalkable(0, 0), "Inside boundaries and no Wall should be walkable");
     }
 }

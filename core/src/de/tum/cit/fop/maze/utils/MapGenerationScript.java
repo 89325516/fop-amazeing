@@ -3,8 +3,15 @@ package de.tum.cit.fop.maze.utils;
 import com.badlogic.gdx.Gdx;
 import de.tum.cit.fop.maze.model.DamageType;
 
+/**
+ * Script to generate all 20 levels for the game campaign.
+ */
 public class MapGenerationScript {
 
+    /**
+     * Generates map files for levels 1 to 20.
+     * Maps are saved to the "maps/" directory.
+     */
     public void generateMaps() {
         Gdx.app.log("MapGenScript", "Starting Map Generation for 20 Levels...");
 

@@ -3,16 +3,22 @@ package de.tum.cit.fop.maze.model.weapons;
 import de.tum.cit.fop.maze.model.DamageType;
 
 /**
- * 弩 (Crossbow) - 远程物理武器
+ * Crossbow - Ranged Physical Weapon.
  * 
- * 特点：
- * - 物理伤害类型
- * - 较高伤害 (2)
- * - 较长射程 (6)
- * - 较长装填时间 (2秒)
+ * Features:
+ * - Physical damage type.
+ * - Higher damage (2).
+ * - Longer range (6).
+ * - Longer reload time (2 seconds).
  */
 public class Crossbow extends Weapon {
 
+    /**
+     * Creates a Crossbow.
+     * 
+     * @param x X coordinate.
+     * @param y Y coordinate.
+     */
     public Crossbow(float x, float y) {
         super(x, y, "Crossbow", 2, 6.0f, 1.5f, WeaponEffect.NONE,
                 DamageType.PHYSICAL, true, 2.0f, 15.0f);

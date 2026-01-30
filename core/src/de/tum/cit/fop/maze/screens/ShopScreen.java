@@ -23,9 +23,10 @@ import de.tum.cit.fop.maze.utils.UIUtils;
 import java.util.List;
 
 /**
- * 商店界面 (Shop Screen)
- * 
- * 显示可购买的武器和护甲，玩家可使用金币购买。
+ * Shop Screen.
+ *
+ * Displays purchasable weapons and armor, allowing players to buy them with
+ * coins.
  */
 public class ShopScreen implements Screen {
 
@@ -161,22 +162,22 @@ public class ShopScreen implements Screen {
         Stack iconStack = new Stack();
         iconStack.setSize(50, 50);
 
-        // 黑色背景層
+        // Black background layer
         Image bgImage = new Image(skin.newDrawable("white", Color.BLACK));
         iconStack.add(bgImage);
 
-        // 加载物品图标贴图
+        // Load item icon texture
         String iconPath = "images/items/shop/" + item.getTextureKey() + ".png";
         try {
             Texture iconTexture = new Texture(Gdx.files.internal(iconPath));
             iconTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
             Image iconImage = new Image(iconTexture);
-            // 將圖標居中放置
+            // Center the icon
             Table iconWrapper = new Table();
             iconWrapper.add(iconImage).size(46, 46).center();
             iconStack.add(iconWrapper);
         } catch (Exception e) {
-            // 如果图标不存在，显示文字占位符
+            // If icon missing, show text placeholder
             Label iconLabel = new Label(item.getCategory() == ShopItem.ItemCategory.WEAPON ? "⚔" : "🛡", skin);
             Table iconWrapper = new Table();
             iconWrapper.add(iconLabel).size(40, 40).center();
@@ -216,7 +217,7 @@ public class ShopScreen implements Screen {
             boolean canAfford = ShopManager.getPlayerCoins() >= item.getPrice();
             buyBtn.setColor(canAfford ? Color.WHITE : Color.DARK_GRAY);
 
-            // === 修复：始终添加监听器，余额不足时给出反馈 ===
+            // === Fix: Always add listener, give feedback if funds insufficient ===
             final ShopItem itemToBuy = item;
             final int itemPrice = item.getPrice();
             buyBtn.addListener(new ChangeListener() {
@@ -229,7 +230,7 @@ public class ShopScreen implements Screen {
                             refreshUI();
                         }
                     } else {
-                        // 余额不足反馈
+                        // Insufficient funds feedback
                         AudioManager.getInstance().playSound("select");
                         showInsufficientFundsDialog(itemPrice, currentCoins);
                     }
@@ -249,7 +250,7 @@ public class ShopScreen implements Screen {
     }
 
     /**
-     * 显示余额不足提示对话框
+     * Shows insufficient funds dialog.
      */
     private void showInsufficientFundsDialog(int itemPrice, int currentCoins) {
         DialogFactory.showInsufficientFundsDialog(stage, skin, itemPrice, currentCoins);
@@ -259,7 +260,7 @@ public class ShopScreen implements Screen {
     public void show() {
         GameLogger.info("ShopScreen", "Showing Shop Screen");
         Gdx.input.setInputProcessor(stage);
-        // 🔊 全局按钮音效
+        // 🔊 Global button sound
         de.tum.cit.fop.maze.utils.UIUtils.enableMenuButtonSound(stage);
         // Initial scroll focus
         if (scrollPane != null) {
@@ -276,23 +277,23 @@ public class ShopScreen implements Screen {
         if (backgroundTexture != null) {
             SpriteBatch batch = game.getSpriteBatch();
 
-            // 获取实际屏幕尺寸 - 使用 backbuffer 尺寸以确保正确
+            // Get actual screen size - use backbuffer size to ensure correctness
             int screenWidth = Gdx.graphics.getBackBufferWidth();
             int screenHeight = Gdx.graphics.getBackBufferHeight();
 
-            // 重置 GL Viewport 到整个屏幕
+            // Reset GL Viewport to full screen
             Gdx.gl.glViewport(0, 0, screenWidth, screenHeight);
 
-            // 设置投影矩阵到屏幕像素坐标系
+            // Set projection matrix to screen pixel coordinate system
             batch.getProjectionMatrix().setToOrtho2D(0, 0, screenWidth, screenHeight);
             batch.begin();
             batch.setColor(0.4f, 0.4f, 0.4f, 1f); // Dim
 
-            // 背景图片原始尺寸
+            // Background texture original size
             float texWidth = backgroundTexture.getWidth();
             float texHeight = backgroundTexture.getHeight();
 
-            // 计算Cover模式的缩放比例
+            // Calculate scale ratio for Cover mode
             float screenRatio = (float) screenWidth / screenHeight;
             float textureRatio = texWidth / texHeight;
 
@@ -300,16 +301,16 @@ public class ShopScreen implements Screen {
             float drawX, drawY;
 
             if (screenRatio > textureRatio) {
-                // 屏幕更宽，以宽度为准，高度可能超出
+                // Screen is wider, fit to width, height might overflow
                 drawWidth = screenWidth;
                 drawHeight = screenWidth / textureRatio;
                 drawX = 0;
-                drawY = (screenHeight - drawHeight) / 2; // 垂直居中
+                drawY = (screenHeight - drawHeight) / 2; // Center vertically
             } else {
-                // 屏幕更高，以高度为准，宽度可能超出
+                // Screen is taller, fit to height, width might overflow
                 drawHeight = screenHeight;
                 drawWidth = screenHeight * textureRatio;
-                drawX = (screenWidth - drawWidth) / 2; // 水平居中
+                drawX = (screenWidth - drawWidth) / 2; // Center horizontally
                 drawY = 0;
             }
 
@@ -318,7 +319,7 @@ public class ShopScreen implements Screen {
             batch.end();
         }
 
-        // 恢复 Stage 的 Viewport（这会重新设置正确的 glViewport）
+        // Restore Stage's Viewport (this will reset the correct glViewport)
         stage.getViewport().apply();
         stage.act(delta);
         stage.draw();

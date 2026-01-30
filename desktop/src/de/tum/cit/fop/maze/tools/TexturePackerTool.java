@@ -4,14 +4,37 @@ import com.badlogic.gdx.graphics.Texture.TextureFilter;
 import com.badlogic.gdx.tools.texturepacker.TexturePacker;
 import java.io.File;
 
+/**
+ * Utility tool for packing texture assets into a TextureAtlas.
+ * This tool runs as a standalone Java application (not part of the game
+ * runtime)
+ * to process raw images from the {@code raw_assets} directory and output them
+ * to the {@code assets/images} directory.
+ */
 public class TexturePackerTool {
     private static final String INPUT_DIR = "../raw_assets";
     private static final String OUTPUT_DIR = "../assets/images";
 
+    /**
+     * Main entry point for the texture packer tool.
+     * Executes the texture packing process.
+     *
+     * @param args Command line arguments (not used).
+     */
     public static void main(String[] args) {
         packTexturesOptimized();
     }
 
+    /**
+     * Packs textures with optimized settings for the game.
+     * <p>
+     * It scans subdirectories in the input folder and creates a separate atlas for
+     * each.
+     * Two passes are performed:
+     * 1. High-resolution pack (scale 1.0)
+     * 2. Low-resolution pack (scale 0.5) for performance/lower-end devices.
+     * </p>
+     */
     private static void packTexturesOptimized() {
         TexturePacker.Settings settings = new TexturePacker.Settings();
         settings.maxWidth = 2048;

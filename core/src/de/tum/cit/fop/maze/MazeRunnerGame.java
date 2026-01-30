@@ -12,6 +12,10 @@ import de.tum.cit.fop.maze.screens.GameScreen;
 import de.tum.cit.fop.maze.screens.MenuScreen;
 import de.tum.cit.fop.maze.config.GameSettings;
 
+/**
+ * The main game class for the Maze Runner game.
+ * Manages game screens, global assets, and the main game loop.
+ */
 public class MazeRunnerGame extends Game {
     private MenuScreen menuScreen;
     private GameScreen gameScreen;
@@ -21,10 +25,16 @@ public class MazeRunnerGame extends Game {
 
     private TextureAtlas atlas;
 
+    /**
+     * Constructor for MazeRunnerGame.
+     */
     public MazeRunnerGame() {
         super();
     }
 
+    /**
+     * Initializes the game, loading resources and setting the initial screen.
+     */
     @Override
     public void create() {
         spriteBatch = new SpriteBatch();
@@ -36,7 +46,7 @@ public class MazeRunnerGame extends Game {
 
         this.loadCharacterAnimation();
 
-        // 加载用户自定义的默认参数
+        // Load user-defined default settings
         GameSettings.loadUserDefaults();
 
         // Initialize Audio Manager
@@ -46,6 +56,10 @@ public class MazeRunnerGame extends Game {
         goToMenu();
     }
 
+    /**
+     * Switches the current screen to the main menu.
+     * Disposes of the game screen if it exists.
+     */
     public void goToMenu() {
         this.setScreen(new MenuScreen(this));
         if (gameScreen != null) {
@@ -55,12 +69,14 @@ public class MazeRunnerGame extends Game {
     }
 
     /**
-     * 进入游戏，先通过加载画面预加载资源
+     * Starts the game by switching to the loading screen to preload resources.
      * 
-     * @param saveFilePath 存档文件路径。如果是 null，代表开始新游戏。
+     * @param saveFilePath The path to the save file to load. If null, starts a new
+     *                     game.
      */
     public void goToGame(String saveFilePath) {
-        // 先进入加载画面预加载资源，完成后自动跳转到GameScreen
+        // Go to loading screen to preload resources, then automatically switch to
+        // GameScreen
         this.setScreen(new de.tum.cit.fop.maze.screens.LoadingScreen(this, saveFilePath));
         if (menuScreen != null) {
             menuScreen.dispose();
@@ -68,6 +84,9 @@ public class MazeRunnerGame extends Game {
         }
     }
 
+    /**
+     * Loads the character animation from the texture atlas.
+     */
     private void loadCharacterAnimation() {
         TextureRegion walkSheet = atlas.findRegion("character");
         if (walkSheet == null) {
@@ -105,6 +124,9 @@ public class MazeRunnerGame extends Game {
         characterDownAnimation = new Animation<>(0.1f, walkFrames);
     }
 
+    /**
+     * Disposes of all resources used by the game.
+     */
     @Override
     public void dispose() {
         if (getScreen() != null) {
@@ -118,18 +140,38 @@ public class MazeRunnerGame extends Game {
         de.tum.cit.fop.maze.utils.AudioManager.getInstance().dispose();
     }
 
+    /**
+     * Returns the game's UI skin.
+     *
+     * @return The Skin object.
+     */
     public Skin getSkin() {
         return skin;
     }
 
+    /**
+     * Returns the character's downward walking animation.
+     *
+     * @return The Animation object for the character walking down.
+     */
     public Animation<TextureRegion> getCharacterDownAnimation() {
         return characterDownAnimation;
     }
 
+    /**
+     * Returns the SpriteBatch used for rendering.
+     *
+     * @return The SpriteBatch object.
+     */
     public SpriteBatch getSpriteBatch() {
         return spriteBatch;
     }
 
+    /**
+     * Returns the global texture atlas.
+     *
+     * @return The TextureAtlas object.
+     */
     public TextureAtlas getAtlas() {
         return atlas;
     }
@@ -137,10 +179,20 @@ public class MazeRunnerGame extends Game {
     // === Save System Context ===
     private String currentSaveFilePath;
 
+    /**
+     * Sets the current save file path.
+     *
+     * @param path The path to the save file.
+     */
     public void setCurrentSaveFilePath(String path) {
         this.currentSaveFilePath = path;
     }
 
+    /**
+     * Returns the current save file path.
+     *
+     * @return The path to the current save file.
+     */
     public String getCurrentSaveFilePath() {
         return currentSaveFilePath;
     }

@@ -9,6 +9,9 @@ import java.util.Map;
  */
 public class LevelInfoDefs {
 
+    /**
+     * Data class to hold information about a specific level or zone.
+     */
     public static class LevelData {
         public String zoneName;
         public String lore;
@@ -17,6 +20,16 @@ public class LevelInfoDefs {
         public String hazards;
         public String themeColorHex; // Hex string for LibGDX Color.valueOf()
 
+        /**
+         * Creates a new LevelData instance.
+         * 
+         * @param zoneName      The name of the zone.
+         * @param lore          Flavor text describing the zone.
+         * @param features      Key gameplay features.
+         * @param enemies       Types of enemies present.
+         * @param hazards       Environmental hazards.
+         * @param themeColorHex Hex code for the theme color (e.g., "RRGGBB").
+         */
         public LevelData(String zoneName, String lore, String features, String enemies, String hazards,
                 String themeColorHex) {
             this.zoneName = zoneName;
@@ -87,12 +100,26 @@ public class LevelInfoDefs {
         register(17, 20, zone5);
     }
 
+    /**
+     * Registers level data for a range of levels.
+     * 
+     * @param start The starting level number (inclusive).
+     * @param end   The ending level number (inclusive).
+     * @param data  The data to register.
+     */
     private static void register(int start, int end, LevelData data) {
         for (int i = start; i <= end; i++) {
             levelMap.put(i, data);
         }
     }
 
+    /**
+     * Retrieves the level data for a specific level number.
+     * 
+     * @param level The level number.
+     * @return The corresponding LevelData, or data for level 1 or 20 if out of
+     *         bounds.
+     */
     public static LevelData getLevelData(int level) {
         // Default to Zone 1 if out of bounds, or handle gracefully
         if (level < 1)

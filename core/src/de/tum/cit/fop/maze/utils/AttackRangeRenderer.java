@@ -9,12 +9,14 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 import de.tum.cit.fop.maze.config.GameSettings;
 
 /**
- * 攻击范围可视化渲染器 (Attack Range Visualizer)
- * 
- * 在玩家攻击时绘制扇形指示器，显示实际伤害判定范围。
- * 扇形参数与 GameWorld.handleAttack() 中的判定逻辑保持一致：
- * - 半径 = weapon.getRange()
- * - 角度 = 60° (鼠标瞄准方向 ±30°)
+ * Attack Range Visualizer.
+ * <p>
+ * Renders a sector indicator when the player attacks, showing the actual damage
+ * detection range.
+ * The sector parameters are consistent with the logic in
+ * GameWorld.handleAttack():
+ * - Radius = weapon.getRange()
+ * - Angle = 60° (Mouse aim direction ±30°)
  * 
  * @see de.tum.cit.fop.maze.model.GameWorld#handleAttack()
  */
@@ -23,90 +25,92 @@ public class AttackRangeRenderer {
     private final ShapeRenderer shapeRenderer;
     private static final float UNIT_SCALE = 16f;
 
-    // 扇形参数 (与攻击判定逻辑一致 - 60度锥形)
-    private static final float ARC_ANGLE = 60f; // 扇形角度
-    private static final int ARC_SEGMENTS = 20; // 扇形平滑度
+    // Sector parameters (Consistent with attack logic - 60 degree cone)
+    private static final float ARC_ANGLE = 60f; // Sector angle
+    private static final int ARC_SEGMENTS = 20; // Sector smoothness
 
-    // 视觉效果参数
+    // Visual effect parameters
     private static final float INDICATOR_ALPHA = 0.35f;
-    private static final Color MELEE_COLOR = new Color(1f, 0.6f, 0.2f, INDICATOR_ALPHA); // 橙色
-    private static final Color RANGED_COLOR = new Color(0.2f, 0.8f, 1f, INDICATOR_ALPHA); // 蓝色
+    private static final Color MELEE_COLOR = new Color(1f, 0.6f, 0.2f, INDICATOR_ALPHA); // Orange
+    private static final Color RANGED_COLOR = new Color(0.2f, 0.8f, 1f, INDICATOR_ALPHA); // Blue
 
     public AttackRangeRenderer() {
         this.shapeRenderer = new ShapeRenderer();
     }
 
     /**
-     * 渲染攻击范围扇形指示器 (使用任意角度)
+     * Renders the attack range sector indicator (using arbitrary angle).
+     * <p>
+     * New range visualization:
+     * - Inner circle: 360-degree all-around attack circle (0.8R)
+     * - Outer circle: Directional sector extension (1.2R)
      * 
-     * 新范围可视化:
-     * - 内圈: 360度全方位攻击圈 (0.8R)
-     * - 外圈: 朝向方向扇形扩展 (1.2R)
-     * 
-     * @param camera         当前相机
-     * @param playerX        玩家世界坐标 X (tile units)
-     * @param playerY        玩家世界坐标 Y (tile units)
-     * @param aimAngle       瞄准角度 (度数, 0=右, 90=上, 180=左, 270=下)
-     * @param range          武器攻击范围 (tile units) - 原始R0
-     * @param isRanged       是否为远程武器
-     * @param attackProgress 攻击进度 (0.0 ~ 1.0)，用于淡出效果
+     * @param camera         The current camera.
+     * @param playerX        Player world X coordinate (tile units).
+     * @param playerY        Player world Y coordinate (tile units).
+     * @param aimAngle       Aiming angle (degrees, 0=Right, 90=Up, 180=Left,
+     *                       270=Down).
+     * @param range          Weapon attack range (tile units) - Original R0.
+     * @param isRanged       Whether it is a ranged weapon.
+     * @param attackProgress Attack progress (0.0 ~ 1.0), used for fade-out effect.
      */
     public void render(OrthographicCamera camera, float playerX, float playerY,
             float aimAngle, float range, boolean isRanged, float attackProgress) {
 
-        // 远程武器不显示扇形（弹道有自己的视觉效果）
+        // Ranged weapons do not show the sector (projectiles have their own visuals)
         if (isRanged) {
             return;
         }
 
-        // 计算新的攻击范围
-        float innerRadius = range * 0.8f; // 360度全方位攻击半径
-        float outerRadius = range * 1.2f; // 朝向扇形扩展半径
+        // Calculate new attack ranges
+        float innerRadius = range * 0.8f; // 360-degree all-around radius
+        float outerRadius = range * 1.2f; // Directional sector extension radius
 
-        // 设置混合模式实现透明效果
+        // Enable blending for transparency
         Gdx.gl.glEnable(GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
 
         shapeRenderer.setProjectionMatrix(camera.combined);
         shapeRenderer.begin(ShapeType.Filled);
 
-        // 计算玩家中心位置（像素坐标）
+        // Calculate player center position (pixel coordinates)
         float centerX = playerX * UNIT_SCALE + UNIT_SCALE / 2f;
         float centerY = playerY * UNIT_SCALE + UNIT_SCALE / 2f;
 
-        // 淡出效果：攻击结束时逐渐变透明
+        // Fade out effect: gradually become transparent as attack ends
         float fadeAlpha = 1f - attackProgress * 0.7f;
 
-        // === 绘制内圈: 360度全方位攻击圈 (0.8R) ===
+        // === Draw Inner Circle: 360-degree all-around attack circle (0.8R) ===
         float innerRadiusPixels = innerRadius * UNIT_SCALE;
-        Color innerColor = new Color(0.5f, 0.8f, 0.5f, INDICATOR_ALPHA * fadeAlpha * 0.7f); // 淡绿色
+        Color innerColor = new Color(0.5f, 0.8f, 0.5f, INDICATOR_ALPHA * fadeAlpha * 0.7f); // Pale green
         drawCircle(centerX, centerY, innerRadiusPixels, innerColor);
 
-        // === 绘制外圈扇形: 朝向扇形扩展 (1.2R) ===
+        // === Draw Outer Sector: Directional extension (1.2R) ===
         float outerRadiusPixels = outerRadius * UNIT_SCALE;
         float startAngle = aimAngle - ARC_ANGLE / 2f;
         Color outerColor = MELEE_COLOR.cpy();
         outerColor.a = INDICATOR_ALPHA * fadeAlpha;
 
-        // 只绘制外圈中超出内圈的部分 (环形扇形)
+        // Only draw the part of the outer circle that exceeds the inner circle (Ring
+        // Sector)
         drawArcRing(centerX, centerY, innerRadiusPixels, outerRadiusPixels, startAngle, ARC_ANGLE, outerColor);
 
         shapeRenderer.end();
 
-        // 绘制边框（增加视觉清晰度）
+        // Draw borders (increase visual clarity)
         shapeRenderer.begin(ShapeType.Line);
         Color borderColor = new Color(1f, 1f, 1f, 0.4f * fadeAlpha);
         shapeRenderer.setColor(borderColor);
 
-        // 内圈边框
+        // Inner circle border
         drawCircleOutline(centerX, centerY, innerRadiusPixels);
 
-        // 外圈扇形边框
+        // Outer sector border
         float endAngle = startAngle + ARC_ANGLE;
         float startRad = startAngle * com.badlogic.gdx.math.MathUtils.degreesToRadians;
         float endRad = endAngle * com.badlogic.gdx.math.MathUtils.degreesToRadians;
 
-        // 两条边线（从内圈边缘到外圈边缘）
+        // Two side lines (from inner circle edge to outer circle edge)
         shapeRenderer.line(
                 centerX + innerRadiusPixels * (float) Math.cos(startRad),
                 centerY + innerRadiusPixels * (float) Math.sin(startRad),
@@ -118,7 +122,7 @@ public class AttackRangeRenderer {
                 centerX + outerRadiusPixels * (float) Math.cos(endRad),
                 centerY + outerRadiusPixels * (float) Math.sin(endRad));
 
-        // 外圈弧线
+        // Outer arc line
         drawArcOutline(centerX, centerY, outerRadiusPixels, startAngle, ARC_ANGLE);
 
         shapeRenderer.end();
@@ -127,9 +131,18 @@ public class AttackRangeRenderer {
     }
 
     /**
-     * 渲染攻击范围扇形指示器 (兼容旧版离散方向)
+     * Renders attack range sector indicator (Legacy discrete direction
+     * combatibility).
      * 
-     * @deprecated 使用 render(camera, x, y, aimAngle, range, isRanged, progress) 代替
+     * @param camera         The current camera.
+     * @param playerX        Player world X.
+     * @param playerY        Player world Y.
+     * @param direction      Direction index.
+     * @param range          Range.
+     * @param isRanged       Is ranged.
+     * @param attackProgress Progress.
+     * @deprecated Use render(camera, x, y, aimAngle, range, isRanged, progress)
+     *             instead.
      */
     @Deprecated
     public void render(OrthographicCamera camera, float playerX, float playerY,
@@ -139,7 +152,7 @@ public class AttackRangeRenderer {
     }
 
     /**
-     * 绘制填充扇形 (从圆心出发)
+     * Draws a filled sector (from center).
      */
     private void drawArc(float cx, float cy, float radius, float startAngle, float arcAngle, Color color) {
         shapeRenderer.setColor(color);
@@ -160,7 +173,7 @@ public class AttackRangeRenderer {
     }
 
     /**
-     * 绘制填充圆形
+     * Draws a filled circle.
      */
     private void drawCircle(float cx, float cy, float radius, Color color) {
         shapeRenderer.setColor(color);
@@ -181,7 +194,7 @@ public class AttackRangeRenderer {
     }
 
     /**
-     * 绘制环形扇形 (内圈到外圈之间的扇形区域)
+     * Draws a ring sector (area between inner and outer radius).
      */
     private void drawArcRing(float cx, float cy, float innerRadius, float outerRadius,
             float startAngle, float arcAngle, Color color) {
@@ -193,26 +206,26 @@ public class AttackRangeRenderer {
             float angle1 = (startAngle + i * angleStep) * com.badlogic.gdx.math.MathUtils.degreesToRadians;
             float angle2 = (startAngle + (i + 1) * angleStep) * com.badlogic.gdx.math.MathUtils.degreesToRadians;
 
-            // 内圈两点
+            // Inner circle points
             float ix1 = cx + innerRadius * (float) Math.cos(angle1);
             float iy1 = cy + innerRadius * (float) Math.sin(angle1);
             float ix2 = cx + innerRadius * (float) Math.cos(angle2);
             float iy2 = cy + innerRadius * (float) Math.sin(angle2);
 
-            // 外圈两点
+            // Outer circle points
             float ox1 = cx + outerRadius * (float) Math.cos(angle1);
             float oy1 = cy + outerRadius * (float) Math.sin(angle1);
             float ox2 = cx + outerRadius * (float) Math.cos(angle2);
             float oy2 = cy + outerRadius * (float) Math.sin(angle2);
 
-            // 用两个三角形绘制四边形 (环形扇形的一个小片段)
+            // Draw quad using two triangles
             shapeRenderer.triangle(ix1, iy1, ox1, oy1, ix2, iy2);
             shapeRenderer.triangle(ix2, iy2, ox1, oy1, ox2, oy2);
         }
     }
 
     /**
-     * 绘制圆形边框
+     * Draws circle outline.
      */
     private void drawCircleOutline(float cx, float cy, float radius) {
         int segments = 32;
@@ -232,7 +245,7 @@ public class AttackRangeRenderer {
     }
 
     /**
-     * 绘制弧线 (扇形外边缘)
+     * Draws arc outline (outer edge of sector).
      */
     private void drawArcOutline(float cx, float cy, float radius, float startAngle, float arcAngle) {
         float angleStep = arcAngle / ARC_SEGMENTS;
@@ -251,21 +264,21 @@ public class AttackRangeRenderer {
     }
 
     /**
-     * 根据玩家朝向获取扇形基础角度
+     * Gets absolute angle based on player direction index.
      * 
-     * @param direction 0=下, 1=上, 2=左, 3=右
-     * @return 角度（度数，逆时针方向）
+     * @param direction 0=Down, 1=Up, 2=Left, 3=Right.
+     * @return Angle in degrees (Counter-clockwise).
      */
     private float getBaseAngle(int direction) {
         switch (direction) {
             case 0:
-                return 270f; // 朝下
+                return 270f; // Down
             case 1:
-                return 90f; // 朝上
+                return 90f; // Up
             case 2:
-                return 180f; // 朝左
+                return 180f; // Left
             case 3:
-                return 0f; // 朝右
+                return 0f; // Right
             default:
                 return 0f;
         }

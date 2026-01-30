@@ -80,23 +80,23 @@ public class LevelMapGeneratorTest {
      * @param level The level number to generate (1-20)
      */
     private void generateLevel(int level) {
-        // 确定主题 (每4关一个主题)
+        // Determine theme (Change theme every 4 levels)
         int themeIndex = (level - 1) / 4;
         String theme = THEMES[themeIndex];
 
-        // 确定难度
+        // Determine difficulty
         int localDifficulty = ((level - 1) % 4) + 1;
         int globalDifficultyBonus = themeIndex;
         int difficulty = Math.min(5, localDifficulty + globalDifficultyBonus / 2);
 
-        // 确定地图大小 (50-200，随关卡增加)
+        // Determine map size (50-200, increasing with level)
         int mapSize = 50 + (level - 1) * 8;
         mapSize = Math.min(200, Math.max(50, mapSize));
 
-        // 确定伤害类型
+        // Determine damage type
         DamageType damageType = (level % 2 == 0) ? DamageType.MAGICAL : DamageType.PHYSICAL;
 
-        // 创建配置
+        // Create configuration
         MapGenerator.MapConfig config = new MapGenerator.MapConfig();
         config.width = mapSize;
         config.height = mapSize;
@@ -111,7 +111,7 @@ public class LevelMapGeneratorTest {
         config.braidChance = 0.5f - level * 0.02f;
         config.roomCount = 20 + level * 2;
 
-        // 生成地图
+        // Generate map
         String fileName = OUTPUT_DIR + "level-" + level + ".properties";
         MapGenerator generator = new MapGenerator(config);
         generator.generateAndSave(fileName);
@@ -119,7 +119,7 @@ public class LevelMapGeneratorTest {
         System.out.printf("✓ Level %2d: %s | %dx%d | Difficulty: %d | %s%n",
                 level, theme, mapSize, mapSize, difficulty, damageType.name());
 
-        // 验证文件存在
+        // Verify file exists
         File file = new File(fileName);
         assertTrue(file.exists(), "Level " + level + " map file should exist");
     }

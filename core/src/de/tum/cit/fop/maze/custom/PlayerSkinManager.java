@@ -8,6 +8,7 @@ import de.tum.cit.fop.maze.utils.GameLogger;
 /**
  * Manages custom player skin selection and persistence.
  * Skins are stored as sprite sheet paths in local storage.
+ * Singleton pattern ensures centralized management of the player's appearance.
  */
 public class PlayerSkinManager {
     private static PlayerSkinManager instance;
@@ -16,6 +17,11 @@ public class PlayerSkinManager {
 
     private String customSkinPath = null;
 
+    /**
+     * Gets the singleton instance of the PlayerSkinManager.
+     * 
+     * @return The singleton instance.
+     */
     public static PlayerSkinManager getInstance() {
         if (instance == null) {
             instance = new PlayerSkinManager();
@@ -29,8 +35,9 @@ public class PlayerSkinManager {
 
     /**
      * Set a custom skin sprite sheet path.
+     * Starts using the new skin immediately and persists the choice.
      * 
-     * @param spritePath Path to the sprite sheet (64x128, 4 cols x 4 rows)
+     * @param spritePath Path to the sprite sheet (64x128, 4 cols x 4 rows).
      */
     public void setCustomSkin(String spritePath) {
         this.customSkinPath = spritePath;
@@ -41,21 +48,24 @@ public class PlayerSkinManager {
     /**
      * Get the current custom skin path.
      * 
-     * @return Path to custom skin sprite sheet, or null if using default
+     * @return Path to custom skin sprite sheet, or null if using default.
      */
     public String getCustomSkin() {
         return customSkinPath;
     }
 
     /**
-     * Check if a custom skin is set.
+     * Check if a custom skin is currently set.
+     * 
+     * @return True if a custom skin is set, false otherwise.
      */
     public boolean hasCustomSkin() {
         return customSkinPath != null;
     }
 
     /**
-     * Clear custom skin and reset to default.
+     * Clear custom skin and reset to default player appearance.
+     * Removes the custom preference but does not delete the skin file.
      */
     public void clearCustomSkin() {
         this.customSkinPath = null;
@@ -64,10 +74,10 @@ public class PlayerSkinManager {
     }
 
     /**
-     * Copy an external skin file to the skins directory.
+     * Copy an external skin file to the game's local skins directory.
      * 
-     * @param sourceFile The source file to copy
-     * @return The relative path to the copied file
+     * @param sourceFile The source file to copy.
+     * @return The relative path to the copied file in local storage.
      */
     public String importSkin(FileHandle sourceFile) {
         // Create skins directory if needed
@@ -88,6 +98,9 @@ public class PlayerSkinManager {
         return relativePath;
     }
 
+    /**
+     * Save the current skin preference to a JSON file.
+     */
     private void save() {
         try {
             FileHandle file = Gdx.files.local(SAVE_FILE);
@@ -100,6 +113,9 @@ public class PlayerSkinManager {
         }
     }
 
+    /**
+     * Load the skin preference from the JSON file.
+     */
     private void load() {
         try {
             FileHandle file = Gdx.files.local(SAVE_FILE);
@@ -116,7 +132,9 @@ public class PlayerSkinManager {
         }
     }
 
-    // Simple data class for JSON serialization
+    /**
+     * Simple data class for JSON serialization of skin preferences.
+     */
     public static class SkinData {
         public String skinPath;
     }

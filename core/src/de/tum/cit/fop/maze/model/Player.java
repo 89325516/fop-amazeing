@@ -38,8 +38,8 @@ import java.util.HashSet;
  */
 
 /**
- * 代表游戏中的玩家角色。
- * 已回退为：连续平滑移动模式 (无网格锁定)
+ * Represents the player character.
+ * Rolled back to: Continuous smooth movement (no grid locking).
  */
 public class Player extends GameObject {
     private int lives;
@@ -118,12 +118,12 @@ public class Player extends GameObject {
     // Blood particle listener (for visual damage feedback)
     private BloodParticleSystem.DamageListener damageListener = null;
 
-    // 碰撞箱大小 (接近 1.0)
+    // Collision box size (approx 1.0)
     private static final float SIZE = 0.99f;
 
     public Player(float x, float y) {
         super(x, y);
-        this.lives = GameSettings.playerMaxLives; // 使用配置的初始生命值
+        this.lives = GameSettings.playerMaxLives; // Use configured initial lives
         this.hasKey = false;
         this.isRunning = false;
 
@@ -224,30 +224,29 @@ public class Player extends GameObject {
     }
 
     /**
-     * 仅更新定时器（用于无尽模式，无需碰撞管理器）
      * Update timers only, without collision management - used for Endless Mode
      */
     public void updateTimers(float delta) {
-        // 死亡检查
+        // Death check
         if (!isDead && lives <= 0) {
             isDead = true;
             deathTimer = DEATH_ANIMATION_DURATION;
             GameLogger.info("Player", "Player died (Timer Update Check). Lives: " + lives);
         }
 
-        // 无敌计时器
+        // Invincibility timer
         if (invincibilityTimer > 0) {
             invincibilityTimer -= delta;
         }
-        // 攻击冷却计时器
+        // Attack cooldown timer
         if (attackTimer > 0) {
             attackTimer -= delta;
         }
-        // 受伤红闪计时器
+        // Hurt red flash timer
         if (hurtTimer > 0) {
             hurtTimer -= delta;
         }
-        // 武器切换提示计时器
+        // Weapon switch notification timer
         if (switchNameTimer > 0) {
             switchNameTimer -= delta;
             if (switchNameTimer <= 0) {
@@ -255,7 +254,7 @@ public class Player extends GameObject {
             }
         }
 
-        // 攻击动画计时器
+        // Attack animation timer
         if (isAttacking) {
             attackAnimTimer -= delta;
             if (attackAnimTimer <= 0) {
@@ -263,7 +262,7 @@ public class Player extends GameObject {
             }
         }
 
-        // 死亡动画计时器
+        // Death animation timer
         if (isDead && deathTimer > 0) {
             deathTimer -= delta;
         }
@@ -350,7 +349,7 @@ public class Player extends GameObject {
     }
 
     /**
-     * 相对移动：在当前坐标基础上增加 delta
+     * Relative movement: add delta to current position.
      */
     public void move(float deltaX, float deltaY) {
         this.x += deltaX;
@@ -358,21 +357,21 @@ public class Player extends GameObject {
     }
 
     /**
-     * 【修复点】绝对定位：直接设置 X 坐标 (用于读档)
+     * [Fix] Absolute positioning: set X directly (for loading).
      */
     public void setX(float x) {
         this.x = x;
     }
 
     /**
-     * 【修复点】绝对定位：直接设置 Y 坐标 (用于读档)
+     * [Fix] Absolute positioning: set Y directly (for loading).
      */
     public void setY(float y) {
         this.y = y;
     }
 
     /**
-     * 绝对定位：同时设置 X 和 Y
+     * Absolute positioning: set both X and Y.
      */
     public void setPosition(float x, float y) {
         this.x = x;
@@ -389,12 +388,12 @@ public class Player extends GameObject {
     /**
      * Take damage with type consideration for armor system.
      * 
-     * @param amount 伤害量
-     * @param type   伤害类型
-     * @return true 如果伤害被应用
+     * @param amount Damage intensity
+     * @param type   Damage type
+     * @return true if damage was applied
      */
     public boolean damage(int amount, DamageType type) {
-        // God Mode: 无敌模式下不受伤害
+        // God Mode: No damage in god mode
         if (godMode) {
             return false;
         }
@@ -423,7 +422,8 @@ public class Player extends GameObject {
             this.lives -= remainingDamage;
             if (this.lives < 0)
                 this.lives = 0;
-            // Trigger blood particle effect - 随机方向（玩家受伤无明确方向）
+            // Trigger blood particle effect - random direction (no specific direction for
+            // player hurt)
             if (damageListener != null) {
                 float angle = (float) (Math.random() * Math.PI * 2);
                 damageListener.onDamage(x + 0.5f, y + 0.5f, remainingDamage,
@@ -519,7 +519,7 @@ public class Player extends GameObject {
         this.hasKey = hasKey;
     }
 
-    // 获取碰撞箱大小
+    // Get collision box size
     public float getWidth() {
         return SIZE;
     }
@@ -935,7 +935,6 @@ public class Player extends GameObject {
     }
 
     /**
-     * 检查玩家是否已停止移动（速度接近零）
      * Check if player has stopped moving (velocity near zero).
      */
     public boolean hasStopped() {
@@ -943,16 +942,14 @@ public class Player extends GameObject {
     }
 
     /**
-     * 当玩家停止移动时，平滑地将玩家对齐到最近的整数格位置。
      * Smoothly snap player to the nearest grid position when stopped.
      * This ensures the player always rests on a tile center, not between tiles.
      * 
-     * @param delta          帧时间 (Frame delta time)
-     * @param canMoveChecker 碰撞检测回调 (Collision check callback: (newX, newY) ->
-     *                       canMove)
+     * @param delta          Frame delta time
+     * @param canMoveChecker Collision check callback: (newX, newY) -> canMove
      */
     public void snapToGrid(float delta, java.util.function.BiFunction<Float, Float, Boolean> canMoveChecker) {
-        // 检查配置：如果禁用了整格停留功能，直接返回
+        // Check config: if grid snapping is disabled, return directly
         if (!GameSettings.isGridSnappingEnabled()) {
             return;
         }
@@ -965,25 +962,25 @@ public class Player extends GameObject {
         float dx = targetX - this.x;
         float dy = targetY - this.y;
 
-        // 如果已经在整数格上，直接设置精确位置并返回
+        // If already on grid, set exact position and return
         if (Math.abs(dx) < 0.01f && Math.abs(dy) < 0.01f) {
             this.x = targetX;
             this.y = targetY;
             return;
         }
 
-        // 计算平滑移动量
+        // Calculate smooth movement
         float moveX = Math.signum(dx) * Math.min(Math.abs(dx), snapSpeed);
         float moveY = Math.signum(dy) * Math.min(Math.abs(dy), snapSpeed);
 
-        // 应用X轴对齐（带碰撞检测）
+        // Apply X alignment (with collision check)
         if (Math.abs(moveX) > 0.001f) {
             if (canMoveChecker.apply(this.x + moveX, this.y)) {
                 this.x += moveX;
             }
         }
 
-        // 应用Y轴对齐（带碰撞检测）
+        // Apply Y alignment (with collision check)
         if (Math.abs(moveY) > 0.001f) {
             if (canMoveChecker.apply(this.x, this.y + moveY)) {
                 this.y += moveY;
@@ -1048,27 +1045,27 @@ public class Player extends GameObject {
     // ==================== Buff System (for Treasure Chest rewards)
     // ====================
 
-    // Buff 状态
-    private float speedBuffTimer = 0f; // 速度Buff剩余时间
-    private float speedBuffMultiplier = 0f; // 速度Buff倍率 (0.5 = +50%)
-    private float rageBuffTimer = 0f; // 狂暴Buff剩余时间
-    private boolean hasShieldBuff = false; // 是否有护盾（抵挡一次伤害）
+    // Buff States
+    private float speedBuffTimer = 0f; // Speed Buff duration remaining
+    private float speedBuffMultiplier = 0f; // Speed Buff multiplier (0.5 = +50%)
+    private float rageBuffTimer = 0f; // Rage Buff duration remaining
+    private boolean hasShieldBuff = false; // Has Shield (blocks one damage instance)
 
     /**
-     * 应用速度Buff
+     * Apply Speed Buff.
      * 
-     * @param durationSeconds Buff持续时间（秒）
+     * @param durationSeconds Buff duration in seconds.
      */
     public void applySpeedBuff(float durationSeconds) {
         this.speedBuffTimer = durationSeconds;
-        this.speedBuffMultiplier = 0.5f; // +50% 移速
+        this.speedBuffMultiplier = 0.5f; // +50% movement speed
         GameLogger.info("Player", "Speed buff applied for " + durationSeconds + "s");
     }
 
     /**
-     * 应用狂暴Buff（攻击冷却减半）
+     * Apply Rage Buff (Halves attack cooldown).
      * 
-     * @param durationSeconds Buff持续时间（秒）
+     * @param durationSeconds Buff duration in seconds.
      */
     public void applyRageBuff(float durationSeconds) {
         this.rageBuffTimer = durationSeconds;
@@ -1076,7 +1073,7 @@ public class Player extends GameObject {
     }
 
     /**
-     * 应用护盾（抵挡下一次伤害）
+     * Apply Shield (Blocks next damage).
      */
     public void applyShield() {
         this.hasShieldBuff = true;
@@ -1084,13 +1081,13 @@ public class Player extends GameObject {
     }
 
     /**
-     * 设置无敌状态（用于宝箱奖励）
+     * Set Invincible state (for chest rewards).
      * 
-     * @param invincible 是否无敌
+     * @param invincible Whether to enable invincibility.
      */
     public void setInvincible(boolean invincible) {
         if (invincible) {
-            // 设置一个较长的无敌时间，实际时间由 setInvincibilityTimer 控制
+            // Set a long duration, actual time controlled by setInvincibilityTimer
             this.invincibilityTimer = 999f;
         } else {
             this.invincibilityTimer = 0f;
@@ -1098,9 +1095,9 @@ public class Player extends GameObject {
     }
 
     /**
-     * 设置无敌计时器（秒）
+     * Set invincibility timer (seconds).
      * 
-     * @param seconds 无敌持续时间
+     * @param seconds Invincibility duration.
      */
     public void setInvincibilityTimer(float seconds) {
         this.invincibilityTimer = seconds;
@@ -1108,8 +1105,8 @@ public class Player extends GameObject {
     }
 
     /**
-     * 更新Buff状态（每帧调用）
-     * 应在 updateTimers 中调用
+     * Update Buff states (called every frame).
+     * Should be called in updateTimers.
      */
     public void updateBuffs(float delta) {
         if (speedBuffTimer > 0) {
@@ -1130,9 +1127,9 @@ public class Player extends GameObject {
     }
 
     /**
-     * 尝试消耗护盾抵挡伤害
+     * Attempt to consume shield to block damage.
      * 
-     * @return true 如果护盾成功抵挡
+     * @return true if shield successfully blocked damage.
      */
     public boolean consumeShieldBuff() {
         if (hasShieldBuff) {
@@ -1144,7 +1141,7 @@ public class Player extends GameObject {
     }
 
     /**
-     * 获取带Buff的速度（覆盖原 getSpeed 逻辑）
+     * Get speed with buff applied (Overrides original getSpeed).
      */
     public float getSpeedWithBuff() {
         float baseSpeed = getSpeed();
@@ -1155,15 +1152,15 @@ public class Player extends GameObject {
     }
 
     /**
-     * 获取带狂暴Buff的攻击冷却倍率
+     * Get attack cooldown multiplier with Rage Buff.
      * 
-     * @return 冷却倍率（正常=1.0，狂暴=0.5）
+     * @return Cooldown multiplier (Normal=1.0, Rage=0.5).
      */
     public float getRageCooldownMultiplier() {
         return rageBuffTimer > 0 ? 0.5f : 1.0f;
     }
 
-    // Buff 状态查询
+    // Buff State Queries
     public boolean hasSpeedBuff() {
         return speedBuffTimer > 0;
     }

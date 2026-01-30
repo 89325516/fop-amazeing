@@ -4,24 +4,27 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Preferences;
 
 /**
- * 集中管理所有可调整的游戏参数。
+ * Centralized management for all adjustable game parameters.
  * 
- * 功能说明：
- * - 硬编码默认值 (DEFAULT_*): 系统原始默认值，不可修改
- * - 用户默认值: 玩家在菜单中自定义并保存的默认值
- * - 当前值: 本局游戏中使用的值 (可在游戏中调整)
+ * Functional Description:
+ * - Hardcoded Defaults (DEFAULT_*): System original values, unchangeable.
+ * - User Defaults: Values customized by the player in the menu and saved.
+ * - Current Values: Values used in the current game session (can be adjusted
+ * during gameplay).
  * 
- * 使用方法：
- * - 游戏启动时调用 loadUserDefaults() 加载用户自定义默认值
- * - 菜单中调整参数后调用 saveAsUserDefaults() 保存
- * - 新关卡开始时调用 resetToUserDefaults() 重置为用户默认值
- * - 游戏中可以临时调整当前值，但不影响保存的默认值
+ * Usage:
+ * - Call loadUserDefaults() at game startup to load user-customized defaults.
+ * - Call saveAsUserDefaults() after adjusting parameters in the menu to save.
+ * - Call resetToUserDefaults() at the start of a new level to reset to user
+ * defaults.
+ * - Adjust current values temporarily during gameplay without affecting saved
+ * defaults.
  */
 public class GameSettings {
 
     private static final String PREFS_NAME = "maze_runner_settings_v3";
 
-    // ==================== 硬编码默认值 (不可修改) ====================
+    // ==================== Hardcoded Defaults (Unchangeable) ====================
 
     private static final float DEFAULT_PLAYER_WALK_SPEED = 3.5f;
     private static final float DEFAULT_PLAYER_RUN_SPEED = 7.0f;
@@ -37,7 +40,7 @@ public class GameSettings {
                                                            // player)
                                                            // height)
 
-    // ==================== 用户自定义默认值 (从文件加载/保存) ====================
+    // ==================== User Defaults (Load/Save from file) ====================
 
     private static float userPlayerWalkSpeed = DEFAULT_PLAYER_WALK_SPEED;
     private static float userPlayerRunSpeed = DEFAULT_PLAYER_RUN_SPEED;
@@ -51,7 +54,8 @@ public class GameSettings {
     private static float userCameraZoom = DEFAULT_CAMERA_ZOOM;
     private static boolean userShowAttackRange = true;
 
-    // ==================== 当前值 (本局游戏使用) ====================
+    // ==================== Current Values (Used in this game session)
+    // ====================
 
     public static float playerWalkSpeed = DEFAULT_PLAYER_WALK_SPEED;
     public static float playerRunSpeed = DEFAULT_PLAYER_RUN_SPEED;
@@ -65,13 +69,13 @@ public class GameSettings {
     public static float cameraZoom = DEFAULT_CAMERA_ZOOM;
     public static boolean showAttackRange = true;
 
-    // === 鼠标瞄准设置 (Mouse Aiming) ===
-    public static boolean useMouseAiming = false; // 默认关闭
+    // === Mouse Aiming Settings ===
+    public static boolean useMouseAiming = false; // Default off
     private static boolean userUseMouseAiming = false;
 
-    // === 整格停留设置 (Grid Snapping) ===
-    public static boolean gridSnappingEnabled = true; // 默认开启
-    public static float gridSnapSpeed = 10.0f; // 对齐速度
+    // === Grid Snapping Settings ===
+    public static boolean gridSnappingEnabled = true; // Default on
+    public static float gridSnapSpeed = 10.0f; // Alignment speed
     private static boolean userGridSnappingEnabled = true;
     private static float userGridSnapSpeed = 10.0f;
 
@@ -87,13 +91,13 @@ public class GameSettings {
     public static int KEY_SWITCH_WEAPON;
     public static int KEY_CONSOLE;
     public static int KEY_CONSOLE_ALT;
-    public static int KEY_INVENTORY; // 背包快捷键
+    public static int KEY_INVENTORY; // Inventory shortcut key
 
-    // ==================== 保存/加载用户默认值 ====================
+    // ==================== Save/Load User Defaults ====================
 
     /**
-     * 从文件加载用户自定义的默认值。
-     * 应在游戏启动时调用一次。
+     * Loads user-customized defaults from file.
+     * Should be called once at game startup.
      */
     public static void loadUserDefaults() {
         Preferences prefs = Gdx.app.getPreferences(PREFS_NAME);
@@ -112,8 +116,8 @@ public class GameSettings {
 
         userFogEnabled = prefs.getBoolean("fogEnabled", false);
         userShowAttackRange = prefs.getBoolean("showAttackRange", true);
-        userUseMouseAiming = prefs.getBoolean("useMouseAiming", false); // 默认关闭
-        userGridSnappingEnabled = prefs.getBoolean("gridSnappingEnabled", true); // 默认开启
+        userUseMouseAiming = prefs.getBoolean("useMouseAiming", false); // Default off
+        userGridSnappingEnabled = prefs.getBoolean("gridSnappingEnabled", true); // Default on
         userGridSnapSpeed = prefs.getFloat("gridSnapSpeed", 10.0f);
 
         KEY_UP = prefs.getInteger("key_up", com.badlogic.gdx.Input.Keys.UP);
@@ -128,16 +132,16 @@ public class GameSettings {
         KEY_CONSOLE_ALT = prefs.getInteger("key_console_alt", com.badlogic.gdx.Input.Keys.F3);
         KEY_INVENTORY = prefs.getInteger("key_inventory", com.badlogic.gdx.Input.Keys.I);
 
-        // 同时设置当前值
+        // Also set current values
         resetToUserDefaults();
     }
 
     /**
-     * 将当前值保存为用户自定义默认值。
-     * 应在菜单设置中点击 "Save" 时调用。
+     * Saves current values as user defaults.
+     * Should be called when "Save" is clicked in menu settings.
      */
     public static void saveAsUserDefaults() {
-        // 更新用户默认值
+        // Update user defaults
         userPlayerWalkSpeed = playerWalkSpeed;
         userPlayerRunSpeed = playerRunSpeed;
         userPlayerMaxLives = playerMaxLives;
@@ -151,7 +155,7 @@ public class GameSettings {
         userFogEnabled = fogEnabled;
         userShowAttackRange = showAttackRange;
 
-        // 保存到文件
+        // Save to file
         Preferences prefs = Gdx.app.getPreferences(PREFS_NAME);
         prefs.putFloat("playerWalkSpeed", userPlayerWalkSpeed);
         prefs.putFloat("playerRunSpeed", userPlayerRunSpeed);
@@ -171,8 +175,8 @@ public class GameSettings {
     }
 
     /**
-     * 仅保存按键绑定设置（这些始终是持久化的）。
-     * 用于游戏内设置界面，不保存速度等会话设置。
+     * Only saves key binding settings (these are always persistent).
+     * Used in in-game settings UI, does not save gameplay settings like speed.
      */
     public static void saveKeyBindingsOnly() {
         Preferences prefs = Gdx.app.getPreferences(PREFS_NAME);
@@ -190,8 +194,8 @@ public class GameSettings {
     }
 
     /**
-     * 重置当前值为用户自定义默认值。
-     * 应在每次新关卡开始时调用。
+     * Resets current values to user defaults.
+     * Should be called at the start of every new level.
      */
     public static void resetToUserDefaults() {
         playerWalkSpeed = userPlayerWalkSpeed;
@@ -211,7 +215,7 @@ public class GameSettings {
         cameraZoom = DEFAULT_CAMERA_ZOOM; // Force new default zoom (0.67 for 15x15 view)
     }
 
-    // ==================== 迷雾模式 (Fog of War) ====================
+    // ==================== Fog of War ====================
     public static boolean fogEnabled = false;
     private static boolean userFogEnabled = false;
 
@@ -224,7 +228,7 @@ public class GameSettings {
         return fogEnabled;
     }
 
-    // ==================== 攻击范围显示 (Attack Range) ====================
+    // ==================== Attack Range Display ====================
     public static void setShowAttackRange(boolean enabled) {
         showAttackRange = enabled;
         userShowAttackRange = enabled;
@@ -234,7 +238,7 @@ public class GameSettings {
         return showAttackRange;
     }
 
-    // ==================== 鼠标瞄准模式 (Mouse Aiming) ====================
+    // ==================== Mouse Aiming Mode ====================
     public static void setUseMouseAiming(boolean enabled) {
         useMouseAiming = enabled;
         userUseMouseAiming = enabled;
@@ -244,7 +248,7 @@ public class GameSettings {
         return useMouseAiming;
     }
 
-    // ==================== 整格停留 (Grid Snapping) ====================
+    // ==================== Grid Snapping ====================
     public static void setGridSnappingEnabled(boolean enabled) {
         gridSnappingEnabled = enabled;
         userGridSnappingEnabled = enabled;
@@ -264,7 +268,7 @@ public class GameSettings {
     }
 
     /**
-     * 重置用户默认值为硬编码默认值，并保存。
+     * Resets user defaults to hardcoded defaults and saves them.
      */
     public static void resetUserDefaultsToHardcoded() {
         userPlayerWalkSpeed = DEFAULT_PLAYER_WALK_SPEED;
@@ -280,21 +284,21 @@ public class GameSettings {
         userShowAttackRange = true;
         userUseMouseAiming = false; // Reset to Keyboard Mode
 
-        // 同时更新当前值
+        // Update current values as well
         resetToUserDefaults();
 
-        // 保存到文件
+        // Save to file
         saveAsUserDefaults();
     }
 
-    // ==================== 关卡解锁系统 ====================
+    // ==================== Level Unlock System ====================
 
-    public static final String DEV_PASSWORD = "111"; // 开发者模式密码
+    public static final String DEV_PASSWORD = "111"; // Developer mode password
     private static final String PREF_UNLOCKED_LEVEL = "max_unlocked_level";
 
     public static int getUnlockedLevel() {
         Preferences prefs = Gdx.app.getPreferences(PREFS_NAME);
-        return prefs.getInteger(PREF_UNLOCKED_LEVEL, 1); // 默认解锁第 1 关
+        return prefs.getInteger(PREF_UNLOCKED_LEVEL, 1); // Default unlock level 1
     }
 
     public static void unlockLevel(int level) {
@@ -318,10 +322,10 @@ public class GameSettings {
         System.out.println("Force Set Unlocked Level: " + level);
     }
 
-    // ==================== 旧方法 (保持兼容) ====================
+    // ==================== Legacy Methods (Compatibility) ====================
 
     /**
-     * @deprecated 使用 resetToUserDefaults() 代替
+     * @deprecated Use resetToUserDefaults() instead
      */
     @Deprecated
     public static void resetToDefaults() {

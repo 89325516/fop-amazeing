@@ -21,13 +21,14 @@ import de.tum.cit.fop.maze.utils.GameLogger;
 import java.util.List;
 
 /**
- * 加载画面 - 在进入游戏前预加载所有自定义元素动画
- * 
- * 工作流程:
- * 1. 显示加载画面 (warmup阶段)
- * 2. 获取预加载任务列表
- * 3. 每帧加载一部分资源，更新进度条
- * 4. 完成后跳转到GameScreen
+ * Loading Screen - Preloads all custom element animations before entering the
+ * game.
+ *
+ * Workflow:
+ * 1. Show loading screen (warmup phase)
+ * 2. Get preload task list
+ * 3. Load a portion of resources per frame, updating the progress bar
+ * 4. Transition to GameScreen upon completion
  */
 public class LoadingScreen implements Screen {
 
@@ -42,9 +43,9 @@ public class LoadingScreen implements Screen {
 
     private List<String[]> preloadTasks;
     private int currentTaskIndex = 0;
-    private int tasksPerFrame = 2; // 每帧加载的任务数（调低以避免帧卡顿）
+    private int tasksPerFrame = 2; // Tasks loaded per frame (lower to prevent lag)
 
-    // 预热阶段：先渲染几帧让UI显示出来
+    // Warmup phase: Render a few frames to ensure UI is displayed
     private int warmupFrames = 3;
     private int frameCount = 0;
     private boolean initialized = false;
@@ -55,7 +56,7 @@ public class LoadingScreen implements Screen {
 
     private boolean isEndlessMode = false;
 
-    // 护甲选择相关字段
+    // Armor Selection Fields
     private de.tum.cit.fop.maze.model.DamageType selectedArmorType = null;
     private de.tum.cit.fop.maze.model.DamageType levelDamageType = null;
 
@@ -93,7 +94,7 @@ public class LoadingScreen implements Screen {
         Table root = new Table();
         root.setFillParent(true);
 
-        // 背景
+        // Background
         Pixmap bgPixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
         bgPixmap.setColor(0.05f, 0.05f, 0.1f, 1f);
         bgPixmap.fill();
@@ -101,19 +102,19 @@ public class LoadingScreen implements Screen {
         root.setBackground(new TextureRegionDrawable(new TextureRegion(bgTexture)));
         bgPixmap.dispose();
 
-        // 标题
+        // Title
         titleLabel = new Label("Loading Game...", skin, "title");
         titleLabel.setColor(Color.WHITE);
         root.add(titleLabel).padBottom(60).row();
 
-        // 进度条背景
+        // Progress Bar Background
         Pixmap barBgPixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
         barBgPixmap.setColor(0.2f, 0.2f, 0.3f, 1f);
         barBgPixmap.fill();
         barBgTexture = new Texture(barBgPixmap);
         barBgPixmap.dispose();
 
-        // 进度条填充
+        // Progress Bar Fill
         Pixmap barFillPixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
         barFillPixmap.setColor(0.3f, 0.7f, 1f, 1f);
         barFillPixmap.fill();
@@ -130,7 +131,7 @@ public class LoadingScreen implements Screen {
         progressBar.setValue(0);
         root.add(progressBar).width(600).height(20).padBottom(30).row();
 
-        // 状态标签
+        // Status Label
         statusLabel = new Label("Preparing...", skin);
         statusLabel.setColor(Color.LIGHT_GRAY);
         root.add(statusLabel).row();
@@ -141,7 +142,7 @@ public class LoadingScreen implements Screen {
     @Override
     public void show() {
         Gdx.input.setInputProcessor(stage);
-        // 🔊 全局按钮音效
+        // 🔊 Global button sound
         de.tum.cit.fop.maze.utils.UIUtils.enableMenuButtonSound(stage);
         // Stop any playing music during loading
         de.tum.cit.fop.maze.utils.AudioManager.getInstance().stopMusic();
@@ -150,38 +151,38 @@ public class LoadingScreen implements Screen {
 
     @Override
     public void render(float delta) {
-        // 清屏
+        // Clear screen
         Gdx.gl.glClearColor(0.05f, 0.05f, 0.1f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        // 先绘制UI
+        // Draw UI first
         stage.act(delta);
         stage.draw();
 
         frameCount++;
 
-        // 预热阶段：等待几帧让UI显示出来
+        // Warmup phase: Wait for a few frames to let UI display
         if (frameCount <= warmupFrames) {
             GameLogger.info("LoadingScreen", "Warmup frame " + frameCount);
             return;
         }
 
-        // 初始化预加载任务（只执行一次）
+        // Initialize preload tasks (execute only once)
         if (!initialized) {
             initializePreloadTasks();
             initialized = true;
             return;
         }
 
-        // 执行预加载任务
+        // Execute preload tasks
         if (currentTaskIndex < preloadTasks.size()) {
-            // 每帧加载几个任务
+            // Load multiple tasks per frame
             for (int i = 0; i < tasksPerFrame && currentTaskIndex < preloadTasks.size(); i++) {
                 String[] task = preloadTasks.get(currentTaskIndex);
                 String elementId = task[0];
                 String action = task[1];
 
-                // 获取元素名称用于显示
+                // Get element name for display
                 String elementName = elementId;
                 var def = CustomElementManager.getInstance().getElement(elementId);
                 if (def != null) {
@@ -190,24 +191,24 @@ public class LoadingScreen implements Screen {
 
                 statusLabel.setText("Loading: " + elementName + " - " + action);
 
-                // 执行预加载
+                // Execute preload
                 CustomElementManager.getInstance().preloadAnimation(elementId, action);
 
                 currentTaskIndex++;
             }
 
-            // 更新进度条
+            // Update progress bar
             float progress = preloadTasks.size() > 0
                     ? (float) currentTaskIndex / preloadTasks.size()
                     : 1f;
             progressBar.setValue(progress);
 
-            // 每10个任务输出一次日志
+            // Log every 10 tasks
             if (currentTaskIndex % 10 == 0) {
                 GameLogger.info("LoadingScreen", "Progress: " + currentTaskIndex + "/" + preloadTasks.size());
             }
         } else {
-            // 加载完成，进入游戏
+            // Loading complete, enter game
             statusLabel.setText("Complete!");
             onLoadingComplete();
         }
@@ -230,7 +231,7 @@ public class LoadingScreen implements Screen {
         } else {
             GameScreen gameScreen = new GameScreen(game, saveFilePath, true);
 
-            // 应用护甲选择
+            // Apply Armor Selection
             if (selectedArmorType != null) {
                 if (selectedArmorType == de.tum.cit.fop.maze.model.DamageType.PHYSICAL) {
                     gameScreen.getGameWorld().getPlayer().equipArmor(
@@ -241,7 +242,7 @@ public class LoadingScreen implements Screen {
                 }
             }
 
-            // 应用关卡伤害类型
+            // Apply Level Damage Type
             if (levelDamageType != null) {
                 gameScreen.getGameWorld().setLevelDamageType(levelDamageType);
             }

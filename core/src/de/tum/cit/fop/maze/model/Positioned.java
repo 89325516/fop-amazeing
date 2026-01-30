@@ -1,18 +1,19 @@
 package de.tum.cit.fop.maze.model;
 
 /**
- * 可定位实体接口 (Positioned Interface)
+ * Positioned Interface.
  * 
- * 用于空间索引系统，任何需要参与空间查询的实体都应实现此接口。
+ * Used for spacial index system. Any entity involved in spatial queries should
+ * implement this.
  */
 public interface Positioned {
     /**
-     * 获取实体的X坐标（格子单位）
+     * Gets the entity X coordinate (tile unit).
      */
     float getX();
 
     /**
-     * 获取实体的Y坐标（格子单位）
+     * Gets the entity Y coordinate (tile unit).
      */
     float getY();
 }

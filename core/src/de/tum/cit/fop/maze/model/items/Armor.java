@@ -4,32 +4,34 @@ import de.tum.cit.fop.maze.model.DamageType;
 import de.tum.cit.fop.maze.model.GameObject;
 
 /**
- * 护甲抽象基类 (Armor Abstract Base Class)
+ * Abstract base class for armor items.
  * 
- * 护甲系统设计：
- * - 玩家同一时刻只能装备一件护甲
- * - 护甲有护盾值 (shield)，吸收对应类型的伤害
- * - 护甲类型决定能吸收的伤害类型
- * - 护盾值耗尽后，伤害将直接作用于玩家生命值
+ * Armor System Design:
+ * - The player can only equip one armor at a time.
+ * - Armor provides a shield value that absorbs specific types of damage.
+ * - The armor type determines which damage types it can resist.
+ * - Once the shield is depleted, remaining damage affects the player's health
+ * directly.
  */
 public abstract class Armor extends GameObject {
 
     protected String name;
     protected int maxShield;
     protected int currentShield;
-    protected DamageType resistType; // 此护甲抵抗的伤害类型
+    /** The type of damage this armor resists. */
+    protected DamageType resistType;
 
-    // 纹理标识符，用于 TextureManager 获取对应图标
+    /** Texture identifier used by TextureManager to retrieve the icon. */
     protected String textureKey;
 
     /**
-     * 创建护甲实例
+     * Creates an armor instance.
      * 
-     * @param x          X 坐标（在地图上作为掉落物时使用）
-     * @param y          Y 坐标
-     * @param name       护甲名称
-     * @param maxShield  最大护盾值
-     * @param resistType 抵抗的伤害类型
+     * @param x          X coordinate (used when dropped on the map).
+     * @param y          Y coordinate.
+     * @param name       Name of the armor.
+     * @param maxShield  Maximum shield value.
+     * @param resistType The type of damage this armor resists.
      */
     public Armor(float x, float y, String name, int maxShield, DamageType resistType) {
         super(x, y);
@@ -42,38 +44,43 @@ public abstract class Armor extends GameObject {
     }
 
     /**
-     * 尝试用护盾吸收伤害
+     * Attempts to absorb damage using the shield.
      * 
-     * @param amount 伤害量
-     * @param type   伤害类型
-     * @return 穿透护盾的剩余伤害（如果护甲不抵抗此类型，返回全额伤害）
+     * @param amount The amount of incoming damage.
+     * @param type   The type of incoming damage.
+     * @return The remaining damage that penetrates the shield (if the armor does
+     *         not resist the damage type, returns full amount).
      */
     public int absorbDamage(int amount, DamageType type) {
-        // 如果伤害类型不匹配护甲抵抗类型，伤害直接穿透
+        // If damage type does not match resistance type, damage penetrates fully
         if (type != resistType) {
             return amount;
         }
 
-        // 计算护盾能吸收的伤害
+        // Calculate absorbed damage
         if (currentShield >= amount) {
             currentShield -= amount;
-            return 0; // 全部吸收
+            return 0; // Fully absorbed
         } else {
             int absorbed = currentShield;
             currentShield = 0;
-            return amount - absorbed; // 返回穿透的伤害
+            return amount - absorbed; // Return remaining damage
         }
     }
 
     /**
-     * 检查护盾是否还有效
+     * Checks if the shield is still active.
+     * 
+     * @return true if current shield is greater than 0, false otherwise.
      */
     public boolean hasShield() {
         return currentShield > 0;
     }
 
     /**
-     * 获取护盾百分比 (用于 UI 显示)
+     * Gets protection percentage for UI display.
+     * 
+     * @return The ratio of current shield to max shield (0.0 to 1.0).
      */
     public float getShieldPercentage() {
         if (maxShield <= 0)
@@ -82,16 +89,16 @@ public abstract class Armor extends GameObject {
     }
 
     /**
-     * 修复护盾（例如通过道具）
+     * Repairs the shield by a specified amount (e.g., via items).
      * 
-     * @param amount 修复量
+     * @param amount The amount to repair.
      */
     public void repairShield(int amount) {
         currentShield = Math.min(currentShield + amount, maxShield);
     }
 
     /**
-     * 完全恢复护盾
+     * Fully restores the shield to its maximum value.
      */
     public void restoreShield() {
         currentShield = maxShield;
@@ -120,12 +127,16 @@ public abstract class Armor extends GameObject {
     }
 
     /**
-     * 获取护甲的描述信息
+     * Gets the description of the armor.
+     * 
+     * @return Ideally a detailed string description.
      */
     public abstract String getDescription();
 
     /**
-     * 获取护甲的类型标识符（用于序列化/反序列化）
+     * Gets the unique type identifier for serialization/deserialization.
+     * 
+     * @return The unique type ID string.
      */
     public abstract String getTypeId();
 }

@@ -38,7 +38,7 @@ public class LevelSummaryScreen implements Screen {
     // Background
     private Texture backgroundTexture;
 
-    // Styling Constants - 使用UIConstants统一管理
+    // Styling Constants - Managed via UIConstants
     private static final Color COLOR_VICTORY = UIConstants.VICTORY_GOLD;
     private static final Color COLOR_DEFEAT = new Color(0.9f, 0.25f, 0.2f, 1f); // Warmer Red
     private static final Color COLOR_TEXT_DIM = UIConstants.VICTORY_TEXT_DIM;
@@ -49,12 +49,12 @@ public class LevelSummaryScreen implements Screen {
         this.skin = game.getSkin();
         this.stage = new Stage(new FitViewport(1920, 1080), game.getSpriteBatch());
 
-        // === 金币同步到商店系统 ===
-        // 将本关卡收集的金币持久化到 Preferences，供商店使用
+        // === Sync Coins to Shop System ===
+        // Persist collected coins in this level to Preferences for Shop use
         de.tum.cit.fop.maze.shop.ShopManager.syncCoinsFromGame(data.getCoinsCollected());
 
-        // === 金币累加到成就系统并检查成就 ===
-        // 在关卡结束时统一处理，避免逐个金币累加导致的重复计数
+        // === Add coins to achievement system and check achievements ===
+        // Processed at level end to avoid duplicate counting of individual coin pickups
         if (data.getCoinsCollected() > 0) {
             AchievementManager.addCoinsToTotal(data.getCoinsCollected());
             java.util.List<String> coinAchievements = AchievementManager.checkCoinMilestone(0);
@@ -67,6 +67,9 @@ public class LevelSummaryScreen implements Screen {
         buildUI();
     }
 
+    /**
+     * Loads the background texture based on the theme.
+     */
     private void loadBackground() {
         String bgPath = "Grass.png"; // Default
         String theme = data.getThemeName();
@@ -100,6 +103,9 @@ public class LevelSummaryScreen implements Screen {
         }
     }
 
+    /**
+     * Builds the UI elements.
+     */
     private void buildUI() {
         Table rootTable = new Table();
         rootTable.setFillParent(true);
@@ -121,7 +127,7 @@ public class LevelSummaryScreen implements Screen {
     private void buildHeader(Table root) {
         String titleText = data.isVictory() ? "VICTORY" : "DEFEAT";
         Label titleLabel = new Label(titleText, skin, "title");
-        // 使用更柔和的金色
+        // Use softer gold
         Color titleColor = data.isVictory() ? UIConstants.VICTORY_GOLD : COLOR_DEFEAT;
         titleLabel.setColor(titleColor);
         titleLabel.setFontScale(1.4f);
@@ -130,7 +136,7 @@ public class LevelSummaryScreen implements Screen {
 
         String subtitle = getSubtitle();
         Label subtitleLabel = new Label(subtitle, skin);
-        // 使用柔和的白色
+        // Use soft white
         subtitleLabel.setColor(UIConstants.VICTORY_TEXT_DIM);
         subtitleLabel.setFontScale(1.0f);
         root.add(subtitleLabel).padBottom(35).row();
@@ -139,14 +145,14 @@ public class LevelSummaryScreen implements Screen {
     private void buildMainCard(Table root) {
         Table card = new Table();
 
-        // 使用渐变边框效果 - 从暖金到科技蓝
+        // Use gradient border effect - from warm gold to tech blue
         Color borderStartColor = data.isVictory() ? UIConstants.VICTORY_BORDER_START : new Color(0.4f, 0.4f, 0.45f, 1f);
         Color borderEndColor = data.isVictory() ? UIConstants.VICTORY_BORDER_END : new Color(0.3f, 0.3f, 0.35f, 1f);
         Color bgColor = UIConstants.VICTORY_CARD_BG;
         card.setBackground(createGradientBorderNinePatch(bgColor, borderStartColor, borderEndColor, 3));
 
-        // 增加内边距避免文字超出边框
-        // 頂部額外增加內邊距，讓PERFORMANCE下移
+        // Increase padding to avoid text overflow
+        // Extra top padding to move PERFORMANCE down
         card.pad(60, 70, 50, 70);
         card.padTop(80);
 
@@ -156,7 +162,7 @@ public class LevelSummaryScreen implements Screen {
             Table statsCol = buildStatsTable();
             card.add(statsCol).expand().fill().padRight(40);
 
-            // Vertical Separator - 使用渐变分割线
+            // Vertical Separator - Use gradient divider
             Image separator = new Image(createGradientDivider());
             card.add(separator).width(2).growY().padRight(40);
 
@@ -168,7 +174,7 @@ public class LevelSummaryScreen implements Screen {
             card.add(statsCol).growX();
         }
 
-        // 增大卡片尺寸
+        // Increase card size
         root.add(card).width(1450).height(520).padBottom(40).row();
     }
 
@@ -218,8 +224,9 @@ public class LevelSummaryScreen implements Screen {
     }
 
     /**
-     * 创建渐变边框的NinePatch (从一种颜色渐变到另一种颜色)
-     * 视觉效果：顶部和左侧使用起始色，底部和右侧使用结束色
+     * Creates a NinePatchDrawable with a gradient border style (gradients from one
+     * color to another).
+     * Visual effect: Start color on top and left, end color on bottom and right.
      */
     private com.badlogic.gdx.scenes.scene2d.utils.Drawable createGradientBorderNinePatch(
             Color bgColor, Color borderStart, Color borderEnd, int borderThickness) {
@@ -227,34 +234,34 @@ public class LevelSummaryScreen implements Screen {
         int size = 16 + 2 * borderThickness;
         Pixmap pm = new Pixmap(size, size, Pixmap.Format.RGBA8888);
 
-        // 填充背景
+        // Fill background
         pm.setColor(bgColor);
         pm.fill();
 
-        // 绘制渐变边框 - 上边和左边用起始色，下边和右边用结束色
-        // 顶部边框 (起始色)
+        // Draw gradient borders - Start color for top/left, End color for bottom/right
+        // Top border (Start Color)
         pm.setColor(borderStart);
         pm.fillRectangle(0, 0, size, borderThickness);
-        // 左侧边框 (起始色)
+        // Left border (Start Color)
         pm.fillRectangle(0, 0, borderThickness, size);
 
-        // 底部边框 (结束色)
+        // Bottom border (End Color)
         pm.setColor(borderEnd);
         pm.fillRectangle(0, size - borderThickness, size, borderThickness);
-        // 右侧边框 (结束色)
+        // Right border (End Color)
         pm.fillRectangle(size - borderThickness, 0, borderThickness, size);
 
-        // 角落混合色 (在四个角创建渐变过渡效果)
+        // Corner Blending (Create gradient transition at corners)
         Color cornerBlend = new Color(
                 (borderStart.r + borderEnd.r) / 2f,
                 (borderStart.g + borderEnd.g) / 2f,
                 (borderStart.b + borderEnd.b) / 2f,
                 1f);
 
-        // 右上角
+        // Top Right
         pm.setColor(cornerBlend);
         pm.fillRectangle(size - borderThickness, 0, borderThickness, borderThickness);
-        // 左下角
+        // Bottom Left
         pm.fillRectangle(0, size - borderThickness, borderThickness, borderThickness);
 
         Texture texture = new Texture(pm);
@@ -267,15 +274,16 @@ public class LevelSummaryScreen implements Screen {
     }
 
     /**
-     * 创建渐变分割线 (中间亮，两端淡出)
+     * Creates a gradient divider (bright in center, fading out at ends).
      */
     private TextureRegionDrawable createGradientDivider() {
-        int height = 200; // 足够高度用于垂直分割线
+        int height = 200; // Sufficient height for vertical divider
         int width = 2;
         Pixmap pm = new Pixmap(width, height, Pixmap.Format.RGBA8888);
 
         for (int y = 0; y < height; y++) {
-            // 计算渐变：中间最亮 (0.4 alpha)，两端淡出 (0.05 alpha)
+            // Calculate gradient: Brightest in center (0.4 alpha), fading at ends (0.05
+            // alpha)
             float distFromCenter = Math.abs(y - height / 2f) / (height / 2f);
             float alpha = 0.35f * (1f - distFromCenter * distFromCenter) + 0.05f;
 
@@ -295,7 +303,7 @@ public class LevelSummaryScreen implements Screen {
         Table table = new Table();
         table.top().left();
 
-        // Section Title - 縮小字體避免超出
+        // Section Title - Smaller font to avoid overflow
         Label sectionTitle = new Label("PERFORMANCE", skin);
         sectionTitle.setColor(UIConstants.VICTORY_BORDER_END);
         sectionTitle.setFontScale(1.0f);
@@ -323,7 +331,7 @@ public class LevelSummaryScreen implements Screen {
         nameLabel.setFontScale(0.95f);
 
         Label valueLabel = new Label(value, skin);
-        // 特殊值高亮显示
+        // Highlight special values
         if (value.contains("Bonus")) {
             valueLabel.setColor(UIConstants.RANK_S_GLOW);
         } else {
@@ -335,7 +343,7 @@ public class LevelSummaryScreen implements Screen {
         table.add(nameLabel).left().padBottom(15).expandX();
         table.add(valueLabel).right().padBottom(15).row();
 
-        // 分割线
+        // Divider Line
         Image line = new Image(createColorDrawable(UIConstants.VICTORY_DIVIDER));
         table.add(line).height(1).colspan(2).growX().padBottom(15).row();
     }
@@ -347,13 +355,13 @@ public class LevelSummaryScreen implements Screen {
         String rank = data.getRank();
         Color rankGlowColor = getRankGlowColor(rank);
 
-        // Rank Display Title - 縮小字體
+        // Rank Display Title - Smaller font
         Label rankTitle = new Label("RANK", skin);
         rankTitle.setColor(UIConstants.VICTORY_BORDER_END);
         rankTitle.setFontScale(1.0f);
         table.add(rankTitle).center().padBottom(10).row();
 
-        // 创建发光背景的Rank容器 - 調整内邊距
+        // Create Glowing Rank Container - Adjusted padding
         Table rankContainer = new Table();
         rankContainer.setBackground(createRankGlowBackground(rankGlowColor));
         rankContainer.pad(15, 30, 15, 30);
@@ -406,13 +414,13 @@ public class LevelSummaryScreen implements Screen {
     }
 
     /**
-     * 创建Rank发光背景
+     * Creates a glowing background for the Rank.
      */
     private TextureRegionDrawable createRankGlowBackground(Color glowColor) {
         int size = 120;
         Pixmap pm = new Pixmap(size, size, Pixmap.Format.RGBA8888);
 
-        // 创建径向渐变发光效果
+        // Create radial gradient glow effect
         float centerX = size / 2f;
         float centerY = size / 2f;
         float maxDist = size / 2f;
@@ -421,7 +429,7 @@ public class LevelSummaryScreen implements Screen {
             for (int x = 0; x < size; x++) {
                 float dist = (float) Math.sqrt((x - centerX) * (x - centerX) + (y - centerY) * (y - centerY));
                 float ratio = Math.min(1f, dist / maxDist);
-                // 中心最亮 (0.25 alpha)，边缘淡出 (0.02 alpha)
+                // Brightest in center (0.25 alpha), fading at edges (0.02 alpha)
                 float alpha = 0.22f * (1f - ratio * ratio) + 0.02f;
 
                 pm.setColor(new Color(glowColor.r, glowColor.g, glowColor.b, alpha));
@@ -436,7 +444,7 @@ public class LevelSummaryScreen implements Screen {
     }
 
     /**
-     * 获取Rank发光颜色
+     * Gets the glow color for a specific Rank.
      */
     private Color getRankGlowColor(String rank) {
         switch (rank) {
@@ -460,7 +468,7 @@ public class LevelSummaryScreen implements Screen {
 
         // Primary Action (Next Level) - Only on Victory
         if (data.isVictory()) {
-            // 簡化文字並增加按鈕寬度，確保完整顯示
+            // Simplify text and increase button width to ensure full display
             TextButton nextBtn = new TextButton("  NEXT  >>  ", skin);
             nextBtn.getLabel().setFontScale(0.95f);
             nextBtn.setColor(UIConstants.VICTORY_BORDER_START);
@@ -525,10 +533,10 @@ public class LevelSummaryScreen implements Screen {
     }
 
     /**
-     * 显示分数提交对话框
+     * Shows the score submission dialog.
      */
     private void showScoreSubmitDialog() {
-        // 计算分数
+        // Calculate score
         int score = de.tum.cit.fop.maze.utils.LeaderboardManager.calculateScore(
                 data.getCompletionTime(),
                 data.getKillCount(),
@@ -541,19 +549,19 @@ public class LevelSummaryScreen implements Screen {
         Table content = new Table();
         content.pad(20);
 
-        // 显示分数
+        // Display Score
         Label scoreLabel = new Label("Your Score: " + score, skin);
         scoreLabel.setColor(Color.GOLD);
         scoreLabel.setFontScale(1.5f);
         content.add(scoreLabel).padBottom(30).row();
 
-        // 显示排名预览
+        // Display Rank Preview
         int rank = de.tum.cit.fop.maze.utils.LeaderboardManager.getInstance().getRank(score);
         Label rankLabel = new Label("Rank #" + rank, skin);
         rankLabel.setColor(Color.CYAN);
         content.add(rankLabel).padBottom(20).row();
 
-        // 玩家名称输入
+        // Player Name Input
         content.add(new Label("Enter Your Name:", skin)).padBottom(10).row();
         final TextField nameField = new TextField("Player", skin);
         nameField.setMaxLength(15);
@@ -561,7 +569,7 @@ public class LevelSummaryScreen implements Screen {
 
         dialog.getContentTable().add(content);
 
-        // 按钮
+        // Buttons
         TextButton submitBtn = new TextButton("Submit", skin);
         submitBtn.addListener(new ChangeListener() {
             @Override
@@ -579,7 +587,7 @@ public class LevelSummaryScreen implements Screen {
 
                 dialog.hide();
 
-                // 显示确认
+                // Show Confirmation
                 Dialog confirmDialog = new Dialog("Score Submitted!", skin);
                 confirmDialog.text("Your score has been saved to the leaderboard!");
                 confirmDialog.button("OK");
@@ -631,32 +639,33 @@ public class LevelSummaryScreen implements Screen {
     private void goToNextLevel() {
         int currentLevel = data.getLevelNumber();
 
-        // ============ 第20關結局處理 (Level 20 Ending Handler) ============
-        // 如果當前是第20關（Final Battle），顯示結局對話並返回主菜單
+        // ============ Level 20 Ending Handler ============
+        // If current level is 20 (Final Battle), show ending dialogue and return to
+        // main menu
         if (currentLevel == 20) {
             Gdx.app.log("LevelSummaryScreen", "Level 20 completed! Showing ending dialogue...");
             game.setScreen(new EndingStoryScreen(game));
             return;
         }
 
-        // ============ 正常關卡流程 ============
+        // ============ Normal Level Flow ============
         int nextLevel = currentLevel + 1;
         String nextMapPath = "maps/level-" + nextLevel + ".properties";
 
         GameSettings.unlockLevel(nextLevel);
 
         if (!Gdx.files.internal(nextMapPath).exists() && !Gdx.files.local(nextMapPath).exists()) {
-            // 使用 MapGenerator 默认配置生成地图
+            // Generate map with default config using MapGenerator
             new MapGenerator().generateAndSave(nextMapPath);
         }
 
-        // 檢查是否有對話需要顯示 (Check if dialogue exists for next level)
+        // Check if dialogue exists for next level
         DialogueData.LevelDialogue dialogue = DialogueData.getDialogueForLevel(nextLevel);
         if (dialogue != null) {
-            // 顯示對話畫面，對話結束後進入 ArmorSelectScreen
+            // Show dialogue screen, then enter armor selection
             game.setScreen(new LevelStoryScreen(game, nextMapPath, dialogue));
         } else {
-            // 沒有對話，直接進入裝備選擇畫面
+            // No dialogue, go directly to armor selection
             game.setScreen(new ArmorSelectScreen(game, nextMapPath));
         }
     }
@@ -676,7 +685,7 @@ public class LevelSummaryScreen implements Screen {
     @Override
     public void show() {
         Gdx.input.setInputProcessor(stage);
-        // 🔊 全局按钮音效
+        // 🔊 Global button sound
         de.tum.cit.fop.maze.utils.UIUtils.enableGameButtonSound(stage);
 
         // 🎵 根据胜负状态播放对应的背景音乐

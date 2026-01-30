@@ -21,8 +21,9 @@ import com.badlogic.gdx.utils.viewport.FitViewport;
 import de.tum.cit.fop.maze.MazeRunnerGame;
 
 /**
- * 關卡間對話畫面 (Level Story Screen)
- * 在關卡切換時顯示對話，對話結束後進入 ArmorSelectScreen
+ * Level Story Screen.
+ * Displays dialogue between levels, then transitions to ArmorSelectScreen upon
+ * completion.
  */
 public class LevelStoryScreen implements Screen {
 
@@ -30,16 +31,16 @@ public class LevelStoryScreen implements Screen {
     private final Stage stage;
     private final String nextMapPath;
 
-    // 對話數據
+    // Dialogue Data
     private final DialogueData.LevelDialogue dialogueData;
     private int currentLineIndex = 0;
 
-    // 紋理資源
+    // Texture Resources
     private Texture backgroundTexture;
     private Texture dialogBoxTexture;
     private Texture borderTexture;
 
-    // UI 元素
+    // UI Elements
     private Label speakerLabel;
     private Label dialogueLabel;
     private Label pageIndicator;
@@ -56,6 +57,9 @@ public class LevelStoryScreen implements Screen {
         setupUI();
     }
 
+    /**
+     * Loads the background texture.
+     */
     private void loadBackgroundTexture() {
         String bgPath = dialogueData.backgroundPath;
         try {
@@ -67,6 +71,9 @@ public class LevelStoryScreen implements Screen {
         }
     }
 
+    /**
+     * Creates textures for the dialog box.
+     */
     private void createDialogBoxTextures() {
         int boxHeight = 50;
         Pixmap gradientPixmap = new Pixmap(1, boxHeight, Pixmap.Format.RGBA8888);
@@ -85,6 +92,9 @@ public class LevelStoryScreen implements Screen {
         borderPixmap.dispose();
     }
 
+    /**
+     * Sets up the UI elements.
+     */
     private void setupUI() {
         stage.clear();
 
@@ -95,17 +105,17 @@ public class LevelStoryScreen implements Screen {
 
         Table dialogContainer = new Table();
 
-        // 頂部裝飾線
+        // Top Border
         Table topBorder = new Table();
         topBorder.setBackground(new TextureRegionDrawable(new TextureRegion(borderTexture)));
         dialogContainer.add(topBorder).width(1750).height(3).padBottom(0).row();
 
-        // 對話框主體
+        // Dialogue Box Body
         Table dialogBox = new Table();
         dialogBox.setBackground(new TextureRegionDrawable(new TextureRegion(dialogBoxTexture)));
         dialogBox.pad(40, 55, 35, 55);
 
-        // 說話者標籤
+        // Speaker Label
         BitmapFont boldFont = game.getSkin().getFont("bold");
         DialogueData.DialogueLine currentLine = getCurrentLine();
         Label.LabelStyle speakerStyle = new Label.LabelStyle(boldFont, currentLine.speaker.color);
@@ -116,7 +126,7 @@ public class LevelStoryScreen implements Screen {
         speakerContainer.add(speakerLabel).left();
         dialogBox.add(speakerContainer).left().padBottom(18).row();
 
-        // 對話內容
+        // Dialogue Content
         BitmapFont dialogFont = game.getSkin().getFont("font");
         Label.LabelStyle dialogStyle = new Label.LabelStyle(dialogFont, new Color(0.95f, 0.95f, 0.95f, 1f));
         dialogueLabel = new Label(currentLine.text, dialogStyle);
@@ -126,7 +136,7 @@ public class LevelStoryScreen implements Screen {
 
         dialogBox.add(dialogueLabel).width(1580).minHeight(130).padBottom(28).left().row();
 
-        // 底部：頁碼 + 按鈕
+        // Bottom: Page Number + Button
         Table bottomRow = new Table();
 
         Label.LabelStyle pageStyle = new Label.LabelStyle(dialogFont, new Color(0.5f, 0.6f, 0.7f, 1f));
@@ -148,7 +158,7 @@ public class LevelStoryScreen implements Screen {
 
         dialogContainer.add(dialogBox).width(1750).row();
 
-        // 底部裝飾線
+        // Bottom Border
         Table bottomBorder = new Table();
         bottomBorder.setBackground(new TextureRegionDrawable(new TextureRegion(borderTexture)));
         dialogContainer.add(bottomBorder).width(1750).height(3).padTop(0);
@@ -170,7 +180,7 @@ public class LevelStoryScreen implements Screen {
     private void onContinueClicked() {
         currentLineIndex++;
         if (currentLineIndex >= dialogueData.lines.length) {
-            // 對話結束，進入裝備選擇畫面
+            // Dialogue ended, enter armor selection screen
             game.setScreen(new ArmorSelectScreen(game, nextMapPath));
         } else {
             updateDialogue();
@@ -188,7 +198,7 @@ public class LevelStoryScreen implements Screen {
     @Override
     public void show() {
         Gdx.input.setInputProcessor(stage);
-        // 🔊 全局按钮音效
+        // 🔊 Global button sound
         de.tum.cit.fop.maze.utils.UIUtils.enableMenuButtonSound(stage);
     }
 

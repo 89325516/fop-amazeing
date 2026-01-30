@@ -11,10 +11,11 @@ import de.tum.cit.fop.maze.model.weapons.Weapon;
 import java.util.List;
 
 /**
- * 可复用的武器栏组件 (Reusable Weapon Slot Bar Widget)
- * 
- * 从 GameHUD 和 EndlessHUD 中提取的公共逻辑。
- * 显示玩家背包中的武器并高亮当前选中武器。
+ * Reusable Weapon Slot Bar Widget.
+ * <p>
+ * Common logic extracted from GameHUD and EndlessHUD.
+ * Displays weapons in the player's inventory and highlights the currently
+ * selected weapon.
  */
 public class WeaponSlotBarWidget extends Table {
 
@@ -32,6 +33,12 @@ public class WeaponSlotBarWidget extends Table {
     private float slotHeight = 40f;
     private float slotPadding = 3f;
 
+    /**
+     * Creates a new WeaponSlotBarWidget.
+     *
+     * @param player The player instance to read inventory from.
+     * @param skin   The skin to use for UI elements.
+     */
     public WeaponSlotBarWidget(Player player, Skin skin) {
         this.player = player;
         this.skin = skin;
@@ -39,7 +46,12 @@ public class WeaponSlotBarWidget extends Table {
     }
 
     /**
-     * 设置槽位尺寸
+     * Sets the dimensions of weapon slots.
+     *
+     * @param width   The width of each slot.
+     * @param height  The height of each slot.
+     * @param padding The padding between slots.
+     * @return This widget for chaining.
      */
     public WeaponSlotBarWidget setSlotSize(float width, float height, float padding) {
         this.slotWidth = width;
@@ -50,7 +62,9 @@ public class WeaponSlotBarWidget extends Table {
     }
 
     /**
-     * 更新武器栏显示
+     * Updates the weapon slot bar display.
+     * Rebuilds slots if inventory size changes or purely updates highlighting if
+     * selection changes.
      */
     public void update() {
         int currentWeaponIdx = player.getCurrentWeaponIndex();

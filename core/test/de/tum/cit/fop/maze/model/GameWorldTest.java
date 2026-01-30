@@ -35,6 +35,11 @@ public class GameWorldTest {
         }
     }
 
+    /**
+     * Sets up the test environment by mocking LibGDX files and application.
+     * This ensures that the tests run in a headless environment without needing a
+     * display.
+     */
     @BeforeEach
     public void setup() {
         // Always mock Gdx.files to ensure isolation
@@ -224,6 +229,11 @@ public class GameWorldTest {
         }
     }
 
+    /**
+     * Tests the initialization of the GameWorld.
+     * Verifies that the player is correctly positioned and that no enemies are
+     * present initially if none are added.
+     */
     @Test
     public void testInitialization() {
         GameMap map = new GameMap();
@@ -237,6 +247,11 @@ public class GameWorldTest {
         assertEquals(0, world.getEnemies().size());
     }
 
+    /**
+     * Tests the loading of enemies into the GameWorld.
+     * Verifies that enemies added to the map are correctly instantiated and placed
+     * in the world.
+     */
     @Test
     public void testEnemyLoading() {
         GameMap map = new GameMap();

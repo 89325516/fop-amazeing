@@ -6,70 +6,81 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Array;
 
 /**
- * 溅血粒子系统 - Blood Splatter Particle System
- * 在敌人或玩家受到伤害时产生视觉效果
+ * Blood Splatter Particle System.
+ * Creates visual effects when enemies or players take damage.
  */
 public class BloodParticleSystem {
 
     /**
-     * 伤害监听器接口 - Damage Listener Interface
-     * 用于解耦粒子系统和游戏实体
+     * Damage Listener Interface.
+     * Used to decouple the particle system from game entities.
      */
     public interface DamageListener {
         /**
-         * @param x                 世界坐标 X
-         * @param y                 世界坐标 Y
-         * @param amount            伤害量
-         * @param attackDirX        攻击方向 X
-         * @param attackDirY        攻击方向 Y
-         * @param knockbackStrength 击退强度 (0.0 - 1.0+, 影响扩散范围)
+         * Called when damage occurs.
+         *
+         * @param x                 The world X coordinate of the damage source.
+         * @param y                 The world Y coordinate of the damage source.
+         * @param amount            The amount of damage dealt.
+         * @param attackDirX        The X component of the attack direction.
+         * @param attackDirY        The Y component of the attack direction.
+         * @param knockbackStrength The knockback strength (0.0 - 1.0+, affects spread
+         *                          range).
          */
         void onDamage(float x, float y, int amount, float attackDirX, float attackDirY, float knockbackStrength);
     }
 
     /**
-     * 单个血液粒子
+     * Represents a single blood particle.
      */
     private static class BloodParticle {
-        float x, y; // 位置
-        float vx, vy; // 速度
-        float life; // 剩余生命
-        float maxLife; // 最大生命
-        float size; // 大小
-        Color color; // 颜色
+        float x, y; // Position
+        float vx, vy; // Velocity
+        float life; // Remaining life
+        float maxLife; // Max life
+        float size; // Size
+        Color color; // Color
 
         /**
-         * @param spawnX    生成位置 X
-         * @param spawnY    生成位置 Y
-         * @param dirX      方向 X
-         * @param dirY      方向 Y
-         * @param intensity 强度系数 (1.0 = 基础, >1.0 = 更夸张)
-         * @param spread    扩散角度系数 (1.0 = 基础, >1.0 = 更大范围)
+         * Creates a new blood particle.
+         *
+         * @param spawnX      Spawn position X.
+         * @param spawnY      Spawn position Y.
+         * @param dirX        Direction X.
+         * @param dirY        Direction Y.
+         * @param intensity   Intensity factor (1.0 = base, >1.0 = more exaggerated).
+         * @param spread      Spread angle factor (1.0 = base, >1.0 = wider range).
+         * @param customColor Custom color for the particle.
          */
         BloodParticle(float spawnX, float spawnY, float dirX, float dirY, float intensity, float spread,
                 Color customColor) {
             this.x = spawnX;
             this.y = spawnY;
 
-            // 随机速度方向 - 以攻击方向为主，扩散范围更窄集中在击退方向
+            // Random velocity direction - main direction based on attack, spread based on
+            // knockback
             float baseAngle = MathUtils.atan2(dirY, dirX);
-            float spreadAngle = MathUtils.random(-0.25f, 0.25f) * spread; // 更窄的扩散角度（约±14度）
+            // Narrower spread angle (approx ±14 degrees)
+            float spreadAngle = MathUtils.random(-0.25f, 0.25f) * spread;
             float angle = baseAngle + spreadAngle;
-            // 伤害越高速度越快 - 增大基础速度让粒子飞得更远
+
+            // Higher damage = faster speed - increase base speed for particles to fly
+            // further
             float baseSpeed = MathUtils.random(60f, 150f);
             float speed = baseSpeed * intensity;
             this.vx = MathUtils.cos(angle) * speed;
             this.vy = MathUtils.sin(angle) * speed;
 
-            // 生命周期 - 强度越高持续越久（增加生命周期让粒子飞得更远）
+            // Lifecycle - higher intensity lasts longer (increase lifecycle for particles
+            // to fly further)
             this.maxLife = MathUtils.random(0.5f, 0.9f) * (0.8f + intensity * 0.2f);
             this.life = maxLife;
 
-            // 大小 (像素) - 伤害越高粒子越大
+            // Size (pixels) - higher damage = larger particles
             float baseSize = MathUtils.random(1f, 2.5f);
             this.size = baseSize * intensity;
 
-            // 颜色 (红色系, 带轻微变化)
+            // Color (Red, with slight variation)
             if (customColor != null) {
                 this.color = new Color(customColor); // Copy base color
                 // Slight variation for custom color
@@ -85,26 +96,27 @@ public class BloodParticleSystem {
         }
 
         /**
-         * 更新粒子状态
+         * Updates the particle state.
          * 
-         * @return true 如果粒子仍然存活
+         * @param delta Time since last frame.
+         * @return true if the particle is still alive.
          */
         boolean update(float delta) {
-            // 更新位置
+            // Update position
             x += vx * delta;
             y += vy * delta;
 
-            // 应用重力效果 (轻微下落) - 像素/秒²
+            // Apply gravity (slight fall) - pixels/sec²
             vy -= 80.0f * delta;
 
-            // 减速
+            // Decelerate
             vx *= 0.95f;
             vy *= 0.95f;
 
-            // 更新生命
+            // Update life
             life -= delta;
 
-            // 更新透明度 (渐隐)
+            // Update opacity (fade out)
             float lifeRatio = life / maxLife;
             color.a = lifeRatio;
 
@@ -112,51 +124,66 @@ public class BloodParticleSystem {
         }
     }
 
-    // 粒子容器
+    // Particle container
     private final Array<BloodParticle> particles = new Array<>();
     private final ShapeRenderer shapeRenderer;
 
-    // 配置
+    // Configuration
     private static final int MAX_PARTICLES = 200;
-    private static final int PARTICLES_PER_DAMAGE = 8; // 每点伤害生成的粒子数
-    private static final float UNIT_SCALE = 16f; // 与游戏使用的缩放匹配
+    private static final int PARTICLES_PER_DAMAGE = 8; // Particles generated per point of damage
+    private static final float UNIT_SCALE = 16f; // Matches game usage scale
 
+    /**
+     * Creates a new BloodParticleSystem.
+     */
     public BloodParticleSystem() {
         this.shapeRenderer = new ShapeRenderer();
     }
 
     /**
-     * 在指定位置生成溅血粒子（带攻击方向和击退强度）
+     * Spawns blood particles at the specified location (with attack direction and
+     * knockback).
      * 
-     * @param x                 世界坐标 X (tiles)
-     * @param y                 世界坐标 Y (tiles)
-     * @param damageAmount      伤害量 (影响粒子数量和大小)
-     * @param attackDirX        攻击方向 X (归一化)
-     * @param attackDirY        攻击方向 Y (归一化)
-     * @param knockbackStrength 击退强度 (影响扩散范围)
+     * @param x                 World X coordinate (tiles).
+     * @param y                 World Y coordinate (tiles).
+     * @param damageAmount      Amount of damage (affects particle count and size).
+     * @param attackDirX        Attack direction X (normalized).
+     * @param attackDirY        Attack direction Y (normalized).
+     * @param knockbackStrength Knockback strength (affects spread).
      */
     public void spawn(float x, float y, int damageAmount, float attackDirX, float attackDirY, float knockbackStrength) {
         spawn(x, y, damageAmount, attackDirX, attackDirY, knockbackStrength, null);
     }
 
+    /**
+     * Spawns blood particles at the specified location with a custom color.
+     * 
+     * @param x                 World X coordinate (tiles).
+     * @param y                 World Y coordinate (tiles).
+     * @param damageAmount      Amount of damage (affects particle count and size).
+     * @param attackDirX        Attack direction X (normalized).
+     * @param attackDirY        Attack direction Y (normalized).
+     * @param knockbackStrength Knockback strength (affects spread).
+     * @param customColor       Custom color for the particles.
+     */
     public void spawn(float x, float y, int damageAmount, float attackDirX, float attackDirY, float knockbackStrength,
             Color customColor) {
-        // 伤害越高，粒子越多
+        // Higher damage = more particles
         int baseCount = Math.min(damageAmount * PARTICLES_PER_DAMAGE, MAX_PARTICLES - particles.size);
-        baseCount = Math.max(baseCount, 5); // 至少5个粒子
+        baseCount = Math.max(baseCount, 5); // At least 5 particles
 
-        // 伤害强度系数 (1伤害 = 1.0, 10伤害 = ~1.8)
+        // Damage intensity factor (1 damage = 1.0, 10 damage = ~1.8)
         float intensity = 1.0f + (float) Math.log10(Math.max(1, damageAmount)) * 0.3f;
 
-        // 击退扩散系数 (击退越大，扩散越大)
+        // Knockback spread factor (higher knockback = wider spread)
         float spread = 1.0f + knockbackStrength * 0.5f;
 
-        // 转换为像素坐标
+        // Convert to pixel coordinates
         float pixelX = x * UNIT_SCALE;
         float pixelY = y * UNIT_SCALE;
 
         for (int i = 0; i < baseCount && particles.size < MAX_PARTICLES; i++) {
-            // 添加小偏移使效果更自然 (像素单位)
+            // Add small offset for natural effect (pixels)
             float offsetX = MathUtils.random(-4f, 4f) * spread;
             float offsetY = MathUtils.random(-4f, 4f) * spread;
             particles.add(
@@ -166,7 +193,9 @@ public class BloodParticleSystem {
     }
 
     /**
-     * 更新所有粒子
+     * Updates all particles.
+     * 
+     * @param delta Time since last frame.
      */
     public void update(float delta) {
         for (int i = particles.size - 1; i >= 0; i--) {
@@ -177,9 +206,9 @@ public class BloodParticleSystem {
     }
 
     /**
-     * 渲染粒子到游戏世界 (使用游戏相机)
+     * Renders particles to the game world (using game camera).
      * 
-     * @param projectionMatrix 相机的投影矩阵
+     * @param projectionMatrix The camera's projection matrix.
      */
     public void render(com.badlogic.gdx.math.Matrix4 projectionMatrix) {
         if (particles.size == 0)
@@ -197,21 +226,23 @@ public class BloodParticleSystem {
     }
 
     /**
-     * 获取当前活跃粒子数量 (用于调试)
+     * Gets the current active particle count (for debugging).
+     * 
+     * @return The number of active particles.
      */
     public int getParticleCount() {
         return particles.size;
     }
 
     /**
-     * 清除所有粒子
+     * Clears all particles.
      */
     public void clear() {
         particles.clear();
     }
 
     /**
-     * 释放资源
+     * Releases resources.
      */
     public void dispose() {
         shapeRenderer.dispose();

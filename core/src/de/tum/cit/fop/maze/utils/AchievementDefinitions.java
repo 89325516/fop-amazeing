@@ -19,6 +19,7 @@ public class AchievementDefinitions {
 
     /**
      * Default constructor required for LibGDX Json deserialization.
+     * Initializes the achievements list.
      */
     public AchievementDefinitions() {
         achievements = new ArrayList<>();

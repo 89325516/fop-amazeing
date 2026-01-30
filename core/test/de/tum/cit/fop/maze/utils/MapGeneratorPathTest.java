@@ -12,11 +12,11 @@ import java.io.File;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * 测试 MapGenerator 的路径连通性和墙体放置。
- * 确保生成的地图满足：
- * 1. 玩家起点到钥匙可达
- * 2. 钥匙到出口可达
- * 3. 无隐形墙（安全区内无墙体）
+ * Tests map connectivity and wall placement for MapGenerator.
+ * Ensures that generated maps satisfy:
+ * 1. Reachability from player start to key
+ * 2. Reachability from key to exit
+ * 3. No invisible walls (no wall entities within the safe zone)
  */
 public class MapGeneratorPathTest {
 
@@ -30,7 +30,8 @@ public class MapGeneratorPathTest {
     }
 
     /**
-     * 测试地图生成基本流程 - 确保不抛出异常
+     * Tests the basic map generation flow.
+     * Ensures that generating and saving a map does not throw any exceptions.
      */
     @Test
     void testMapGenerationDoesNotThrow() {
@@ -39,8 +40,8 @@ public class MapGeneratorPathTest {
     }
 
     /**
-     * 重复测试多次以验证随机生成的稳定性
-     * 每次生成都应该成功（有路径）
+     * Repeatedly tests the map generation to verify consistency and stability.
+     * Ensures that a valid map (with paths) is generated every time.
      */
     @RepeatedTest(5)
     void testMapGenerationConsistency() {
@@ -54,7 +55,8 @@ public class MapGeneratorPathTest {
     }
 
     /**
-     * 测试大地图生成 - 确保大地图也能保证路径连通
+     * Tests large map generation.
+     * Ensures that path connectivity is maintained even for larger map dimensions.
      */
     @Test
     void testLargeMapGeneration() {
@@ -69,7 +71,8 @@ public class MapGeneratorPathTest {
     }
 
     /**
-     * 测试小地图生成 - 确保小地图也能正常工作
+     * Tests small map generation.
+     * Ensures that small maps are generated correctly and function as expected.
      */
     @Test
     void testSmallMapGeneration() {

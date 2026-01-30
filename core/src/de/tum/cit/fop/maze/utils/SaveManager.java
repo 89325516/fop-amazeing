@@ -29,28 +29,31 @@ import java.util.Comparator;
  * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
 
+/**
+ * Manages game saving and loading.
+ */
 public class SaveManager {
 
-    // 所有的存档都放在 saves 文件夹下
+    // All save files are located in the "saves/" directory
     private static final String SAVE_DIR = "saves/";
 
     /**
-     * 保存游戏，允许指定文件名
+     * Saves the game, allowing a specific filename.
      * 
-     * @param state    游戏状态
-     * @param filename 用户输入的文件名 (不需要带 .json 后缀)
+     * @param state    The game state to save.
+     * @param filename The user-provided filename (without .json extension).
      */
     public static void saveGame(GameState state, String filename) {
         Json json = new Json();
-        // 关键设置：输出标准的 JSON 格式
+        // Critical setting: Output standard JSON format
         json.setOutputType(JsonWriter.OutputType.json);
 
-        // 确保文件夹存在
+        // Ensure directory exists
         if (!Gdx.files.local(SAVE_DIR).exists()) {
             Gdx.files.local(SAVE_DIR).mkdirs();
         }
 
-        // 自动加上 .json 后缀
+        // Automatically add .json extension
         if (!filename.endsWith(".json")) {
             filename += ".json";
         }
@@ -63,7 +66,9 @@ public class SaveManager {
     }
 
     /**
-     * 兼容方法：默认保存 (保存为 auto_save.json)
+     * Compatibility method: Default save (saves as auto_save.json).
+     *
+     * @param state The game state to save.
      */
     public static void saveGame(GameState state) {
         saveGame(state, "auto_save");
@@ -75,6 +80,8 @@ public class SaveManager {
      * 
      * This is used when switching profiles or exiting, to ensure the active
      * profile is up-to-date.
+     *
+     * @param filename The filename to sync to.
      */
     public static void saveGlobalProgression(String filename) {
         if (filename == null || filename.isEmpty())
@@ -103,7 +110,10 @@ public class SaveManager {
     }
 
     /**
-     * 读取指定文件名的存档
+     * Loads the save with the specified filename.
+     *
+     * @param filename The filename to load.
+     * @return The loaded GameState, or null if not found/failed.
      */
     public static GameState loadGame(String filename) {
         if (filename == null || filename.isEmpty()) {
@@ -130,15 +140,19 @@ public class SaveManager {
     }
 
     /**
-     * 兼容方法：默认读取 (读取 auto_save.json)
+     * Compatibility method: Default load (loads auto_save.json).
+     *
+     * @return The loaded GameState.
      */
     public static GameState loadGame() {
         return loadGame("auto_save.json");
     }
 
     /**
-     * 获取所有存档文件，并按修改时间倒序排列（最新的在最前面）
-     * 供 GameScreen 的读档列表使用
+     * Gets all save files, sorted by modification date (newest first).
+     * Used by GameScreen's load list.
+     *
+     * @return An array of FileHandles.
      */
     public static FileHandle[] getSaveFiles() {
         FileHandle dir = Gdx.files.local(SAVE_DIR);
@@ -147,10 +161,10 @@ public class SaveManager {
             return new FileHandle[0];
         }
 
-        // 获取所有 .json 结尾的文件
+        // Get all files ending with .json
         FileHandle[] files = dir.list(".json");
 
-        // 按时间排序 (最新的排前面)
+        // Sort by time (newest first)
         Arrays.sort(files, new Comparator<FileHandle>() {
             @Override
             public int compare(FileHandle f1, FileHandle f2) {
@@ -161,6 +175,12 @@ public class SaveManager {
         return files;
     }
 
+    /**
+     * Deletes a save file.
+     *
+     * @param filename The filename to delete.
+     * @return True if deleted successfully, false otherwise.
+     */
     public static boolean deleteSave(String filename) {
         if (filename == null || filename.isEmpty())
             return false;
@@ -188,21 +208,21 @@ public class SaveManager {
     private static final String ENDLESS_SAVE_DIR = "saves/endless/";
 
     /**
-     * 保存无尽模式游戏状态
+     * Saves Endless Mode game state.
      * 
-     * @param state    无尽模式游戏状态
-     * @param filename 文件名 (不需要带 .json 后缀)
+     * @param state    Endless game state.
+     * @param filename User provided filename (without .json extension).
      */
     public static void saveEndlessGame(de.tum.cit.fop.maze.model.EndlessGameState state, String filename) {
         Json json = new Json();
         json.setOutputType(JsonWriter.OutputType.json);
 
-        // 确保无尽模式存档文件夹存在
+        // Ensure endless save directory exists
         if (!Gdx.files.local(ENDLESS_SAVE_DIR).exists()) {
             Gdx.files.local(ENDLESS_SAVE_DIR).mkdirs();
         }
 
-        // 自动加上 .json 后缀
+        // Automatically add .json extension
         if (!filename.endsWith(".json")) {
             filename += ".json";
         }
@@ -215,14 +235,19 @@ public class SaveManager {
     }
 
     /**
-     * 默认保存无尽模式 (endless_auto_save.json)
+     * Default save for Endless Mode (endless_auto_save.json).
+     *
+     * @param state The state to save.
      */
     public static void saveEndlessGame(de.tum.cit.fop.maze.model.EndlessGameState state) {
         saveEndlessGame(state, "endless_auto_save");
     }
 
     /**
-     * 读取无尽模式存档
+     * Loads Endless Mode save.
+     *
+     * @param filename The filename to load.
+     * @return The loaded state.
      */
     public static de.tum.cit.fop.maze.model.EndlessGameState loadEndlessGame(String filename) {
         if (filename == null || filename.isEmpty()) {
@@ -249,14 +274,18 @@ public class SaveManager {
     }
 
     /**
-     * 默认读取无尽模式存档
+     * Default load for Endless Mode.
+     *
+     * @return The loaded state.
      */
     public static de.tum.cit.fop.maze.model.EndlessGameState loadEndlessGame() {
         return loadEndlessGame("endless_auto_save.json");
     }
 
     /**
-     * 获取所有无尽模式存档文件
+     * Gets all Endless Mode save files.
+     *
+     * @return Array of save files.
      */
     public static FileHandle[] getEndlessSaveFiles() {
         FileHandle dir = Gdx.files.local(ENDLESS_SAVE_DIR);
@@ -277,7 +306,10 @@ public class SaveManager {
     }
 
     /**
-     * 删除无尽模式存档
+     * Deletes an Endless Mode save.
+     *
+     * @param filename The filename to delete.
+     * @return True if deleted.
      */
     public static boolean deleteEndlessSave(String filename) {
         if (filename == null || filename.isEmpty())
@@ -300,7 +332,9 @@ public class SaveManager {
     }
 
     /**
-     * 检查是否有无尽模式存档
+     * Checks if any Endless Mode save exists.
+     *
+     * @return True if exists.
      */
     public static boolean hasEndlessSave() {
         FileHandle[] files = getEndlessSaveFiles();

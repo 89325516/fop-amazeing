@@ -18,10 +18,10 @@ import de.tum.cit.fop.maze.MazeRunnerGame;
 import de.tum.cit.fop.maze.model.EndlessGameState;
 
 /**
- * 无尽模式结算画面 (Endless Mode Game Over Screen)
- * 
- * 显示最终分数、生存时间、击杀数等统计信息
- * 提供重试和返回主菜单选项
+ * Endless Mode Game Over Screen.
+ *
+ * Displays final score, survival time, total kills, and other statistics.
+ * Provides options to retry or return to main menu.
  */
 public class EndlessGameOverScreen implements Screen {
 
@@ -29,7 +29,7 @@ public class EndlessGameOverScreen implements Screen {
     private final Stage stage;
     private final EndlessGameState finalState;
 
-    // 背景
+    // Background
     private Texture bgTexture;
 
     public EndlessGameOverScreen(MazeRunnerGame game, EndlessGameState state) {
@@ -38,10 +38,10 @@ public class EndlessGameOverScreen implements Screen {
 
         stage = new Stage(new FitViewport(1920, 1080), game.getSpriteBatch());
         Gdx.input.setInputProcessor(stage);
-        // 🔊 全局按钮音效
+        // 🔊 Global button sound
         de.tum.cit.fop.maze.utils.UIUtils.enableGameButtonSound(stage);
 
-        // 创建半透明黑色背景
+        // Create semi-transparent black background
         Pixmap bg = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
         bg.setColor(0.1f, 0.05f, 0.15f, 0.95f);
         bg.fill();
@@ -59,17 +59,17 @@ public class EndlessGameOverScreen implements Screen {
         rootTable.setBackground(new TextureRegionDrawable(new TextureRegion(bgTexture)));
         stage.addActor(rootTable);
 
-        // === 标题 ===
+        // === Title ===
         Label titleLabel = new Label("GAME OVER", skin, "title");
         titleLabel.setColor(Color.RED);
         rootTable.add(titleLabel).padBottom(40).row();
 
-        // === 分数 ===
+        // === Score ===
         Label scoreLabel = new Label("Final Score: " + String.format("%,d", finalState.score), skin, "title");
         scoreLabel.setColor(Color.GOLD);
         rootTable.add(scoreLabel).padBottom(20).row();
 
-        // === 统计信息表格 ===
+        // === Stats Table ===
         Table statsTable = new Table();
         statsTable.defaults().pad(10).align(Align.left);
 
@@ -81,7 +81,7 @@ public class EndlessGameOverScreen implements Screen {
 
         rootTable.add(statsTable).padBottom(40).row();
 
-        // === 按钮 ===
+        // === Buttons ===
         Table buttonTable = new Table();
         buttonTable.defaults().width(250).height(60).pad(10);
 
@@ -105,7 +105,7 @@ public class EndlessGameOverScreen implements Screen {
 
         rootTable.add(buttonTable).row();
 
-        // === 提示文本 ===
+        // === Hint Text ===
         Label tipLabel = new Label("Press ESCAPE to return to menu", skin);
         tipLabel.setColor(Color.GRAY);
         tipLabel.setFontScale(0.8f);
@@ -130,7 +130,7 @@ public class EndlessGameOverScreen implements Screen {
         stage.act(delta);
         stage.draw();
 
-        // ESC返回菜单
+        // ESC return to menu
         if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.ESCAPE)) {
             game.goToMenu();
         }

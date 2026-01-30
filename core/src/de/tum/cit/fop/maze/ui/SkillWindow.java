@@ -1,17 +1,31 @@
 package de.tum.cit.fop.maze.ui;
 
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import de.tum.cit.fop.maze.model.Player;
 import de.tum.cit.fop.maze.model.Skill;
 
+/**
+ * Skill Tree Window.
+ * <p>
+ * Displays the skill tree where players can view and unlock skills using Skill
+ * Points (SP).
+ * Extends Scene2D Window to provide a draggable and modal dialog.
+ */
 public class SkillWindow extends Window {
 
     private final Player player;
     private final Skin skin;
     private final Label pointsLabel;
 
+    /**
+     * Creates the Skill Window.
+     *
+     * @param skin   The skin for UI elements.
+     * @param player The player instance.
+     */
     public SkillWindow(Skin skin, Player player) {
         super("Skill Tree", skin);
         this.skin = skin;
@@ -49,6 +63,13 @@ public class SkillWindow extends Window {
         pack();
     }
 
+    /**
+     * Adds a row for a specific skill, including name, description, and unlock
+     * button.
+     *
+     * @param table The table to add the row to.
+     * @param skill The skill to display.
+     */
     private void addSkillRow(Table table, final Skill skill) {
         table.add(new Label(skill.getDisplayName(), skin)).left().width(150);
 
@@ -73,6 +94,10 @@ public class SkillWindow extends Window {
         // 1))).colspan(3).growX().height(1).pad(5).row();
     }
 
+    /**
+     * Updates the UI to reflect current skill points and potential unlock status
+     * changes.
+     */
     public void updateUI() {
         pointsLabel.setText("Skill Points: " + player.getSkillPoints());
 

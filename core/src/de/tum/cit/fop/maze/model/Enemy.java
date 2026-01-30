@@ -32,7 +32,7 @@ import java.util.Random;
  */
 
 /**
- * 代表一个可以巡逻和追逐玩家的敌人。
+ * Represents an enemy that can patrol and chase the player.
  */
 public class Enemy extends GameObject {
     public enum EnemyState {
@@ -60,9 +60,9 @@ public class Enemy extends GameObject {
     private float stunTimer = 0f;
     private float hurtTimer = 0f; // Red flash timer
     private float deathTimer = 5.0f; // Dead body persists for 5s
-    private float lastDamageSourceX = 0f; // 最后一次伤害来源 X
-    private float lastDamageSourceY = 0f; // 最后一次伤害来源 Y
-    private float lastKnockbackStrength = 1.0f; // 最后一次击退强度
+    private float lastDamageSourceX = 0f; // Last damage source X
+    private float lastDamageSourceY = 0f; // Last damage source Y
+    private float lastKnockbackStrength = 1.0f; // Last knockback strength
 
     // Knockback
     private float knockbackVx = 0f;
@@ -86,15 +86,15 @@ public class Enemy extends GameObject {
     private static float DECELERATION = 15.0f; // How fast to slow down
     private static float VELOCITY_THRESHOLD = 0.1f; // Snap to zero below this
 
-    // 巡逻逻辑
+    // Patrol logic
     private float patrolDirX;
     private float patrolDirY;
     private float changeDirTimer;
 
-    // 碰撞箱大小 (接近 1.0，但稍微内缩以避免卡住)
+    // Collision box size (approx 1.0, but slightly shrunk to avoid sticking)
     private static final float SIZE = 0.99f;
 
-    // 出生点 (领地中心)
+    // Spawn point (Territory center)
     private final float homeX;
     private final float homeY;
 
@@ -114,15 +114,15 @@ public class Enemy extends GameObject {
     private BloodParticleSystem.DamageListener damageListener = null;
 
     /**
-     * 墙壁检测函数式接口 (用于无尽模式的碰撞检测)
-     * Wall checker functional interface for Endless Mode collision detection
+     * Wall checker functional interface (used for Endless Mode collision
+     * detection).
      */
     @FunctionalInterface
     public interface WallChecker {
         boolean isWall(int x, int y);
     }
 
-    // 墙壁检测回调 (Endless Mode 使用)
+    // Wall checker callback (Used in Endless Mode)
     private WallChecker wallChecker = null;
 
     public void setWallChecker(WallChecker checker) {
@@ -146,7 +146,8 @@ public class Enemy extends GameObject {
     }
 
     /**
-     * 设置伤害来源位置和击退强度（用于血液粒子方向和扩散）
+     * Sets the damage source position and knockback strength (for blood particle
+     * direction and spread).
      */
     public void setDamageSource(float sourceX, float sourceY, float knockbackStrength) {
         this.lastDamageSourceX = sourceX;
@@ -156,7 +157,7 @@ public class Enemy extends GameObject {
 
     public Enemy(float x, float y) {
         super(x, y);
-        // 记录出生点
+        // Record spawn point
         this.homeX = x;
         this.homeY = y;
 
@@ -174,12 +175,12 @@ public class Enemy extends GameObject {
     /**
      * Extended constructor for enemies with shields (complex levels).
      * 
-     * @param x            X 坐标
-     * @param y            Y 坐标
-     * @param health       生命值
-     * @param attackType   攻击伤害类型
-     * @param shieldType   护盾类型（null 表示无护盾）
-     * @param shieldAmount 护盾值
+     * @param x            X coordinate
+     * @param y            Y coordinate
+     * @param health       Health points
+     * @param attackType   Attack damage type
+     * @param shieldType   Shield type (null means no shield)
+     * @param shieldAmount Shield amount
      */
     public Enemy(float x, float y, int health, DamageType attackType,
             DamageType shieldType, int shieldAmount) {
@@ -202,8 +203,8 @@ public class Enemy extends GameObject {
     /**
      * Take damage with type consideration for shield system.
      * 
-     * @param amount 伤害量
-     * @param type   伤害类型
+     * @param amount Damage amount
+     * @param type   Damage type
      * @return false (GameScreen checks isRemovable for removal)
      */
     public boolean takeDamage(int amount, DamageType type) {
@@ -228,7 +229,7 @@ public class Enemy extends GameObject {
 
         if (remainingDamage > 0) {
             this.health -= remainingDamage;
-            // Trigger blood particle effect - 粒子从伤害源向外飞溅（远离攻击者）
+            // Trigger blood particle effect - particles splash away from damage source
             if (damageListener != null) {
                 float dirX = x - lastDamageSourceX;
                 float dirY = y - lastDamageSourceY;
@@ -293,14 +294,14 @@ public class Enemy extends GameObject {
     }
 
     /**
-     * 获取冷冻/减速效果剩余时间（用于粒子效果渲染）
+     * Gets remaining time for freeze/slow effects (for particle rendering).
      */
     public float getEffectRemainingTime() {
         return effectTimer;
     }
 
     /**
-     * 获取当前速度倍率（用于减速效果）
+     * Gets current speed multiplier (for slow effect).
      */
     public float getSlowMultiplier() {
         return (currentEffect == WeaponEffect.SLOW) ? slowMultiplier : 1.0f;
@@ -382,31 +383,33 @@ public class Enemy extends GameObject {
 
         this.stunTimer = 0.5f;
 
-        // 防止击退卡墙：如果当前位置已经在墙内，强制修正到安全位置
+        // Prevent getting stuck in walls: if currently inside a wall, force correct to
+        // safe position
         if (cm != null) {
             ensureSafePosition(cm);
         }
     }
 
     /**
-     * 确保敌人不在墙内。如果在墙内，尝试修正到最近的安全位置。
+     * Ensures the enemy is not inside a wall. If inside, tries to correct to the
+     * nearest safe position.
      * 
-     * @param cm CollisionManager 用于检查墙壁
+     * @param cm CollisionManager used to check for walls
      */
     private void ensureSafePosition(CollisionManager cm) {
-        // 检查当前中心点是否在可行走区域
+        // Check if current center point is in walkable area
         float centerX = this.x + 0.5f;
         float centerY = this.y + 0.5f;
 
         if (isWalkable(centerX, centerY, cm)) {
-            return; // 当前位置安全，无需修正
+            return; // Current position is safe, no correction needed
         }
 
-        // 当前位置不安全，寻找最近的安全格子
+        // Current position unsafe, look for nearest safe tile
         float safeX = Math.round(this.x);
         float safeY = Math.round(this.y);
 
-        // 尝试当前格子和四个相邻方向
+        // Try current tile and 8 neighbors
         float[][] offsets = { { 0, 0 }, { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 },
                 { 1, 1 }, { 1, -1 }, { -1, 1 }, { -1, -1 } };
         for (float[] offset : offsets) {
@@ -415,14 +418,14 @@ public class Enemy extends GameObject {
             if (isWalkable(testX + 0.5f, testY + 0.5f, cm)) {
                 this.x = testX;
                 this.y = testY;
-                // 停止击退速度，防止继续移动到墙内
+                // Stop knockback velocity to prevent moving back into wall
                 this.knockbackVx = 0;
                 this.knockbackVy = 0;
                 GameLogger.debug("Enemy", "Position corrected from wall to (" + testX + ", " + testY + ")");
                 return;
             }
         }
-        // 如果所有方向都不安全，保持原位（极端情况）
+        // If all directions unsafe, stay put (extreme case)
         GameLogger.warn("Enemy", "Could not find safe position for enemy at (" + this.x + ", " + this.y + ")");
     }
 
@@ -439,23 +442,23 @@ public class Enemy extends GameObject {
             float moveX = knockbackVx * delta;
             float moveY = knockbackVy * delta;
 
-            // 计算新位置
+            // Calculate new position
             float newX = this.x + moveX;
             float newY = this.y + moveY;
 
-            // 分轴碰撞检测 (Split axis collision detection)
+            // Split axis collision detection
             float padding = 0.1f;
 
-            // X轴移动检查
+            // Horizontal movement check
             if (moveX != 0) {
                 boolean xBlocked = false;
-                // 边界检查
+                // Boundary check
                 if (newX < 1 || newX > 898) {
                     xBlocked = true;
                 }
-                // 墙壁检查 (使用 WallChecker 回调)
+                // Wall check (Using WallChecker callback)
                 if (!xBlocked && wallChecker != null) {
-                    // 检查四个角落
+                    // Check four corners
                     if (wallChecker.isWall((int) (newX + padding), (int) (this.y + padding)) ||
                             wallChecker.isWall((int) (newX + SIZE - padding), (int) (this.y + padding)) ||
                             wallChecker.isWall((int) (newX + SIZE - padding), (int) (this.y + SIZE - padding)) ||
@@ -464,7 +467,7 @@ public class Enemy extends GameObject {
                     }
                 }
                 if (xBlocked) {
-                    // 墙壁反弹
+                    // Wall bounce
                     if (Math.abs(knockbackVx) > 5.0f) {
                         GameLogger.debug("Enemy", "Endless: Enemy hit wall (X) Vel: " + knockbackVx);
                     }
@@ -473,16 +476,16 @@ public class Enemy extends GameObject {
                 }
             }
 
-            // Y轴移动检查
+            // Vertical movement check
             if (moveY != 0) {
                 boolean yBlocked = false;
-                // 边界检查
+                // Boundary check
                 if (newY < 1 || newY > 898) {
                     yBlocked = true;
                 }
-                // 墙壁检查 (使用 WallChecker 回调)
+                // Wall check (Using WallChecker callback)
                 if (!yBlocked && wallChecker != null) {
-                    // 检查四个角落
+                    // Check four corners
                     if (wallChecker.isWall((int) (newX + padding), (int) (newY + padding)) ||
                             wallChecker.isWall((int) (newX + SIZE - padding), (int) (newY + padding)) ||
                             wallChecker.isWall((int) (newX + SIZE - padding), (int) (newY + SIZE - padding)) ||
@@ -491,7 +494,7 @@ public class Enemy extends GameObject {
                     }
                 }
                 if (yBlocked) {
-                    // 墙壁反弹
+                    // Wall bounce
                     if (Math.abs(knockbackVy) > 5.0f) {
                         GameLogger.debug("Enemy", "Endless: Enemy hit wall (Y) Vel: " + knockbackVy);
                     }
@@ -500,7 +503,7 @@ public class Enemy extends GameObject {
                 }
             }
 
-            // 应用位置更新
+            // Apply position update
             this.x = newX;
             this.y = newY;
 
@@ -551,9 +554,12 @@ public class Enemy extends GameObject {
     }
 
     /**
-     * 更新敌人：基于状态的连续移动
+     * Update enemy: state-based continuous movement.
      * 
-     * @param safeGrid 安全路径网格 [x][y]
+     * @param delta            Frame delta time
+     * @param player           Player instance
+     * @param collisionManager Collision manager
+     * @param safeGrid         Safe path grid [x][y]
      */
     public void update(float delta, Player player, CollisionManager collisionManager, boolean[][] safeGrid) {
         // 0. Update Physics (Knockback) - Always runs to allow "flying corpses"
@@ -638,7 +644,7 @@ public class Enemy extends GameObject {
                 // We will let GameScreen handle removal for now.
             }
         }
-        // 1. 状态判断
+        // 1. State decision
         if (player.isDead()) {
             state = EnemyState.IDLE;
         } else {
@@ -677,36 +683,36 @@ public class Enemy extends GameObject {
                 float distance = (float) Math.sqrt(dx * dx + dy * dy);
 
                 if (distance > 0.1f) {
-                    // 计算主方向和备选方向
+                    // Calculate primary and secondary directions
                     float primaryVx = 0, primaryVy = 0;
                     float secondaryVx = 0, secondaryVy = 0;
 
-                    // 主方向：距离差大的轴
+                    // Primary direction: Axis with larger distance difference
                     if (Math.abs(dx) > Math.abs(dy)) {
                         primaryVx = Math.signum(dx) * maxSpeed;
                         primaryVy = 0;
-                        // 备选方向：另一个轴
+                        // Secondary direction: The other axis
                         secondaryVx = 0;
                         secondaryVy = (dy != 0) ? Math.signum(dy) * maxSpeed : maxSpeed;
                     } else {
                         primaryVx = 0;
                         primaryVy = Math.signum(dy) * maxSpeed;
-                        // 备选方向：另一个轴
+                        // Secondary direction: The other axis
                         secondaryVx = (dx != 0) ? Math.signum(dx) * maxSpeed : maxSpeed;
                         secondaryVy = 0;
                     }
 
-                    // 智能绕墙：检查主方向是否被墙挡住
-                    float checkDist = 0.6f; // 提前检查距离
+                    // Smart Wall Avoidance: Check if primary direction is blocked
+                    float checkDist = 0.6f; // Look-ahead distance
                     float checkX = this.x + 0.5f + (primaryVx != 0 ? Math.signum(primaryVx) * checkDist : 0);
                     float checkY = this.y + 0.5f + (primaryVy != 0 ? Math.signum(primaryVy) * checkDist : 0);
 
                     if (collisionManager != null && isWalkable(checkX, checkY, collisionManager)) {
-                        // 主方向可行
+                        // Primary direction is clear
                         targetVx = primaryVx;
                         targetVy = primaryVy;
                     } else {
-                        // 主方向被挡，尝试备选方向
+                        // Primary direction blocked, try secondary direction
                         checkX = this.x + 0.5f + (secondaryVx != 0 ? Math.signum(secondaryVx) * checkDist : 0);
                         checkY = this.y + 0.5f + (secondaryVy != 0 ? Math.signum(secondaryVy) * checkDist : 0);
 
@@ -714,7 +720,7 @@ public class Enemy extends GameObject {
                             targetVx = secondaryVx;
                             targetVy = secondaryVy;
                         } else {
-                            // 两个方向都被挡，尝试反向绕路
+                            // Both directions blocked, try reverse detour
                             secondaryVx = -secondaryVx;
                             secondaryVy = -secondaryVy;
                             checkX = this.x + 0.5f + (secondaryVx != 0 ? Math.signum(secondaryVx) * checkDist : 0);
@@ -723,7 +729,7 @@ public class Enemy extends GameObject {
                                 targetVx = secondaryVx;
                                 targetVy = secondaryVy;
                             }
-                            // 如果全被挡，保持 targetVx/targetVy = 0，碰撞系统会处理
+                            // If all blocked, keep targetVx/targetVy = 0, collision system will handle it
                         }
                     }
 
@@ -864,14 +870,15 @@ public class Enemy extends GameObject {
     }
 
     /**
-     * 尝试移动。如果目标位置没有碰撞，则应用移动并返回 true。
+     * Try to move. If target position has no collision, apply movement and return
+     * true.
      */
     private boolean tryMove(float deltaX, float deltaY, CollisionManager cm) {
         float newX = this.x + deltaX;
         float newY = this.y + deltaY;
 
-        // 碰撞检测：检查自身的四个角落
-        float padding = 0.1f; // 内缩一点，防止卡住
+        // Collision detection: check four corners of self
+        float padding = 0.1f; // Shrink slightly to avoid sticking
 
         boolean canMove = isWalkable(newX + padding, newY + padding, cm) &&
                 isWalkable(newX + SIZE - padding, newY + padding, cm) &&
@@ -896,19 +903,19 @@ public class Enemy extends GameObject {
             case 0:
                 patrolDirX = 1;
                 patrolDirY = 0;
-                break; // 右
+                break; // Right
             case 1:
                 patrolDirX = -1;
                 patrolDirY = 0;
-                break; // 左
+                break; // Left
             case 2:
                 patrolDirX = 0;
                 patrolDirY = 1;
-                break; // 上
+                break; // Up
             case 3:
                 patrolDirX = 0;
                 patrolDirY = -1;
-                break; // 下
+                break; // Down
         }
     }
 
@@ -916,7 +923,7 @@ public class Enemy extends GameObject {
         return state;
     }
 
-    // 兼容旧代码的 getter，防止其他地方报错
+    // Backup getter for compatibility
     public int getTargetX() {
         return (int) x;
     }

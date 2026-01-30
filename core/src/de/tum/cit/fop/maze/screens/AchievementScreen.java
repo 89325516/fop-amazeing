@@ -24,9 +24,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Achievement List Screen - 成就列表界面
- * 
- * 显示所有成就及其进度，支持分类筛选和统计数据展示。
+ * Achievement List Screen.
+ *
+ * Displays all achievements and their progress, supporting category filtering
+ * and statistic display.
  */
 public class AchievementScreen implements Screen {
 
@@ -399,7 +400,7 @@ public class AchievementScreen implements Screen {
     @Override
     public void show() {
         Gdx.input.setInputProcessor(stage);
-        // 🔊 全局按钮音效
+        // 🔊 Global button sound
         de.tum.cit.fop.maze.utils.UIUtils.enableMenuButtonSound(stage);
         refreshAchievementList(); // Refresh on show in case data changed
         // Initial scroll focus
@@ -417,23 +418,23 @@ public class AchievementScreen implements Screen {
         if (backgroundTexture != null) {
             SpriteBatch batch = game.getSpriteBatch();
 
-            // 获取实际屏幕尺寸 - 使用 backbuffer 尺寸以确保正确
+            // Get actual screen size - use backbuffer size to ensure correctness
             int screenWidth = Gdx.graphics.getBackBufferWidth();
             int screenHeight = Gdx.graphics.getBackBufferHeight();
 
-            // 重置 GL Viewport 到整个屏幕
+            // Reset GL Viewport to full screen
             Gdx.gl.glViewport(0, 0, screenWidth, screenHeight);
 
-            // 设置投影矩阵到屏幕像素坐标系
+            // Set projection matrix to screen pixel coordinate system
             batch.getProjectionMatrix().setToOrtho2D(0, 0, screenWidth, screenHeight);
             batch.begin();
             batch.setColor(0.4f, 0.4f, 0.4f, 1f); // Dim
 
-            // 背景图片原始尺寸
+            // Background texture original size
             float texWidth = backgroundTexture.getWidth();
             float texHeight = backgroundTexture.getHeight();
 
-            // 计算Cover模式的缩放比例
+            // Calculate scale ratio for Cover mode
             float screenRatio = (float) screenWidth / screenHeight;
             float textureRatio = texWidth / texHeight;
 
@@ -441,16 +442,16 @@ public class AchievementScreen implements Screen {
             float drawX, drawY;
 
             if (screenRatio > textureRatio) {
-                // 屏幕更宽，以宽度为准，高度可能超出
+                // Screen is wider, fit to width, height might overflow
                 drawWidth = screenWidth;
                 drawHeight = screenWidth / textureRatio;
                 drawX = 0;
-                drawY = (screenHeight - drawHeight) / 2; // 垂直居中
+                drawY = (screenHeight - drawHeight) / 2; // Vertically centered
             } else {
-                // 屏幕更高，以高度为准，宽度可能超出
+                // Screen is taller, fit to height, width might overflow
                 drawHeight = screenHeight;
                 drawWidth = screenHeight * textureRatio;
-                drawX = (screenWidth - drawWidth) / 2; // 水平居中
+                drawX = (screenWidth - drawWidth) / 2; // Horizontally centered
                 drawY = 0;
             }
 
@@ -459,7 +460,7 @@ public class AchievementScreen implements Screen {
             batch.end();
         }
 
-        // 恢复 Stage 的 Viewport（这会重新设置正确的 glViewport）
+        // Restore Stage's Viewport (this will reset the correct glViewport)
         stage.getViewport().apply();
         stage.act(Math.min(delta, 1 / 30f));
         stage.draw();

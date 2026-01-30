@@ -4,15 +4,15 @@ import de.tum.cit.fop.maze.model.GameObject;
 import de.tum.cit.fop.maze.model.Player;
 
 /**
- * 药水类 (Potion)
+ * Potion Class.
  * 
- * 表示玩家可以收集和使用的消耗品。
- * 不同类型的药水有不同的效果。
+ * Represents consumable items that players can collect and use.
+ * Different potion types provide different effects.
  */
 public class Potion extends GameObject implements InventoryItem {
 
     /**
-     * 药水类型枚举
+     * Enumeration of potion types.
      */
     public enum PotionType {
         HEALTH("Health Potion", "Restores health", "potion_health", 0xFF0000),
@@ -33,23 +33,38 @@ public class Potion extends GameObject implements InventoryItem {
             this.color = color;
         }
 
-        public String getDisplayName() { return displayName; }
-        public String getDescription() { return description; }
-        public String getTextureKey() { return textureKey; }
-        public int getColor() { return color; }
+        public String getDisplayName() {
+            return displayName;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public String getTextureKey() {
+            return textureKey;
+        }
+
+        public int getColor() {
+            return color;
+        }
     }
 
     private PotionType type;
-    private int value;          // 效果数值 (如恢复量、增益幅度)
-    private float duration;     // 持续时间（秒），0 表示瞬时效果
-    private int stackCount;     // 堆叠数量
+    /** Effect magnitude (e.g., healing amount, buff percentage). */
+    private int value;
+    /** Duration in seconds (0 for instant effects). */
+    private float duration;
+    /** Number of stacked potions in this slot. */
+    private int stackCount;
 
     /**
-     * 创建药水
-     * @param x 位置 X
-     * @param y 位置 Y
-     * @param type 药水类型
-     * @param value 效果数值
+     * Creates a potion instance.
+     * 
+     * @param x     X coordinate.
+     * @param y     Y coordinate.
+     * @param type  Potion type.
+     * @param value Effect magnitude.
      */
     public Potion(float x, float y, PotionType type, int value) {
         super(x, y);
@@ -62,7 +77,13 @@ public class Potion extends GameObject implements InventoryItem {
     }
 
     /**
-     * 创建带持续时间的药水（用于增益效果）
+     * Creates a potion with duration (for buffs).
+     * 
+     * @param x        X coordinate.
+     * @param y        Y coordinate.
+     * @param type     Potion type.
+     * @param value    Effect magnitude.
+     * @param duration Duration in seconds.
      */
     public Potion(float x, float y, PotionType type, int value, float duration) {
         this(x, y, type, value);
@@ -70,12 +91,14 @@ public class Potion extends GameObject implements InventoryItem {
     }
 
     /**
-     * 对玩家使用药水
-     * @param player 目标玩家
-     * @return true 如果药水成功使用
+     * Uses the potion on the specified player.
+     * 
+     * @param player The target player.
+     * @return true if the potion was successfully consumed.
      */
     public boolean use(Player player) {
-        if (stackCount <= 0) return false;
+        if (stackCount <= 0)
+            return false;
 
         boolean used = false;
         switch (type) {
@@ -92,15 +115,15 @@ public class Potion extends GameObject implements InventoryItem {
                 }
                 break;
             case SPEED:
-                // TODO: 实现速度增益效果（需要在 Player 中添加 buff 系统）
+                // TODO: Implement speed buff (requires Buff system in Player)
                 used = true;
                 break;
             case STRENGTH:
-                // TODO: 实现伤害增益效果
+                // TODO: Implement strength buff
                 used = true;
                 break;
             case SHIELD:
-                // TODO: 实现临时护盾效果
+                // TODO: Implement temporary shield
                 used = true;
                 break;
         }
@@ -112,7 +135,7 @@ public class Potion extends GameObject implements InventoryItem {
         return used;
     }
 
-    // === InventoryItem 接口实现 ===
+    // === InventoryItem Interface Implementation ===
 
     @Override
     public String getName() {
@@ -125,7 +148,7 @@ public class Potion extends GameObject implements InventoryItem {
         if (type == PotionType.HEALTH || type == PotionType.ENERGY) {
             desc += " (" + value + ")";
         } else if (duration > 0) {
-            desc += " (" + (int)duration + "s)";
+            desc += " (" + (int) duration + "s)";
         }
         return desc;
     }
@@ -180,31 +203,47 @@ public class Potion extends GameObject implements InventoryItem {
         return type.getColor();
     }
 
-    // === 工厂方法 ===
+    // === Factory Methods ===
 
     /**
-     * 创建健康药水（恢复 1 点生命）
+     * Creates a Health Potion (Restores 1 HP).
+     * 
+     * @param x X coordinate.
+     * @param y Y coordinate.
+     * @return A new Health Potion instance.
      */
     public static Potion createHealthPotion(float x, float y) {
         return new Potion(x, y, PotionType.HEALTH, 1);
     }
 
     /**
-     * 创建大型健康药水（恢复 2 点生命）
+     * Creates a Large Health Potion (Restores 2 HP).
+     * 
+     * @param x X coordinate.
+     * @param y Y coordinate.
+     * @return A new Large Health Potion instance.
      */
     public static Potion createLargeHealthPotion(float x, float y) {
         return new Potion(x, y, PotionType.HEALTH, 2);
     }
 
     /**
-     * 创建能量药水（恢复 50 点能量）
+     * Creates an Energy Potion (Restores 50 Energy).
+     * 
+     * @param x X coordinate.
+     * @param y Y coordinate.
+     * @return A new Energy Potion instance.
      */
     public static Potion createEnergyPotion(float x, float y) {
         return new Potion(x, y, PotionType.ENERGY, 50);
     }
 
     /**
-     * 创建速度药水（持续 10 秒）
+     * Creates a Speed Potion (Lasts 10 seconds).
+     * 
+     * @param x X coordinate.
+     * @param y Y coordinate.
+     * @return A new Speed Potion instance.
      */
     public static Potion createSpeedPotion(float x, float y) {
         return new Potion(x, y, PotionType.SPEED, 50, 10f);

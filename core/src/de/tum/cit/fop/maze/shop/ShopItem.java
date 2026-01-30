@@ -1,9 +1,9 @@
 package de.tum.cit.fop.maze.shop;
 
 /**
- * 商店商品数据类 (Shop Item)
- * 
- * 存储商店中可购买物品的信息。
+ * Shop Item Data Class.
+ *
+ * Stores information about items available for purchase in the shop.
  */
 public class ShopItem {
 

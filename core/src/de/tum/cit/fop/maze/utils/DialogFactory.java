@@ -8,24 +8,25 @@ import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Timer;
 
 /**
- * Dialog工厂类 (Dialog Factory)
+ * Dialog Factory.
  * 
- * 提供统一风格的对话框创建方法，确保UI一致性。
+ * Provides consistent dialog creation methods to ensure UI consistency.
  */
 public final class DialogFactory {
 
     private DialogFactory() {
-    } // 防止实例化
+    } // Prevent instantiation
 
     /**
-     * 创建并显示一个带自动消失功能的信息提示对话框。
+     * Creates and shows an info dialog with auto-hide functionality.
      *
-     * @param stage           目标Stage
-     * @param skin            皮肤
-     * @param title           标题（可为空字符串）
-     * @param message         消息内容
-     * @param autoHideSeconds 自动消失时间（秒），0表示不自动消失
-     * @return 创建的Dialog实例
+     * @param stage           The target Stage.
+     * @param skin            The skin to use.
+     * @param title           The title (can be empty).
+     * @param message         The message content.
+     * @param autoHideSeconds Auto-hide duration in seconds (0 to disable
+     *                        auto-hide).
+     * @return The created Dialog instance.
      */
     public static Dialog showInfoDialog(Stage stage, Skin skin, String title, String message, float autoHideSeconds) {
         Dialog dialog = new Dialog(title, skin);
@@ -47,13 +48,13 @@ public final class DialogFactory {
     }
 
     /**
-     * 创建并显示一个警告对话框（标题为红色）。
+     * Creates and shows a warning dialog (with red title).
      *
-     * @param stage   目标Stage
-     * @param skin    皮肤
-     * @param title   标题
-     * @param message 消息内容
-     * @return 创建的Dialog实例
+     * @param stage   The target Stage.
+     * @param skin    The skin to use.
+     * @param title   The title.
+     * @param message The message content.
+     * @return The created Dialog instance.
      */
     public static Dialog showWarningDialog(Stage stage, Skin skin, String title, String message) {
         Dialog dialog = new Dialog(title, skin);
@@ -67,15 +68,15 @@ public final class DialogFactory {
     }
 
     /**
-     * 创建并显示一个确认对话框（带确认和取消按钮）。
+     * Creates and shows a confirmation dialog (with Confirm and Cancel buttons).
      *
-     * @param stage     目标Stage
-     * @param skin      皮肤
-     * @param title     标题
-     * @param message   消息内容
-     * @param onConfirm 确认回调
-     * @param onCancel  取消回调（可为null）
-     * @return 创建的Dialog实例
+     * @param stage     The target Stage.
+     * @param skin      The skin to use.
+     * @param title     The title.
+     * @param message   The message content.
+     * @param onConfirm Callback for confirmation.
+     * @param onCancel  Callback for cancellation (can be null).
+     * @return The created Dialog instance.
      */
     public static Dialog showConfirmDialog(Stage stage, Skin skin, String title, String message,
             Runnable onConfirm, Runnable onCancel) {
@@ -101,13 +102,13 @@ public final class DialogFactory {
     }
 
     /**
-     * 创建并显示一个余额不足对话框（商店专用）。
+     * Creates and shows an insufficient funds dialog (specifically for shops).
      *
-     * @param stage        目标Stage
-     * @param skin         皮肤
-     * @param itemPrice    物品价格
-     * @param currentCoins 当前金币
-     * @return 创建的Dialog实例
+     * @param stage        The target Stage.
+     * @param skin         The skin to use.
+     * @param itemPrice    The item price.
+     * @param currentCoins The current coins.
+     * @return The created Dialog instance.
      */
     public static Dialog showInsufficientFundsDialog(Stage stage, Skin skin, int itemPrice, int currentCoins) {
         int needed = itemPrice - currentCoins;

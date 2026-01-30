@@ -36,10 +36,10 @@ public class SettingsUI {
     private TextButton btnUp, btnDown, btnLeft, btnRight, btnAttack, btnSwitchWeapon;
     private String remappingKeyName = null;
 
-    // 关键！标签列宽度要足够大，避免被控件覆盖
+    // Critical: Label width must be wide enough to prevent overlap by controls
     private static final float LABEL_WIDTH = 230f;
     private static final float SLIDER_WIDTH = 200f;
-    private static final float SLIDER_HEIGHT = 36f; // 增加高度使触摸区域更大
+    private static final float SLIDER_HEIGHT = 36f; // Increased height for larger touch area
     private static final float VALUE_WIDTH = 50f;
     private static final float BTN_WIDTH = 100f;
     private static final float KEY_LABEL_WIDTH = 90f;
@@ -59,7 +59,7 @@ public class SettingsUI {
      */
     public Table build() {
         contentTable = new Table();
-        contentTable.pad(50, 40, 20, 40); // 上50 左右40 下20
+        contentTable.pad(50, 40, 20, 40); // Top 50, Left/Right 40, Bottom 20
 
         buildContent();
         return contentTable;
@@ -78,23 +78,25 @@ public class SettingsUI {
      * Uses a dark opaque overlay to fully cover the game, then displays settings
      * content.
      * 
-     * @param screenshotTexture 游戏暂停时的截图纹理 (不再使用，改为深色遮罩)
+     * @param screenshotTexture Texture to use for the background (not currently
+     *                          used, using dim effect).
+     * @return The table containing the settings UI.
      */
     public Table buildWithBackground(Texture screenshotTexture) {
-        // 创建外层容器 - 使用完全不透明的深色背景
+        // Create outer container with full screen dim background
         Table outerContainer = new Table();
         outerContainer.setFillParent(true);
 
-        // 使用完全不透明的深色背景遮罩游戏画面
+        // Use fully opaque dark background to mask game screen
         outerContainer.setBackground(skin.newDrawable("white", 0.05f, 0.05f, 0.08f, 1.0f));
 
-        // 内层内容表格
+        // Inner content table
         contentTable = new Table();
-        contentTable.pad(50, 40, 20, 40); // 上50 左右40 下20
+        contentTable.pad(50, 40, 20, 40); // Top 50, Left/Right 40, Bottom 20
 
         buildContent();
 
-        // 将内容表格添加到外层容器中
+        // Add content table to outer container
         outerContainer.add(contentTable).expand().center();
 
         return outerContainer;
@@ -110,25 +112,28 @@ public class SettingsUI {
         }
     }
 
+    /**
+     * Builds the content of the settings menu.
+     */
     private void buildContent() {
-        // ===== Title =====
+        // Title
         Label title = new Label("Settings", skin, "title");
         title.setFontScale(1.2f);
         contentTable.add(title).colspan(3).padBottom(25).row();
 
-        // ===== Audio Section =====
+        // Audio
         addSectionHeader("Audio");
         addVolumeRow();
         addMusicRow();
 
-        // ===== Gameplay Section =====
+        // Gameplay
         addSectionHeader("Gameplay");
         addWalkSpeedRow();
         addRunSpeedRow();
         addCameraRow();
         addFogRow();
         addAttackRangeRow();
-        addMouseAimingRow(); // 添加鼠标瞄准开关
+        addMouseAimingRow(); // Add mouse aiming toggle
         addHint();
 
         // ===== Controls Section =====
@@ -139,6 +144,11 @@ public class SettingsUI {
         addBackButton();
     }
 
+    /**
+     * Adds a section header with decorative lines.
+     *
+     * @param text The text to display in the header.
+     */
     private void addSectionHeader(String text) {
         Table header = new Table();
 
@@ -158,6 +168,9 @@ public class SettingsUI {
 
     // ==================== Audio Section ====================
 
+    /**
+     * Adds the volume control row to the settings menu.
+     */
     private void addVolumeRow() {
         Label label = new Label("Volume:", skin);
         label.setFontScale(1.0f);
@@ -175,6 +188,9 @@ public class SettingsUI {
         contentTable.row().padBottom(10);
     }
 
+    /**
+     * Adds the music toggle row to the settings menu.
+     */
     private void addMusicRow() {
         Label label = new Label("Music:", skin);
         label.setFontScale(1.0f);
@@ -197,6 +213,9 @@ public class SettingsUI {
 
     // ==================== Gameplay Section ====================
 
+    /**
+     * Adds the walk speed slider row.
+     */
     private void addWalkSpeedRow() {
         Label label = new Label("Walk Speed:", skin);
         label.setFontScale(1.0f);
@@ -220,6 +239,9 @@ public class SettingsUI {
         contentTable.row().padBottom(10);
     }
 
+    /**
+     * Adds the run speed slider row.
+     */
     private void addRunSpeedRow() {
         Label label = new Label("Run Speed:", skin);
         label.setFontScale(1.0f);
@@ -243,6 +265,9 @@ public class SettingsUI {
         contentTable.row().padBottom(10);
     }
 
+    /**
+     * Adds the camera zoom slider row.
+     */
     private void addCameraRow() {
         Label label = new Label("Camera Zoom:", skin);
         label.setFontScale(1.0f);
@@ -266,6 +291,9 @@ public class SettingsUI {
         contentTable.row().padBottom(10);
     }
 
+    /**
+     * Adds the fog of war toggle row.
+     */
     private void addFogRow() {
         Label label = new Label("Fog of War:", skin);
         label.setFontScale(1.0f);
@@ -285,6 +313,9 @@ public class SettingsUI {
         contentTable.row().padBottom(6);
     }
 
+    /**
+     * Adds the attack range display toggle row.
+     */
     private void addAttackRangeRow() {
         Label label = new Label("Attack Range:", skin);
         label.setFontScale(1.0f);
@@ -304,6 +335,9 @@ public class SettingsUI {
         contentTable.row().padBottom(6);
     }
 
+    /**
+     * Adds the mouse aiming toggle row.
+     */
     private void addMouseAimingRow() {
         Label label = new Label("Mouse Aiming:", skin);
         label.setFontScale(1.0f);
@@ -323,6 +357,9 @@ public class SettingsUI {
         contentTable.row().padBottom(6);
     }
 
+    /**
+     * Adds a hint label to the bottom of the gameplay section.
+     */
     private void addHint() {
         Label hint = new Label("* Fog mode: vision range is fixed", skin);
         hint.setColor(0.6f, 0.6f, 0.6f, 1f);
@@ -332,6 +369,9 @@ public class SettingsUI {
 
     // ==================== Controls Section ====================
 
+    /**
+     * Adds the controls section with key binding options.
+     */
     private void addControlsSection() {
         // Status label
         statusLabel = new Label("Click button → Press new key", skin);
@@ -362,6 +402,12 @@ public class SettingsUI {
         contentTable.add(keyRow2).colspan(3).padBottom(10).row();
     }
 
+    /**
+     * Creates a button for remapping a specific key.
+     *
+     * @param keyName The name of the key to be remapped.
+     * @return The created TextButton.
+     */
     private TextButton makeKeyButton(final String keyName) {
         final TextButton btn = new TextButton(getKeyName(keyName), skin);
         btn.getLabel().setFontScale(0.85f);
@@ -374,6 +420,13 @@ public class SettingsUI {
         return btn;
     }
 
+    /**
+     * Adds a single key binding row to the given table.
+     *
+     * @param table     The table to add the binding to.
+     * @param labelText The label text for the key binding.
+     * @param btn       The button associated with the key binding.
+     */
     private void addKeyBinding(Table table, String labelText, Actor btn) {
         Label label = new Label(labelText, skin);
         label.setFontScale(0.85f);
@@ -381,6 +434,9 @@ public class SettingsUI {
         table.add(btn).width(KEY_BTN_WIDTH).height(34).padRight(30);
     }
 
+    /**
+     * Adds the back/save button to the bottom of the content table.
+     */
     private void addBackButton() {
         TextButton backBtn = new TextButton("Back / Save", skin);
         backBtn.getLabel().setFontScale(0.9f);
@@ -397,6 +453,13 @@ public class SettingsUI {
 
     // ===== Key Remapping Logic =====
 
+    /**
+     * Retrieves the string representation of the current key binding for a given
+     * action.
+     *
+     * @param keyName The name of the action/key.
+     * @return The string representation of the key code.
+     */
     private String getKeyName(String keyName) {
         int code = -1;
         switch (keyName) {
@@ -409,7 +472,6 @@ public class SettingsUI {
             case "LEFT":
                 code = GameSettings.KEY_LEFT;
             case "RIGHT":
-
                 code = GameSettings.KEY_RIGHT;
                 break;
             case "ATTACK":
@@ -422,12 +484,21 @@ public class SettingsUI {
         return Input.Keys.toString(code);
     }
 
+    /**
+     * Starts the key remapping process for a specific action.
+     *
+     * @param keyName The name of the action to remap.
+     * @param btn     The button that initiated the remapping.
+     */
     private void startRemap(String keyName, TextButton btn) {
         remappingKeyName = keyName;
         statusLabel.setText("Press key for " + keyName);
         btn.setText("...");
     }
 
+    /**
+     * Updates the text of all key binding buttons to reflect current settings.
+     */
     private void updateButtons() {
         btnUp.setText(getKeyName("UP"));
         btnDown.setText(getKeyName("DOWN"));
@@ -437,6 +508,13 @@ public class SettingsUI {
         btnSwitchWeapon.setText(getKeyName("SWITCH_WEAPON"));
     }
 
+    /**
+     * Handles key down events for remapping keys.
+     *
+     * @param keycode The key code of the pressed key.
+     * @return true if the key event was handled (i.e., remapping occurred or
+     *         cancelled), false otherwise.
+     */
     public boolean handleKeyDown(int keycode) {
         if (remappingKeyName != null) {
             if (keycode == Input.Keys.ESCAPE) {
@@ -473,6 +551,9 @@ public class SettingsUI {
         return false;
     }
 
+    /**
+     * Sets up the input processor to listen for key events on the stage.
+     */
     private void setupInputProcessor() {
         stage.addListener(new InputListener() {
             @Override

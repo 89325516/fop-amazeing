@@ -12,6 +12,7 @@ import java.util.Map;
 
 /**
  * Loads and caches sprites for custom elements.
+ * Singleton class to manage texture resources efficiently.
  */
 public class CustomSpriteLoader {
 
@@ -29,6 +30,11 @@ public class CustomSpriteLoader {
         textureCache = new HashMap<>();
     }
 
+    /**
+     * Gets the singleton instance of the CustomSpriteLoader.
+     * 
+     * @return The singleton instance.
+     */
     public static CustomSpriteLoader getInstance() {
         if (instance == null) {
             instance = new CustomSpriteLoader();
@@ -37,7 +43,11 @@ public class CustomSpriteLoader {
     }
 
     /**
-     * Load or get cached animation for a custom element action
+     * Load or get cached animation for a custom element action.
+     * 
+     * @param element The custom element definition.
+     * @param action  The action name (e.g., "Idle", "Move").
+     * @return The animation object.
      */
     public Animation<TextureRegion> getAnimation(CustomElementDefinition element, String action) {
         String elementId = element.getId();
@@ -63,7 +73,11 @@ public class CustomSpriteLoader {
     }
 
     /**
-     * Load animation from sprite files
+     * Load animation from sprite files.
+     * 
+     * @param element The custom element definition.
+     * @param action  The action name.
+     * @return The loaded animation.
      */
     private Animation<TextureRegion> loadAnimation(CustomElementDefinition element, String action) {
         int frameCount = element.getFrameCount();
@@ -99,7 +113,9 @@ public class CustomSpriteLoader {
     }
 
     /**
-     * Create a placeholder texture for missing sprites
+     * Create a placeholder texture for missing sprites.
+     * 
+     * @return A magenta placeholder texture region.
      */
     private TextureRegion createPlaceholder() {
         // Use a simple colored placeholder
@@ -115,7 +131,9 @@ public class CustomSpriteLoader {
     }
 
     /**
-     * Preload all sprites for an element
+     * Preload all sprites for an element.
+     * 
+     * @param element The custom element definition to preload.
      */
     public void preloadElement(CustomElementDefinition element) {
         for (String action : element.getType().getActions()) {
@@ -124,7 +142,9 @@ public class CustomSpriteLoader {
     }
 
     /**
-     * Clear cache for a specific element (when element is deleted)
+     * Clear cache for a specific element (when element is deleted).
+     * 
+     * @param elementId The ID of the element to remove from cache.
      */
     public void clearCache(String elementId) {
         animationCache.remove(elementId);
@@ -139,7 +159,7 @@ public class CustomSpriteLoader {
     }
 
     /**
-     * Dispose all cached textures
+     * Dispose all cached textures and clear cache.
      */
     public void dispose() {
         for (Texture tex : textureCache.values()) {

@@ -3,50 +3,50 @@ package de.tum.cit.fop.maze.model;
 import de.tum.cit.fop.maze.model.weapons.WeaponEffect;
 
 /**
- * 投射物类 (Projectile)
+ * Projectile Class.
  * 
- * 远程武器发射的飞行物体，具有：
- * - 位置和速度
- * - 伤害值和伤害类型
- * - 生命周期（超时自动消失）
- * - 碰撞检测（命中敌人/墙壁）
+ * Flying object fired by ranged weapons, having:
+ * - Position and velocity
+ * - Damage and damage type
+ * - Lifetime (auto-expired)
+ * - Collision detection (hits enemy/wall)
  */
 public class Projectile extends GameObject {
 
-    // 速度向量
+    // Velocity vector
     private float vx, vy;
 
-    // 伤害属性
+    // Damage attributes
     private int damage;
     private DamageType damageType;
     private WeaponEffect effect;
 
-    // 生命周期
+    // Lifetime
     private float lifeTime;
     private float maxLifeTime = 3f;
     private boolean expired = false;
 
-    // 归属（区分玩家/敌人发射）
+    // Ownership (distinguish player/enemy)
     private boolean playerOwned;
 
-    // 视觉效果
+    // Visual effects
     private String textureKey;
-    private float rotation; // 旋转角度（弧度）
-    private float size = 1.0f; // 渲染缩放系数 (Render scale multiplier)
+    private float rotation; // Rotation angle (radians)
+    private float size = 1.0f; // Render scale multiplier
 
     /**
-     * 创建投射物
+     * Create projectile.
      * 
-     * @param x           起始 X 坐标
-     * @param y           起始 Y 坐标
-     * @param vx          X 方向速度
-     * @param vy          Y 方向速度
-     * @param damage      伤害值
-     * @param damageType  伤害类型
-     * @param effect      附加效果
-     * @param playerOwned 是否为玩家发射
-     * @param textureKey  纹理键名
-     * @param size        渲染缩放系数
+     * @param x           Start X
+     * @param y           Start Y
+     * @param vx          Velocity X
+     * @param vy          Velocity Y
+     * @param damage      Damage amount
+     * @param damageType  Damage type
+     * @param effect      Attached effect
+     * @param playerOwned Is player owned
+     * @param textureKey  Texture key
+     * @param size        Render scale
      */
     public Projectile(float x, float y, float vx, float vy,
             int damage, DamageType damageType, WeaponEffect effect,
@@ -62,7 +62,7 @@ public class Projectile extends GameObject {
         this.size = size;
         this.lifeTime = maxLifeTime;
 
-        // 投射物碰撞体积较小
+        // Projectile hitbox is small
         this.width = 0.3f;
         this.height = 0.3f;
 
@@ -70,7 +70,7 @@ public class Projectile extends GameObject {
         this.startX = x;
         this.startY = y;
 
-        // 计算旋转角度（指向飞行方向）
+        // Calculate rotation (point to flight direction)
         this.rotation = (float) Math.atan2(vy, vx);
     }
 
@@ -93,31 +93,31 @@ public class Projectile extends GameObject {
     }
 
     /**
-     * 更新投射物状态
+     * Update projectile status.
      * 
-     * @param delta 帧时间
-     * @param cm    碰撞管理器（用于墙壁检测）
-     * @return true 如果投射物应该被移除
+     * @param delta Frame time.
+     * @param cm    Collision manager (for wall detection).
+     * @return true if projectile should be removed.
      */
     public boolean update(float delta, CollisionManager cm) {
-        // 更新生命周期
+        // Update lifetime
         lifeTime -= delta;
         if (lifeTime <= 0) {
             expired = true;
             return true;
         }
 
-        // 计算新位置
+        // Calculate new position
         float newX = x + vx * delta;
         float newY = y + vy * delta;
 
-        // 检查墙壁碰撞 (isWalkable 返回 true 表示可行走，取反表示被阻挡)
+        // Check wall collision (isWalkable returns true if walkable, ! means blocked)
         if (cm != null && !cm.isWalkable((int) newX, (int) newY)) {
             expired = true;
             return true;
         }
 
-        // 应用移动
+        // Apply movement
         x = newX;
         y = newY;
 
@@ -125,13 +125,13 @@ public class Projectile extends GameObject {
     }
 
     /**
-     * 检查是否命中目标
+     * Check if hits target.
      * 
-     * @param target 目标对象
-     * @return true 如果碰撞
+     * @param target Target object.
+     * @return true if collision detected.
      */
     public boolean hitsTarget(GameObject target) {
-        // 简单的圆形碰撞检测
+        // Simple circle collision detection
         float dx = target.getX() - x;
         float dy = target.getY() - y;
         float distance = (float) Math.sqrt(dx * dx + dy * dy);
@@ -140,7 +140,7 @@ public class Projectile extends GameObject {
     }
 
     /**
-     * 标记为已命中（将被移除）
+     * Mark as hit (will be removed).
      */
     public void markHit() {
         expired = true;
@@ -189,14 +189,14 @@ public class Projectile extends GameObject {
     }
 
     /**
-     * 获取速度大小
+     * Get speed magnitude.
      */
     public float getSpeed() {
         return (float) Math.sqrt(vx * vx + vy * vy);
     }
 
     /**
-     * 获取渲染缩放系数 (Render scale multiplier)
+     * Get render scale multiplier.
      */
     public float getSize() {
         return size;

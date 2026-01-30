@@ -7,6 +7,12 @@ import de.tum.cit.fop.maze.model.DamageType;
  */
 public class MagicStaff extends Weapon {
 
+    /**
+     * Creates a Magic Staff.
+     * 
+     * @param x X coordinate.
+     * @param y Y coordinate.
+     */
     public MagicStaff(float x, float y) {
         // High damage, medium range, fast cooldown for rapid fire, Burn effect
         // Fully initialized as Ranged: isRanged=true, speed 12

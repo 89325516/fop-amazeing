@@ -34,7 +34,7 @@ public class MenuScreen implements Screen {
         this.game = game;
         var camera = new OrthographicCamera();
 
-        // 加载背景纹理
+        // Load background texture
         backgroundTexture = new Texture(Gdx.files.internal("images/menu_background.png"));
         backgroundTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
 
@@ -73,10 +73,10 @@ public class MenuScreen implements Screen {
             }
         });
 
-        // 4. "Endless Mode" Button (原 Random Map 位置)
+        // 4. "Endless Mode" Button (Originally Random Map)
         TextButton endlessButton = new TextButton("Endless Mode", game.getSkin());
         UIUtils.addMenuClickSound(endlessButton);
-        endlessButton.setColor(1f, 0.8f, 0.3f, 1f); // 金黄色高亮
+        endlessButton.setColor(1f, 0.8f, 0.3f, 1f); // Gold highlight
         table.add(endlessButton).width(300).height(60).padBottom(20).row();
 
         endlessButton.addListener(new ChangeListener() {
@@ -217,7 +217,7 @@ public class MenuScreen implements Screen {
     }
 
     /**
-     * 显示读档列表窗口 (动态尺寸版)
+     * Show load dialog (dynamic sizing).
      */
     private void showLoadDialog() {
         Window win = new Window("Select Save File", game.getSkin());
@@ -295,12 +295,12 @@ public class MenuScreen implements Screen {
         // Auto-focus scroll on hover so user doesn't need to click
         UIUtils.enableHoverScrollFocus(scrollPane, stage);
 
-        // --- 动态尺寸计算 ---
+        // --- Dynamic Size Calculation ---
         float screenW = stage.getWidth();
         float screenH = stage.getHeight();
 
-        float dialogW = Math.max(screenW * 0.6f, 350); // 至少350宽，或者屏幕60%
-        float dialogH = screenH * 0.7f; // 高度70%
+        float dialogW = Math.max(screenW * 0.6f, 350); // Minimum 350 width, or 60% of screen
+        float dialogH = screenH * 0.7f; // 70% Height
 
         win.add(scrollPane).grow().pad(10).row();
 
@@ -393,27 +393,29 @@ public class MenuScreen implements Screen {
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        // 绘制背景图片 - 使用整个 GL 视口覆盖整个屏幕（包括 FitViewport 的黑边区域）
-        // 关键：使用 glViewport 重置为整个屏幕，然后渲染背景，再恢复 FitViewport
+        // Draw background image - Use full GL viewport to cover screen (including
+        // FitViewport black bars)
+        // Key: Use glViewport to reset to full screen, render background, then restore
+        // FitViewport
         SpriteBatch batch = game.getSpriteBatch();
 
-        // 获取实际屏幕尺寸 - 使用 backbuffer 尺寸以确保正确
+        // Get actual screen size - use backbuffer size to ensure correctness
         int screenWidth = Gdx.graphics.getBackBufferWidth();
         int screenHeight = Gdx.graphics.getBackBufferHeight();
 
-        // 重置 GL Viewport 到整个屏幕
+        // Reset GL Viewport to full screen
         Gdx.gl.glViewport(0, 0, screenWidth, screenHeight);
 
-        // 设置投影矩阵到屏幕像素坐标系
+        // Set projection matrix to screen pixel coordinate system
         batch.getProjectionMatrix().setToOrtho2D(0, 0, screenWidth, screenHeight);
         batch.begin();
 
-        // 背景图片原始尺寸
+        // Background texture original size
         float texWidth = backgroundTexture.getWidth();
         float texHeight = backgroundTexture.getHeight();
 
-        // 计算Cover模式的缩放比例
-        // Cover: 保持宽高比，确保图片覆盖整个屏幕（可能会裁剪）
+        // Calculate scale ratio for Cover mode
+        // Cover: Keep aspect ratio, ensure image covers whole screen (may crop)
         float screenRatio = (float) screenWidth / screenHeight;
         float textureRatio = texWidth / texHeight;
 
@@ -421,23 +423,23 @@ public class MenuScreen implements Screen {
         float drawX, drawY;
 
         if (screenRatio > textureRatio) {
-            // 屏幕更宽，以宽度为准，高度可能超出
+            // Screen is wider, fit to width, height might overflow
             drawWidth = screenWidth;
             drawHeight = screenWidth / textureRatio;
             drawX = 0;
-            drawY = (screenHeight - drawHeight) / 2; // 垂直居中
+            drawY = (screenHeight - drawHeight) / 2; // Vertically centered
         } else {
-            // 屏幕更高，以高度为准，宽度可能超出
+            // Screen is taller, fit to height, width might overflow
             drawHeight = screenHeight;
             drawWidth = screenHeight * textureRatio;
-            drawX = (screenWidth - drawWidth) / 2; // 水平居中
+            drawX = (screenWidth - drawWidth) / 2; // Horizontally centered
             drawY = 0;
         }
 
         batch.draw(backgroundTexture, drawX, drawY, drawWidth, drawHeight);
         batch.end();
 
-        // 恢复 Stage 的 Viewport（这会重新设置正确的 glViewport）
+        // Restore Stage's Viewport (this will reset the correct glViewport)
         stage.getViewport().apply();
         stage.act(Math.min(Gdx.graphics.getDeltaTime(), 1 / 30f));
         stage.draw();
@@ -457,7 +459,7 @@ public class MenuScreen implements Screen {
     @Override
     public void show() {
         Gdx.input.setInputProcessor(stage);
-        // 🔊 全局按钮音效
+        // 🔊 Global button sound
         UIUtils.enableMenuButtonSound(stage);
         // Play menu background music
         de.tum.cit.fop.maze.utils.AudioManager.getInstance().playMenuBgm();

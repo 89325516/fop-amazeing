@@ -10,17 +10,18 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 开发者控制台 (Developer Console)
+ * Developer Console.
  * 
- * 允许玩家在游戏中输入命令修改游戏状态。
- * 使用 HashMap 存储动态变量，支持多种内置命令和别名。
+ * Allows players to modify game state via commands during gameplay.
+ * Use HashMap to store dynamic variables, supports multiple built-in commands
+ * and aliases.
  * 
- * 使用方法:
- * - 在 GameScreen 中按 ~ 或 F3 键打开控制台
- * - 输入命令并按 Enter 执行
- * - 按 ESC 关闭控制台
+ * Usage:
+ * - Press ~ or F3 in GameScreen to open the console
+ * - Type command and press Enter to execute
+ * - Press ESC to close console
  * 
- * 命令分类:
+ * Command Categories:
  * - player: god, noclip, heal, give, set
  * - world: tp, spawn, kill, time
  * - level: level, restart, win, skip
@@ -29,45 +30,45 @@ import java.util.Map;
  */
 public class DeveloperConsole {
 
-    /** 存储动态变量的 HashMap */
+    /** HashMap to store dynamic variables */
     private final Map<String, Object> variables = new HashMap<>();
 
-    /** 命令别名映射 */
+    /** Command alias map */
     private final Map<String, String> aliases = new HashMap<>();
 
-    /** 控制台输出历史 */
+    /** Console output history */
     private final List<String> outputHistory = new ArrayList<>();
 
-    /** 命令输入历史 (用于上下键切换) */
+    /** Command input history (for up/down key navigation) */
     private final List<String> commandHistory = new ArrayList<>();
     private int historyIndex = -1;
 
-    /** 游戏世界引用，用于执行命令 */
+    /** Game world reference, used for executing commands */
     private GameWorld gameWorld;
 
-    /** 关卡切换监听器 */
+    /** Level change listener */
     private LevelChangeListener levelChangeListener;
 
-    /** 控制台是否可见 */
+    /** Console visibility */
     private boolean visible = false;
 
-    /** 最大历史记录数 */
+    /** Max history size */
     private static final int MAX_HISTORY = 100;
 
-    /** 时间流速倍率 */
+    /** Time scale */
     private float timeScale = 1.0f;
 
-    /** FPS显示开关 */
+    /** FPS display toggle */
     private boolean showFps = false;
 
-    /** 无尽模式标志 - 启用后禁用level/skip/win命令 */
+    /** Endless mode flag - disables level/skip/win commands when enabled */
     private boolean endlessMode = false;
 
-    /** 无尽模式数据引用 */
+    /** Endless mode data reference */
     private EndlessModeData endlessModeData;
 
     /**
-     * 关卡切换监听器接口
+     * Level change listener interface.
      */
     public interface LevelChangeListener {
         void onLevelChange(int levelNumber);
@@ -80,23 +81,23 @@ public class DeveloperConsole {
     }
 
     /**
-     * 创建开发者控制台实例
+     * Creates a new DeveloperConsole instance.
      */
     public DeveloperConsole() {
-        // 初始化默认变量
+        // Initialize default variables
         variables.put("godmode", false);
         variables.put("noclip", false);
         variables.put("speed_multiplier", 1.0f);
         variables.put("debug", false);
 
-        // 初始化别名
+        // Initialize aliases
         initAliases();
 
         log("Developer Console initialized. Type 'help' for commands.");
     }
 
     /**
-     * 初始化命令别名
+     * Initializes command aliases.
      */
     private void initAliases() {
         // Player commands
@@ -125,21 +126,27 @@ public class DeveloperConsole {
     }
 
     /**
-     * 设置游戏世界引用
+     * Sets the game world reference.
+     * 
+     * @param world The GameWorld instance.
      */
     public void setGameWorld(GameWorld world) {
         this.gameWorld = world;
     }
 
     /**
-     * 设置关卡切换监听器
+     * Sets the level change listener.
+     * 
+     * @param listener The listener to set.
      */
     public void setLevelChangeListener(LevelChangeListener listener) {
         this.levelChangeListener = listener;
     }
 
     /**
-     * 解析并执行命令
+     * Parses and executes a command.
+     * 
+     * @param input The command string to execute.
      */
     public void executeCommand(String input) {
         if (input == null || input.trim().isEmpty()) {
@@ -148,17 +155,17 @@ public class DeveloperConsole {
 
         String trimmed = input.trim();
 
-        // 添加到命令历史
+        // Add to history
         commandHistory.add(trimmed);
         if (commandHistory.size() > MAX_HISTORY) {
             commandHistory.remove(0);
         }
         historyIndex = commandHistory.size();
 
-        // 记录输入
+        // Log input
         log("> " + trimmed);
 
-        // 解析命令，处理别名
+        // Parse command, resolve aliases
         String resolved = resolveAlias(trimmed);
         String[] parts = resolved.split("\\s+");
         String command = parts[0].toLowerCase();
@@ -264,7 +271,10 @@ public class DeveloperConsole {
     }
 
     /**
-     * 解析别名
+     * Resolves command aliases.
+     * 
+     * @param input The raw input command.
+     * @return The resolved command.
      */
     private String resolveAlias(String input) {
         String[] parts = input.split("\\s+", 2);
@@ -282,6 +292,11 @@ public class DeveloperConsole {
 
     // ==================== Help Commands ====================
 
+    /**
+     * Handles the 'help' command.
+     * 
+     * @param parts The command parts.
+     */
     private void handleHelp(String[] parts) {
         if (parts.length < 2) {
             showHelpOverview();
@@ -363,6 +378,9 @@ public class DeveloperConsole {
         }
     }
 
+    /**
+     * Shows current developer console overview.
+     */
     private void showHelpOverview() {
         log("╔══════════════════════════════════════════════════════════╗");
         log("║         DEVELOPER CONSOLE - COMMAND REFERENCE            ║");
@@ -384,6 +402,9 @@ public class DeveloperConsole {
         log("  win        - Complete current level");
     }
 
+    /**
+     * Shows help for player commands.
+     */
     private void showHelpPlayer() {
         log("╔═══════════════════════════════════════════════════════════╗");
         log("║                    PLAYER COMMANDS                        ║");
@@ -401,6 +422,9 @@ public class DeveloperConsole {
         log("  set speed 2.0       Double movement speed");
     }
 
+    /**
+     * Shows help for world commands.
+     */
     private void showHelpWorld() {
         log("╔═══════════════════════════════════════════════════════════╗");
         log("║                    WORLD COMMANDS                         ║");
@@ -418,6 +442,9 @@ public class DeveloperConsole {
         log("  time 0.5            Half speed (slow motion)");
     }
 
+    /**
+     * Shows help for level commands.
+     */
     private void showHelpLevel() {
         log("╔═══════════════════════════════════════════════════════════╗");
         log("║                    LEVEL COMMANDS                         ║");
@@ -434,6 +461,9 @@ public class DeveloperConsole {
         log("  skip                Advance to next level");
     }
 
+    /**
+     * Shows help for debug commands.
+     */
     private void showHelpDebug() {
         log("╔═══════════════════════════════════════════════════════════╗");
         log("║                    DEBUG COMMANDS                         ║");
@@ -451,6 +481,15 @@ public class DeveloperConsole {
         log("  vars                List all variables");
     }
 
+    /**
+     * Shows usage help for a specific command.
+     * 
+     * @param name     Command name.
+     * @param usage    Usage syntax.
+     * @param desc     Command description.
+     * @param notes    Additional notes.
+     * @param examples Usage examples.
+     */
     private void showHelpCommand(String name, String usage, String desc, String notes, String[] examples) {
         log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         log(name.toUpperCase());
@@ -472,6 +511,11 @@ public class DeveloperConsole {
 
     // ==================== Player Commands ====================
 
+    /**
+     * Handles 'god' command.
+     * 
+     * @param parts Command parts.
+     */
     private void handleGod(String[] parts) {
         if (gameWorld == null) {
             log("[ERROR] No active game world.");
@@ -491,6 +535,11 @@ public class DeveloperConsole {
         log("[OK] God mode: " + (newValue ? "ON" : "OFF"));
     }
 
+    /**
+     * Handles 'noclip' command.
+     * 
+     * @param parts Command parts.
+     */
     private void handleNoClip(String[] parts) {
         if (gameWorld == null) {
             log("[ERROR] No active game world.");
@@ -510,6 +559,11 @@ public class DeveloperConsole {
         log("[OK] No-clip mode: " + (newValue ? "ON" : "OFF"));
     }
 
+    /**
+     * Handles 'heal' command.
+     * 
+     * @param parts Command parts.
+     */
     private void handleHeal(String[] parts) {
         if (gameWorld == null) {
             log("[ERROR] No active game world.");
@@ -536,6 +590,11 @@ public class DeveloperConsole {
         log("[OK] Healed " + amount + " HP. Current: " + player.getLives() + "/" + maxHP);
     }
 
+    /**
+     * Handles 'give' command.
+     * 
+     * @param parts Command parts.
+     */
     private void handleGive(String[] parts) {
         if (parts.length < 2) {
             log("[ERROR] Usage: give <item> [count]");
@@ -580,6 +639,11 @@ public class DeveloperConsole {
         }
     }
 
+    /**
+     * Handles 'set' command.
+     * 
+     * @param parts Command parts.
+     */
     private void handleSet(String[] parts) {
         if (parts.length < 3) {
             log("[ERROR] Usage: set <variable> <value>");
@@ -640,6 +704,11 @@ public class DeveloperConsole {
 
     // ==================== World Commands ====================
 
+    /**
+     * Handles 'teleport' command.
+     * 
+     * @param parts Command parts.
+     */
     private void handleTeleport(String[] parts) {
         if (parts.length < 3) {
             log("[ERROR] Usage: tp <x> <y>");
@@ -675,6 +744,11 @@ public class DeveloperConsole {
         log("[OK] Teleported to (" + (int) x + ", " + (int) y + ")");
     }
 
+    /**
+     * Handles 'spawn' command.
+     * 
+     * @param parts Command parts.
+     */
     private void handleSpawn(String[] parts) {
         if (parts.length < 2) {
             log("[ERROR] Usage: spawn <type> [count]");
@@ -722,6 +796,11 @@ public class DeveloperConsole {
         }
     }
 
+    /**
+     * Handles 'kill' command.
+     * 
+     * @param parts Command parts.
+     */
     private void handleKill(String[] parts) {
         if (gameWorld == null) {
             log("[ERROR] No active game world.");
@@ -747,6 +826,11 @@ public class DeveloperConsole {
         }
     }
 
+    /**
+     * Handles 'time' command.
+     * 
+     * @param parts Command parts.
+     */
     private void handleTime(String[] parts) {
         if (parts.length < 2) {
             log("[INFO] Current time scale: " + timeScale);
@@ -763,6 +847,11 @@ public class DeveloperConsole {
 
     // ==================== Physics Commands ====================
 
+    /**
+     * Handles 'physics' command.
+     * 
+     * @param parts Command parts.
+     */
     private void handlePhysics(String[] parts) {
         if (parts.length < 2) {
             log("[INFO] Physics Parameters:");
@@ -825,12 +914,18 @@ public class DeveloperConsole {
 
     // ==================== Level Commands ====================
 
+    /**
+     * Handles 'level' command.
+     * 
+     * @param parts Command parts.
+     */
     private void handleLevel(String[] parts) {
         if (endlessMode) {
             log("[ERROR] 'level' command disabled in Endless Mode.");
             log("  Use 'endless' commands instead.");
             return;
         }
+
         if (parts.length < 2) {
             // No argument: show level category help
             showHelpLevel();
@@ -848,6 +943,9 @@ public class DeveloperConsole {
         }
     }
 
+    /**
+     * Handles 'restart' command.
+     */
     private void handleRestart() {
         if (levelChangeListener != null) {
             log("[OK] Restarting level...");
@@ -857,6 +955,9 @@ public class DeveloperConsole {
         }
     }
 
+    /**
+     * Handles 'skip' command.
+     */
     private void handleSkip() {
         if (endlessMode) {
             log("[ERROR] 'skip' command disabled in Endless Mode.");
@@ -870,6 +971,9 @@ public class DeveloperConsole {
         }
     }
 
+    /**
+     * Handles 'win' command.
+     */
     private void handleWin() {
         if (endlessMode) {
             log("[ERROR] 'win' command disabled in Endless Mode.");
@@ -886,6 +990,9 @@ public class DeveloperConsole {
 
     // ==================== Debug Commands ====================
 
+    /**
+     * Handles 'status' command.
+     */
     private void handleStatus() {
         log("═══════════════════════════════════════════");
         log("           GAME STATUS");
@@ -916,6 +1023,9 @@ public class DeveloperConsole {
         log("═══════════════════════════════════════════");
     }
 
+    /**
+     * Handles 'vars' command.
+     */
     private void showVariables() {
         log("═══════════════════════════════════════════");
         log("        CONSOLE VARIABLES");
@@ -926,6 +1036,11 @@ public class DeveloperConsole {
         log("═══════════════════════════════════════════");
     }
 
+    /**
+     * Handles 'fps' command.
+     * 
+     * @param parts Command parts.
+     */
     private void handleFps(String[] parts) {
         if (parts.length > 1) {
             showFps = parts[1].equalsIgnoreCase("on") || parts[1].equals("1") || parts[1].equalsIgnoreCase("true");
@@ -936,8 +1051,11 @@ public class DeveloperConsole {
         log("[OK] FPS display: " + (showFps ? "ON" : "OFF"));
     }
 
-    // ==================== Legacy Commands ====================
-
+    /**
+     * Handles 'speed' command (legacy support).
+     * 
+     * @param parts Command parts.
+     */
     private void handleSpeed(String[] parts) {
         log("[WARN] 'speed' is deprecated. Use 'set speed <value>' instead.");
         if (parts.length < 2) {
@@ -1049,7 +1167,8 @@ public class DeveloperConsole {
     // ==================== Endless Mode Support ====================
 
     /**
-     * 无尽模式数据接口 - 用于控制台交互
+     * Endless Mode Data Interface.
+     * Used for interaction between the console and the Endless Mode logic.
      */
     public interface EndlessModeData {
         int getTotalKills();
@@ -1097,7 +1216,10 @@ public class DeveloperConsole {
     }
 
     /**
-     * 设置无尽模式
+     * Enables or disables Endless Mode.
+     * 
+     * @param enabled True to enable, false to disable.
+     * @param data    The EndlessModeData instance (required if enabled).
      */
     public void setEndlessMode(boolean enabled, EndlessModeData data) {
         this.endlessMode = enabled;
@@ -1107,12 +1229,19 @@ public class DeveloperConsole {
         }
     }
 
+    /**
+     * Checks if Endless Mode is enabled.
+     * 
+     * @return True if enabled, false otherwise.
+     */
     public boolean isEndlessMode() {
         return endlessMode;
     }
 
     /**
-     * 处理无尽模式命令
+     * Handles Endless Mode commands.
+     * 
+     * @param parts The command parts.
      */
     private void handleEndless(String[] parts) {
         if (!endlessMode) {
@@ -1233,27 +1362,27 @@ public class DeveloperConsole {
         log("║                  ENDLESS MODE COMMANDS                    ║");
         log("╚═══════════════════════════════════════════════════════════╝");
         log("");
-        log("【状态查看】");
+        log("[Status & Info]");
         log("endless status        Show full endless mode stats");
         log("endless wave          View current wave info");
         log("endless zone          View current zone");
         log("endless enemies       View current enemy count");
         log("");
-        log("【分数系统】");
+        log("[Score System]");
         log("endless score [n]     View/Set current score");
         log("endless combo [n]     View/Set current combo");
         log("endless kill [n]      Add kills (debug)");
         log("");
-        log("【RAGE系统】");
+        log("[Rage System]");
         log("endless rage [0-100]  View/Set rage progress");
         log("endless maxrage       Instantly max out rage");
         log("");
-        log("【敌人控制】");
+        log("[Enemy Control]");
         log("endless spawn [n]     Spawn n enemies (default 5)");
         log("endless spawn boss    Spawn a boss enemy");
         log("endless clear         Kill all enemies");
         log("");
-        log("【移动】");
+        log("[Movement]");
         log("endless tp <x> <y>    Teleport to coordinates");
         log("");
         log("NOTE: 'level', 'skip', 'win' are disabled in Endless Mode.");

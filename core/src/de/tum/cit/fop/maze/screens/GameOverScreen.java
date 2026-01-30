@@ -12,6 +12,10 @@ import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import de.tum.cit.fop.maze.MazeRunnerGame;
 
+/**
+ * Screen displayed when the player loses the game.
+ * Shows statistics and unlocked cards.
+ */
 public class GameOverScreen implements Screen {
 
     private final MazeRunnerGame game;
@@ -73,7 +77,7 @@ public class GameOverScreen implements Screen {
     @Override
     public void show() {
         Gdx.input.setInputProcessor(stage);
-        // 🔊 全局按钮音效
+        // 🔊 Global button sound
         de.tum.cit.fop.maze.utils.UIUtils.enableGameButtonSound(stage);
     }
 

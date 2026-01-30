@@ -10,9 +10,10 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * 护甲系统单元测试
+ * Unit tests for the Armor System.
  * 
- * 测试护甲的伤害吸收、类型匹配和护盾耗尽逻辑。
+ * Tests damage absorption, type matching (Physical vs Magical), and shield
+ * depletion logic.
  */
 class ArmorSystemTest {
 
@@ -27,8 +28,12 @@ class ArmorSystemTest {
 
     // === Physical Armor Tests ===
 
+    /**
+     * Verifies that physical armor completely absorbs physical damage when the
+     * shield is sufficient.
+     */
     @Test
-    @DisplayName("物理护甲应完全吸收物理伤害（不超过护盾值）")
+    @DisplayName("Physical armor should fully absorb physical damage (within shield limit)")
     void physicalArmorAbsorbsPhysicalDamage() {
         int initialShield = physicalArmor.getCurrentShield();
         int damage = 2;
@@ -39,8 +44,11 @@ class ArmorSystemTest {
         assertEquals(initialShield - damage, physicalArmor.getCurrentShield());
     }
 
+    /**
+     * Verifies that physical armor does not absorb magical damage.
+     */
     @Test
-    @DisplayName("物理护甲无法吸收法术伤害")
+    @DisplayName("Physical armor cannot absorb magical damage")
     void physicalArmorCannotAbsorbMagicalDamage() {
         int initialShield = physicalArmor.getCurrentShield();
         int damage = 3;
@@ -51,8 +59,12 @@ class ArmorSystemTest {
         assertEquals(initialShield, physicalArmor.getCurrentShield(), "Shield should not be reduced");
     }
 
+    /**
+     * Verifies that excess physical damage passes through after the shield is
+     * depleted.
+     */
     @Test
-    @DisplayName("物理护甲护盾耗尽后剩余伤害穿透")
+    @DisplayName("Physical armor lets overflow damage pass through when shield is depleted")
     void physicalArmorOverflowDamage() {
         int shield = physicalArmor.getCurrentShield();
         int excessiveDamage = shield + 3;
@@ -66,8 +78,12 @@ class ArmorSystemTest {
 
     // === Magical Armor Tests ===
 
+    /**
+     * Verifies that magical armor completely absorbs magical damage when the shield
+     * is sufficient.
+     */
     @Test
-    @DisplayName("法术护甲应完全吸收法术伤害")
+    @DisplayName("Magical armor should fully absorb magical damage")
     void magicalArmorAbsorbsMagicalDamage() {
         int initialShield = magicalArmor.getCurrentShield();
         int damage = 2;
@@ -78,8 +94,11 @@ class ArmorSystemTest {
         assertEquals(initialShield - damage, magicalArmor.getCurrentShield());
     }
 
+    /**
+     * Verifies that magical armor does not absorb physical damage.
+     */
     @Test
-    @DisplayName("法术护甲无法吸收物理伤害")
+    @DisplayName("Magical armor cannot absorb physical damage")
     void magicalArmorCannotAbsorbPhysicalDamage() {
         int initialShield = magicalArmor.getCurrentShield();
         int damage = 3;
@@ -92,40 +111,50 @@ class ArmorSystemTest {
 
     // === Edge Cases ===
 
+    /**
+     * Verifies that damage passes through if the armor is already broken (no
+     * shield).
+     */
     @Test
-    @DisplayName("对已破损护甲的伤害应全部穿透")
+    @DisplayName("Damage to broken armor should fully pass through")
     void damageToBrokenArmorPassesThrough() {
-        // 耗尽护盾
+        // Deplete shield
         int shield = physicalArmor.getCurrentShield();
         physicalArmor.absorbDamage(shield + 10, DamageType.PHYSICAL);
 
-        // 再次受到伤害
+        // Take damage again
         int newDamage = 5;
         int remaining = physicalArmor.absorbDamage(newDamage, DamageType.PHYSICAL);
 
         assertEquals(newDamage, remaining, "Damage to broken armor should pass through");
     }
 
+    /**
+     * Verifies correct calculation of the shield percentage.
+     */
     @Test
-    @DisplayName("护盾百分比计算正确")
+    @DisplayName("Shield percentage is calculated correctly")
     void shieldPercentageCalculation() {
         int maxShield = physicalArmor.getMaxShield();
 
-        // 满护盾
+        // Full shield
         assertEquals(1.0f, physicalArmor.getShieldPercentage(), 0.01f);
 
-        // 消耗2点护盾后
+        // Consume 2 points of shield
         physicalArmor.absorbDamage(2, DamageType.PHYSICAL);
         float expectedPercent = (float) (maxShield - 2) / maxShield;
         assertEquals(expectedPercent, physicalArmor.getShieldPercentage(), 0.01f);
 
-        // 空护盾
+        // Empty shield
         physicalArmor.absorbDamage(maxShield, DamageType.PHYSICAL);
         assertEquals(0.0f, physicalArmor.getShieldPercentage(), 0.01f);
     }
 
+    /**
+     * Verifies that armor types return the correct Type ID.
+     */
     @Test
-    @DisplayName("护甲类型标识符正确")
+    @DisplayName("Armor Type ID is correct")
     void armorTypeIdCorrect() {
         assertEquals("PHYSICAL_ARMOR", physicalArmor.getTypeId());
         assertEquals("MAGICAL_ARMOR", magicalArmor.getTypeId());

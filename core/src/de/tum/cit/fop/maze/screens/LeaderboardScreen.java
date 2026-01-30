@@ -19,17 +19,17 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
 /**
- * 排行榜界面 (Leaderboard Screen)
- * 
- * 显示本地高分排行榜。
- * 支持按关卡筛选和全部显示。
+ * Leaderboard Screen.
+ *
+ * Displays local high score leaderboard.
+ * Supports filtering by level and showing all scores.
  */
 public class LeaderboardScreen extends BaseScreen {
 
     private Table contentTable;
     private ScrollPane scrollPane;
-    private String currentFilter = null; // null = 全部
-    private boolean showEndlessMode = false; // true = 显示无尽模式排行榜
+    private String currentFilter = null; // null = all
+    private boolean showEndlessMode = false; // true = show endless mode leaderboard
     private Texture backgroundTexture;
 
     public LeaderboardScreen(MazeRunnerGame game) {
@@ -48,15 +48,15 @@ public class LeaderboardScreen extends BaseScreen {
         rootTable.setFillParent(true);
         stage.addActor(rootTable);
 
-        // 标题
+        // Title
         Label titleLabel = new Label("LEADERBOARD", skin, "title");
         titleLabel.setColor(Color.GOLD);
         rootTable.add(titleLabel).padTop(30).padBottom(20).row();
 
-        // 筛选按钮栏
+        // Filter Button Bar
         Table filterTable = new Table();
 
-        // 统一按钮尺寸，确保显示一致
+        // Unify button dimensions for consistency
         float filterBtnWidth = 100f;
         float filterBtnHeight = 45f;
         float filterBtnPad = 8f;
@@ -66,13 +66,13 @@ public class LeaderboardScreen extends BaseScreen {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 currentFilter = null;
-                showEndlessMode = false; // 退出无尽模式显示
+                showEndlessMode = false; // Exit endless mode display
                 refreshLeaderboard();
             }
         });
         filterTable.add(allBtn).width(filterBtnWidth).height(filterBtnHeight).padRight(filterBtnPad);
 
-        // 添加关卡筛选按钮 (前 5 关)
+        // Add Level Filter Buttons (First 5 Levels)
         for (int i = 1; i <= 5; i++) {
             final String levelPath = "maps/level-" + i + ".properties";
             final String levelName = "L" + i;
@@ -81,7 +81,7 @@ public class LeaderboardScreen extends BaseScreen {
                 @Override
                 public void changed(ChangeEvent event, Actor actor) {
                     currentFilter = levelPath;
-                    showEndlessMode = false; // 退出无尽模式显示
+                    showEndlessMode = false; // Exit endless mode display
                     refreshLeaderboard();
                 }
             });
@@ -90,7 +90,7 @@ public class LeaderboardScreen extends BaseScreen {
 
         // === ENDLESS MODE Tab ===
         TextButton endlessBtn = new TextButton("Endless", skin);
-        endlessBtn.setColor(1f, 0.8f, 0.3f, 1f); // 金色高亮
+        endlessBtn.setColor(1f, 0.8f, 0.3f, 1f); // Gold highlight
         endlessBtn.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
@@ -103,7 +103,7 @@ public class LeaderboardScreen extends BaseScreen {
 
         rootTable.add(filterTable).padBottom(15).row();
 
-        // 排行榜表头
+        // Leaderboard Header
         Table headerTable = new Table();
         headerTable.add(new Label("Rank", skin)).width(60).padRight(10);
         headerTable.add(new Label("Player", skin)).width(150).padRight(10);
@@ -114,12 +114,12 @@ public class LeaderboardScreen extends BaseScreen {
         headerTable.add(new Label("Date", skin)).width(150);
         rootTable.add(headerTable).padBottom(10).row();
 
-        // 分隔线
+        // Divider
         Table divider = new Table();
         divider.setBackground(skin.newDrawable("white", Color.GRAY));
         rootTable.add(divider).height(2).fillX().padBottom(10).row();
 
-        // 排行榜内容
+        // Leaderboard Content
         contentTable = new Table();
         contentTable.top();
 
@@ -127,12 +127,12 @@ public class LeaderboardScreen extends BaseScreen {
         scrollPane.setFadeScrollBars(false);
         scrollPane.setScrollingDisabled(true, false);
 
-        // 自动聚焦滚动
+        // Auto-focus scroll
         UIUtils.enableHoverScrollFocus(scrollPane, stage);
 
         rootTable.add(scrollPane).grow().pad(10).row();
 
-        // 底部按钮
+        // Bottom Buttons
         Table buttonTable = new Table();
 
         TextButton refreshBtn = new TextButton("Refresh", skin);
@@ -165,17 +165,17 @@ public class LeaderboardScreen extends BaseScreen {
 
         rootTable.add(buttonTable).padTop(15).padBottom(30);
 
-        // 初始加载
+        // Initial Load
         refreshLeaderboard();
     }
 
     /**
-     * 刷新排行榜显示
+     * Refreshes the leaderboard display.
      */
     private void refreshLeaderboard() {
         contentTable.clear();
 
-        // 无尽模式排行榜显示
+        // Endless Mode Leaderboard Display
         if (showEndlessMode) {
             refreshEndlessLeaderboard();
             return;
@@ -201,7 +201,7 @@ public class LeaderboardScreen extends BaseScreen {
         for (LeaderboardEntry entry : entries) {
             Table rowTable = new Table();
 
-            // 排名颜色
+            // Rank Color
             Label rankLabel = new Label(String.valueOf(rank), skin);
             if (rank == 1)
                 rankLabel.setColor(Color.GOLD);
@@ -231,18 +231,18 @@ public class LeaderboardScreen extends BaseScreen {
     }
 
     /**
-     * 刷新无尽模式排行榜显示
+     * Refreshes the endless mode leaderboard display.
      */
     private void refreshEndlessLeaderboard() {
-        // 显示专门的无尽模式表头
+        // Show special endless mode header
         contentTable.clear();
 
-        // 无尽模式特有的提示
+        // Endless mode specific hint
         Label modeLabel = new Label("~~ ENDLESS MODE LEADERBOARD ~~", skin);
         modeLabel.setColor(Color.GOLD);
         contentTable.add(modeLabel).padBottom(20).row();
 
-        // 获取无尽模式记录（使用特殊level过滤器）
+        // Get endless mode records (using special level filter)
         LeaderboardManager manager = LeaderboardManager.getInstance();
         List<LeaderboardEntry> entries = manager.getScoresByLevel("endless");
 
@@ -258,7 +258,7 @@ public class LeaderboardScreen extends BaseScreen {
         for (LeaderboardEntry entry : entries) {
             Table rowTable = new Table();
 
-            // 排名颜色
+            // Rank Color
             Label rankLabel = new Label(String.valueOf(rank), skin);
             if (rank == 1)
                 rankLabel.setColor(Color.GOLD);
@@ -274,8 +274,8 @@ public class LeaderboardScreen extends BaseScreen {
             scoreLabel.setColor(Color.GOLD);
             rowTable.add(scoreLabel).width(100).padRight(10);
 
-            // 无尽模式显示Wave而非Level
-            Label waveLabel = new Label("Wave " + entry.kills, skin); // 临时使用kills存储wave
+            // Display Wave instead of Level for Endless Mode
+            Label waveLabel = new Label("Wave " + entry.kills, skin); // Temporarily use kills to store wave
             waveLabel.setColor(Color.CYAN);
             rowTable.add(waveLabel).width(80).padRight(10);
 
@@ -291,7 +291,7 @@ public class LeaderboardScreen extends BaseScreen {
     }
 
     /**
-     * 显示清除确认对话框
+     * Shows the clear confirmation dialog.
      */
     private void showClearConfirmDialog() {
         Dialog dialog = new Dialog("Confirm Clear", skin) {
@@ -310,7 +310,7 @@ public class LeaderboardScreen extends BaseScreen {
     }
 
     /**
-     * 截断字符串
+     * Truncates a string to a maximum length.
      */
     private String truncate(String str, int maxLength) {
         if (str == null)
@@ -329,23 +329,23 @@ public class LeaderboardScreen extends BaseScreen {
         if (backgroundTexture != null) {
             SpriteBatch batch = game.getSpriteBatch();
 
-            // 获取实际屏幕尺寸 - 使用 backbuffer 尺寸以确保正确
+            // Get actual screen size - use backbuffer size to ensure correctness
             int screenWidth = Gdx.graphics.getBackBufferWidth();
             int screenHeight = Gdx.graphics.getBackBufferHeight();
 
-            // 重置 GL Viewport 到整个屏幕
+            // Reset GL Viewport to full screen
             Gdx.gl.glViewport(0, 0, screenWidth, screenHeight);
 
-            // 设置投影矩阵到屏幕像素坐标系
+            // Set projection matrix to screen pixel coordinate system
             batch.getProjectionMatrix().setToOrtho2D(0, 0, screenWidth, screenHeight);
             batch.begin();
             batch.setColor(0.4f, 0.4f, 0.4f, 1f); // Dim
 
-            // 背景图片原始尺寸
+            // Background texture original size
             float texWidth = backgroundTexture.getWidth();
             float texHeight = backgroundTexture.getHeight();
 
-            // 计算Cover模式的缩放比例
+            // Calculate scale ratio for Cover mode
             float screenRatio = (float) screenWidth / screenHeight;
             float textureRatio = texWidth / texHeight;
 
@@ -353,16 +353,16 @@ public class LeaderboardScreen extends BaseScreen {
             float drawX, drawY;
 
             if (screenRatio > textureRatio) {
-                // 屏幕更宽，以宽度为准，高度可能超出
+                // Screen is wider, fit to width, height might overflow
                 drawWidth = screenWidth;
                 drawHeight = screenWidth / textureRatio;
                 drawX = 0;
-                drawY = (screenHeight - drawHeight) / 2; // 垂直居中
+                drawY = (screenHeight - drawHeight) / 2; // Center vertically
             } else {
-                // 屏幕更高，以高度为准，宽度可能超出
+                // Screen is taller, fit to height, width might overflow
                 drawHeight = screenHeight;
                 drawWidth = screenHeight * textureRatio;
-                drawX = (screenWidth - drawWidth) / 2; // 水平居中
+                drawX = (screenWidth - drawWidth) / 2; // Center horizontally
                 drawY = 0;
             }
 
@@ -371,7 +371,7 @@ public class LeaderboardScreen extends BaseScreen {
             batch.end();
         }
 
-        // 恢复 Stage 的 Viewport（这会重新设置正确的 glViewport）
+        // Restore Stage's Viewport (this will reset the correct glViewport)
         stage.getViewport().apply();
         stage.act(Math.min(delta, 1 / 30f));
         stage.draw();

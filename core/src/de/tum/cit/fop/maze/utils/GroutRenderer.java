@@ -10,7 +10,7 @@ import de.tum.cit.fop.maze.model.GameMap;
 import de.tum.cit.fop.maze.model.Wall;
 
 /**
- * Handles the rendering of "Grout" (美缝) between tiles.
+ * Handles the rendering of "Grout" between tiles.
  * Supports adaptive coloring and different styles for Wall-Floor vs
  * Floor-Floor.
  */
@@ -29,11 +29,20 @@ public class GroutRenderer implements Disposable {
     private TextureRegion verticalGroutTexture;
     private TextureRegion horizontalGroutTexture;
 
+    /**
+     * Creates a new GroutRenderer.
+     * 
+     * @param textureManager The texture manager to use for retrieving textures.
+     */
     public GroutRenderer(TextureManager textureManager) {
         this.textureManager = textureManager;
         initGroutTextures();
     }
 
+    /**
+     * Initializes the procedural textures used for grout rendering.
+     * Creates 3D-effect textures using Pixmaps.
+     */
     private void initGroutTextures() {
         // Create a 3x1 texture for Vertical Grout (Light - Dark - Light) for 3D effect
         // We use Grayscale so we can tint it.
@@ -66,7 +75,7 @@ public class GroutRenderer implements Disposable {
 
     /**
      * Renders Grout for a specific tile position (East and North edges).
-     * 
+     *
      * @param batch             SpriteBatch to draw with
      * @param gameMap           Game map to check neighbors
      * @param x                 Grid X
@@ -100,6 +109,17 @@ public class GroutRenderer implements Disposable {
         }
     }
 
+    /**
+     * Renders a vertical grout line.
+     * 
+     * @param batch     SpriteBatch to draw with.
+     * @param x         Grid X coordinate of the left tile.
+     * @param y         Grid Y coordinate of the tile.
+     * @param unitScale Chunk/Tile size.
+     * @param width     Width of the grout line.
+     * @param color     Color of the grout line.
+     * @param use3D     Whether to use the 3D texture effect.
+     */
     private void renderVerticalLine(SpriteBatch batch, int x, int y, float unitScale, float width, Color color,
             boolean use3D) {
         float centerX = (x + 1) * unitScale - (width / 2);
@@ -117,6 +137,17 @@ public class GroutRenderer implements Disposable {
         }
     }
 
+    /**
+     * Renders a horizontal grout line.
+     * 
+     * @param batch     SpriteBatch to draw with.
+     * @param x         Grid X coordinate of the tile.
+     * @param y         Grid Y coordinate of the bottom tile.
+     * @param unitScale Chunk/Tile size.
+     * @param height    Height/Thickness of the grout line.
+     * @param color     Color of the grout line.
+     * @param use3D     Whether to use the 3D texture effect.
+     */
     private void renderHorizontalLine(SpriteBatch batch, int x, int y, float unitScale, float height, Color color,
             boolean use3D) {
         float drawX = x * unitScale;
@@ -134,6 +165,9 @@ public class GroutRenderer implements Disposable {
         }
     }
 
+    /**
+     * Disposes of the procedure textures created by this renderer.
+     */
     @Override
     public void dispose() {
         if (verticalGroutTexture != null && verticalGroutTexture.getTexture() != null) {

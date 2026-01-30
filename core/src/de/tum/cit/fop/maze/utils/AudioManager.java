@@ -106,6 +106,12 @@ public class AudioManager implements Disposable {
         loadSound("skill_upgrade", "audio/sfx/skill_upgrade.wav");
     }
 
+    /**
+     * Loads a background music track from the specified path.
+     *
+     * @param key  The key to store the music track under.
+     * @param path The file path to the music file.
+     */
     private void loadBgm(String key, String path) {
         if (Gdx.files.internal(path).exists()) {
             Music music = Gdx.audio.newMusic(Gdx.files.internal(path));
@@ -117,6 +123,13 @@ public class AudioManager implements Disposable {
         }
     }
 
+    /**
+     * Loads a sound effect from the specified path, with fallback support.
+     * Tries .wav and .mp3 extensions if the original .ogg file is not found.
+     *
+     * @param name The name to store the sound effect under.
+     * @param path The file path to the sound file.
+     */
     private void loadSound(String name, String path) {
         if (Gdx.files.internal(path).exists()) {
             soundEffects.put(name, Gdx.audio.newSound(Gdx.files.internal(path)));
@@ -256,34 +269,58 @@ public class AudioManager implements Disposable {
         }
     }
 
+    /**
+     * Stops the currently playing music.
+     */
     public void stopMusic() {
         if (currentBgm != null) {
             currentBgm.stop();
         }
     }
 
+    /**
+     * Pauses the currently playing music.
+     */
     public void pauseMusic() {
         if (currentBgm != null && currentBgm.isPlaying()) {
             currentBgm.pause();
         }
     }
 
+    /**
+     * Resumes the paused music if enabled.
+     */
     public void resumeMusic() {
         if (musicEnabled && currentBgm != null && !currentBgm.isPlaying()) {
             currentBgm.play();
         }
     }
 
+    /**
+     * Checks if music is currently playing.
+     *
+     * @return true if music is playing, false otherwise.
+     */
     public boolean isMusicPlaying() {
         return currentBgm != null && currentBgm.isPlaying();
     }
 
+    /**
+     * Gets the key of the current BGM track.
+     *
+     * @return The BGM key.
+     */
     public String getCurrentBgmKey() {
         return currentBgmKey;
     }
 
     // ==================== Settings ====================
 
+    /**
+     * Sets whether music is enabled.
+     *
+     * @param enabled true to enable music, false to disable.
+     */
     public void setMusicEnabled(boolean enabled) {
         this.musicEnabled = enabled;
         if (enabled) {
@@ -293,10 +330,20 @@ public class AudioManager implements Disposable {
         }
     }
 
+    /**
+     * Checks if music is enabled.
+     *
+     * @return true if enabled, false otherwise.
+     */
     public boolean isMusicEnabled() {
         return musicEnabled;
     }
 
+    /**
+     * Sets the volume for background music.
+     *
+     * @param volume The volume level (0.0 to 1.0).
+     */
     public void setVolume(float volume) {
         this.musicVolume = Math.max(0f, Math.min(1f, volume));
         if (currentBgm != null) {
@@ -308,20 +355,40 @@ public class AudioManager implements Disposable {
         }
     }
 
+    /**
+     * Gets the current music volume.
+     *
+     * @return The volume level (0.0 to 1.0).
+     */
     public float getVolume() {
         return musicVolume;
     }
 
+    /**
+     * Sets the volume for sound effects.
+     *
+     * @param volume The volume level (0.0 to 1.0).
+     */
     public void setSfxVolume(float volume) {
         this.sfxVolume = Math.max(0f, Math.min(1f, volume));
     }
 
+    /**
+     * Gets the current sound effects volume.
+     *
+     * @return The volume level (0.0 to 1.0).
+     */
     public float getSfxVolume() {
         return sfxVolume;
     }
 
     // ==================== Sound Effects ====================
 
+    /**
+     * Plays a sound effect by name.
+     *
+     * @param name The name of the sound effect.
+     */
     public void playSound(String name) {
         Sound sound = soundEffects.get(name);
         if (sound != null) {
@@ -329,6 +396,12 @@ public class AudioManager implements Disposable {
         }
     }
 
+    /**
+     * Plays a sound effect with a specific volume multiplier.
+     *
+     * @param name   The name of the sound effect.
+     * @param volume The volume multiplier (0.0 to 1.0).
+     */
     public void playSound(String name, float volume) {
         Sound sound = soundEffects.get(name);
         if (sound != null) {

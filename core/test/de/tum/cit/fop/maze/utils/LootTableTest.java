@@ -13,14 +13,17 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * 掉落概率表单元测试
+ * Unit tests for the LootTable class.
  * 
- * 测试 LootTable 的概率分布和物品生成。
+ * Tests probability distributions and item generation logic.
  */
 class LootTableTest {
 
+    /**
+     * Verifies that generating loot returns either a valid item or null.
+     */
     @Test
-    @DisplayName("generateLoot 应返回有效掉落物或 null")
+    @DisplayName("generateLoot should return valid item or null")
     void generateLootReturnsValidItemOrNull() {
         for (int i = 0; i < 100; i++) {
             DroppedItem item = LootTable.generateLoot(0, 0, 1);
@@ -32,8 +35,12 @@ class LootTableTest {
         }
     }
 
+    /**
+     * Statistical test to verify that the drop probability distribution roughly
+     * matches expectations.
+     */
     @RepeatedTest(10)
-    @DisplayName("概率分布应大致符合预期（统计测试）")
+    @DisplayName("Probability distribution should roughly match expectations (Statistical Test)")
     void probabilityDistributionTest() {
         int iterations = 1000;
         Map<DroppedItem.ItemType, Integer> counts = new HashMap<>();
@@ -48,17 +55,20 @@ class LootTableTest {
             }
         }
 
-        // 验证大致概率分布 (允许 ±15% 误差)
+        // Verify approximate probability distribution (allowing ±15% error)
         // NOTHING: ~5%, ARMOR: ~10%, WEAPON: ~15%, COIN: ~70%
         double nullPercent = (double) nullCount / iterations;
         double coinPercent = (double) counts.getOrDefault(DroppedItem.ItemType.COIN, 0) / iterations;
 
-        // 放宽检验，仅确保金币是最常见的
+        // Relaxed check, only ensuring coins are the most common drop
         assertTrue(coinPercent > 0.4, "Coins should be most common drop (got " + (coinPercent * 100) + "%)");
     }
 
+    /**
+     * Verifies that generateRandomWeapon always returns a valid weapon.
+     */
     @Test
-    @DisplayName("generateRandomWeapon 应返回有效武器")
+    @DisplayName("generateRandomWeapon should return a valid weapon")
     void generateRandomWeaponTest() {
         for (int i = 0; i < 20; i++) {
             Weapon weapon = LootTable.generateRandomWeapon(0, 0);
@@ -68,8 +78,11 @@ class LootTableTest {
         }
     }
 
+    /**
+     * Verifies that generateRandomArmor always returns a valid armor.
+     */
     @Test
-    @DisplayName("generateRandomArmor 应返回有效护甲")
+    @DisplayName("generateRandomArmor should return a valid armor")
     void generateRandomArmorTest() {
         for (int i = 0; i < 20; i++) {
             Armor armor = LootTable.generateRandomArmor(0, 0);
@@ -79,8 +92,11 @@ class LootTableTest {
         }
     }
 
+    /**
+     * Verifies that guaranteeCoinDrop always returns a coin item.
+     */
     @Test
-    @DisplayName("guaranteeCoinDrop 应始终返回金币")
+    @DisplayName("guaranteeCoinDrop should always return coins")
     void guaranteeCoinDropTest() {
         int amount = 10;
         DroppedItem item = LootTable.guaranteeCoinDrop(5, 5, amount);
@@ -90,8 +106,12 @@ class LootTableTest {
         assertEquals(amount, item.getPayload());
     }
 
+    /**
+     * Verifies that boss loot generation always returns a non-null item
+     * (Weapon, Armor, or Coins).
+     */
     @Test
-    @DisplayName("generateBossLoot 应始终返回非空物品")
+    @DisplayName("generateBossLoot should always return a non-null item")
     void generateBossLootTest() {
         for (int i = 0; i < 50; i++) {
             DroppedItem item = LootTable.generateBossLoot(0, 0);
@@ -104,8 +124,11 @@ class LootTableTest {
         }
     }
 
+    /**
+     * Verifies that higher levels yield more coins on average.
+     */
     @Test
-    @DisplayName("高关卡掉落更多金币")
+    @DisplayName("Higher levels should drop more coins")
     void higherLevelDropsMoreCoins() {
         int lowLevelCoins = 0;
         int highLevelCoins = 0;
@@ -122,7 +145,8 @@ class LootTableTest {
             }
         }
 
-        // 高关卡平均金币应该更多（允许随机波动）
+        // Higher level average coins should be greater (allowing for random
+        // fluctuations)
         assertTrue(highLevelCoins > lowLevelCoins * 0.8,
                 "Higher level should drop more coins on average");
     }

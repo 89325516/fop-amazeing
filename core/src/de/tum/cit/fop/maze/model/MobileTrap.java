@@ -21,6 +21,12 @@ public class MobileTrap extends GameObject {
         pickNewDirection();
     }
 
+    /**
+     * Updates the logic of the mobile trap.
+     * 
+     * @param delta            Time delta.
+     * @param collisionManager Collision manager to check for walls.
+     */
     public void update(float delta, CollisionManager collisionManager) {
         timer += delta;
 

@@ -17,10 +17,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 基础Screen抽象类 (Base Screen Abstract Class)
- * 
- * 提供统一的Viewport管理、Stage创建、资源管理和生命周期方法。
- * 所有非游戏界面的Screen应继承此类。
+ * Base Screen Abstract Class.
+ *
+ * Provides unified Viewport management, Stage creation, resource management,
+ * and lifecycle methods.
+ * All non-gameplay screens should extend this class.
  */
 public abstract class BaseScreen implements Screen {
 
@@ -29,16 +30,16 @@ public abstract class BaseScreen implements Screen {
     protected final Skin skin;
     protected final OrthographicCamera camera;
 
-    /** 管理本Screen创建的Drawable资源 */
+    /** Manages Drawable resources created by this Screen. */
     private final List<UIUtils.ManagedDrawable> managedDrawables = new ArrayList<>();
 
-    /** 背景颜色，子类可覆盖 */
+    /** Background color, can be overridden by subclasses. */
     protected Color backgroundColor = UIConstants.BG_COLOR_DEFAULT;
 
     /**
-     * 构造函数，初始化Stage和通用资源。
+     * Constructor, initializes Stage and common resources.
      *
-     * @param game MazeRunnerGame实例
+     * @param game The MazeRunnerGame instance.
      */
     public BaseScreen(MazeRunnerGame game) {
         this.game = game;
@@ -53,11 +54,11 @@ public abstract class BaseScreen implements Screen {
     }
 
     /**
-     * 创建并管理颜色Drawable。
-     * 在本Screen被dispose时会自动释放这些资源。
+     * Creates and manages a color Drawable.
+     * These resources will be automatically released when this Screen is disposed.
      *
-     * @param color 目标颜色
-     * @return TextureRegionDrawable
+     * @param color The target color.
+     * @return A TextureRegionDrawable of the specified color.
      */
     protected UIUtils.ManagedDrawable createManagedDrawable(Color color) {
         UIUtils.ManagedDrawable drawable = UIUtils.createManagedColorDrawable(color);
@@ -66,21 +67,22 @@ public abstract class BaseScreen implements Screen {
     }
 
     /**
-     * 子类实现此方法来构建UI。
-     * 在构造函数中调用。
+     * Subclasses must implement this method to build their UI.
+     * Called in the constructor.
      */
     protected abstract void buildUI();
 
     @Override
     public void show() {
         Gdx.input.setInputProcessor(stage);
-        // 🔊 全局按钮音效 - 所有继承BaseScreen的界面自动启用
+        // 🔊 Global button sound - automatically enabled for all screens extending
+        // BaseScreen
         UIUtils.enableMenuButtonSound(stage);
     }
 
     @Override
     public void render(float delta) {
-        // 清屏
+        // Clear screen
         Gdx.gl.glClearColor(
                 backgroundColor.r,
                 backgroundColor.g,
@@ -88,7 +90,7 @@ public abstract class BaseScreen implements Screen {
                 backgroundColor.a);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        // 更新和绘制Stage
+        // Update and draw Stage
         stage.act(Math.min(delta, 1 / 30f));
         stage.draw();
     }
@@ -100,32 +102,32 @@ public abstract class BaseScreen implements Screen {
 
     @Override
     public void pause() {
-        // 默认空实现，子类可覆盖
+        // Default empty implementation, subclasses can override
     }
 
     @Override
     public void resume() {
-        // 默认空实现，子类可覆盖
+        // Default empty implementation, subclasses can override
     }
 
     @Override
     public void hide() {
-        // 默认空实现，子类可覆盖
+        // Default empty implementation, subclasses can override
     }
 
     @Override
     public void dispose() {
-        // 释放所有管理的Drawable资源
+        // Release all managed Drawable resources
         for (UIUtils.ManagedDrawable drawable : managedDrawables) {
             drawable.dispose();
         }
         managedDrawables.clear();
 
-        // 释放Stage
+        // Dispose Stage
         stage.dispose();
     }
 
-    // ==================== Getter方法 ====================
+    // ==================== Getter Methods ====================
 
     public MazeRunnerGame getGame() {
         return game;

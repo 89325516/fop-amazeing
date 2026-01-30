@@ -1,13 +1,13 @@
 package de.tum.cit.fop.maze.utils;
 
 /**
- * 成就数据模型 (Achievement Data Model)
- * 
- * 代表一个具体的成就，包含：
- * - 基本信息：ID、名称、描述
- * - 分类信息：稀有度、类别
- * - 进度信息：当前进度、目标值、是否已解锁
- * - 隐藏属性：是否为隐藏成就
+ * Achievement Data Model.
+ * <p>
+ * Represents a concrete achievement, containing:
+ * - Basic info: ID, name, description
+ * - Category info: rarity, category
+ * - Progress info: current progress, target value, unlocked status
+ * - Hidden attributes: whether it is a hidden achievement
  */
 public class Achievement {
 
@@ -17,12 +17,18 @@ public class Achievement {
     private final AchievementRarity rarity;
     private final AchievementCategory category;
     private final boolean isHidden;
-    private final int requiredCount; // 需要的次数，0 = 一次性成就
-    private int currentProgress; // 当前进度
+    private final int requiredCount; // Required count, 0 = one-time achievement
+    private int currentProgress; // Current progress
     private boolean isUnlocked;
 
     /**
-     * 创建一次性成就（触发一次即解锁）
+     * Creates a one-time achievement (unlocked immediately upon triggering).
+     *
+     * @param id          Unique identifier for the achievement.
+     * @param name        Achievement name to display.
+     * @param description Achievement description to display.
+     * @param rarity      The rarity level of the achievement.
+     * @param category    The category of the achievement.
      */
     public Achievement(String id, String name, String description,
             AchievementRarity rarity, AchievementCategory category) {
@@ -30,7 +36,14 @@ public class Achievement {
     }
 
     /**
-     * 创建需要累计的成就
+     * Creates an accumulative achievement.
+     *
+     * @param id            Unique identifier for the achievement.
+     * @param name          Achievement name to display.
+     * @param description   Achievement description to display.
+     * @param rarity        The rarity level of the achievement.
+     * @param category      The category of the achievement.
+     * @param requiredCount The count required to unlock the achievement.
      */
     public Achievement(String id, String name, String description,
             AchievementRarity rarity, AchievementCategory category,
@@ -39,15 +52,15 @@ public class Achievement {
     }
 
     /**
-     * 完整构造器
+     * Full constructor.
      * 
-     * @param id            成就唯一标识
-     * @param name          成就名称
-     * @param description   成就描述
-     * @param rarity        稀有度
-     * @param category      类别
-     * @param isHidden      是否为隐藏成就
-     * @param requiredCount 需要的次数（0 = 一次性成就）
+     * @param id            Unique identifier for the achievement.
+     * @param name          Achievement name to display.
+     * @param description   Achievement description to display.
+     * @param rarity        The rarity level of the achievement.
+     * @param category      The category of the achievement.
+     * @param isHidden      Whether the achievement is hidden until unlocked.
+     * @param requiredCount The count required to unlock (0 = one-time achievement).
      */
     public Achievement(String id, String name, String description,
             AchievementRarity rarity, AchievementCategory category,
@@ -64,19 +77,20 @@ public class Achievement {
     }
 
     /**
-     * 更新进度
+     * Updates the progress of the achievement.
      * 
-     * @param amount 增加的进度量
-     * @return 如果本次更新导致成就解锁，返回 true
+     * @param amount The amount to increase progress by.
+     * @return true if this update caused the achievement to unlock, false
+     *         otherwise.
      */
     public boolean addProgress(int amount) {
         if (isUnlocked) {
-            return false; // 已解锁不再更新
+            return false; // Already unlocked, no update needed
         }
 
         currentProgress += amount;
 
-        // 检查是否达成
+        // Check if unlocked
         if (requiredCount > 0 && currentProgress >= requiredCount) {
             isUnlocked = true;
             return true;
@@ -86,9 +100,9 @@ public class Achievement {
     }
 
     /**
-     * 直接解锁成就（用于一次性成就）
+     * Directly unlocks the achievement (for one-time achievements).
      * 
-     * @return 如果是新解锁返回 true
+     * @return true if it was newly unlocked, false if it was already unlocked.
      */
     public boolean unlock() {
         if (isUnlocked) {
@@ -100,23 +114,27 @@ public class Achievement {
     }
 
     /**
-     * 设置解锁状态（用于从存档加载）
+     * Sets the unlocked status (used for loading from save).
+     *
+     * @param unlocked The unlocked status to set.
      */
     public void setUnlocked(boolean unlocked) {
         this.isUnlocked = unlocked;
     }
 
     /**
-     * 设置当前进度（用于从存档加载）
+     * Sets the current progress (used for loading from save).
+     *
+     * @param progress The progress value to set.
      */
     public void setCurrentProgress(int progress) {
         this.currentProgress = progress;
     }
 
     /**
-     * 获取完成进度百分比
+     * Gets the completion progress as a percentage.
      * 
-     * @return 0.0 到 1.0 之间的值
+     * @return A value between 0.0 and 1.0.
      */
     public float getProgressPercentage() {
         if (isUnlocked)
@@ -127,7 +145,9 @@ public class Achievement {
     }
 
     /**
-     * 获取进度显示字符串，如 "15/25"
+     * Gets the progress display string, e.g., "15/25".
+     *
+     * @return The formatted progress string.
      */
     public String getProgressString() {
         if (isUnlocked) {
@@ -140,7 +160,9 @@ public class Achievement {
     }
 
     /**
-     * 判断是否为一次性成就
+     * Checks if this is a one-time achievement.
+     *
+     * @return true if required count is less than or equal to 0.
      */
     public boolean isOneTimeAchievement() {
         return requiredCount <= 0;

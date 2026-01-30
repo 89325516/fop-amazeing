@@ -1,58 +1,66 @@
 package de.tum.cit.fop.maze.model;
 
 /**
- * 伤害类型枚举 (Damage Type Enum)
+ * Damage Type Enum.
  * 
- * 游戏中存在两种伤害类型：
- * - PHYSICAL: 物理伤害，可被物理护甲吸收
- * - MAGICAL: 法术伤害，可被法术护甲吸收
+ * There are two types of damage in the game:
+ * - PHYSICAL: Physical damage, absorbed by Physical Armor.
+ * - MAGICAL: Magical damage, absorbed by Magical Armor.
  * 
- * 关卡设计规则：
- * - 同一关卡内所有怪物只能造成同一种类型的伤害
- * - 玩家进入关卡前需要选择对应的护甲类型
+ * Level Design Rules:
+ * - Monsters within the same level can only deal one type of damage.
+ * - Players need to choose the corresponding armor type before entering a
+ * level.
  */
 public enum DamageType {
 
     /**
-     * 物理伤害
-     * - 由近战武器、弩等造成
-     * - 被物理护甲 (PhysicalArmor) 吸收
+     * Physical Damage.
+     * - Caused by melee weapons, crossbows, etc.
+     * - Absorbed by {@code PhysicalArmor}.
      */
     PHYSICAL,
 
     /**
-     * 法术伤害
-     * - 由法杖、魔法弹等造成
-     * - 被法术护甲 (MagicalArmor) 吸收
+     * Magical Damage.
+     * - Caused by wands, magic projectiles, etc.
+     * - Absorbed by {@code MagicalArmor}.
      */
     MAGICAL;
 
     /**
-     * 检查此伤害类型是否会被对应护甲吸收
+     * Checks if this damage type is blocked by the corresponding armor type.
      * 
-     * @param armorType 护甲的抵抗类型
-     * @return 如果护甲可以吸收此伤害则返回 true
+     * @param armorType The resistance type of the armor.
+     * @return {@code true} if the armor allows blocking this damage type.
      */
     public boolean isBlockedBy(DamageType armorType) {
         return this == armorType;
     }
 
     /**
-     * 别名方法：检查此伤害类型是否被护甲阻挡
+     * Alias method: Checks if this damage type is blocked by the armor.
+     * 
+     * @param armorType The resistance type of the armor.
+     * @return {@code true} if blocked.
      */
     public boolean blockedBy(DamageType armorType) {
         return isBlockedBy(armorType);
     }
 
     /**
-     * 获取对立的伤害类型
+     * Gets the opposite damage type.
+     * 
+     * @return The opposite DamageType.
      */
     public DamageType getOpposite() {
         return this == PHYSICAL ? MAGICAL : PHYSICAL;
     }
 
     /**
-     * 获取伤害类型的显示名称（英文）
+     * Gets the display name of the damage type (English).
+     * 
+     * @return The display name string.
      */
     public String getDisplayName() {
         switch (this) {
@@ -66,7 +74,9 @@ public enum DamageType {
     }
 
     /**
-     * 获取伤害类型的显示名称（中文）
+     * Gets the display name of the damage type (Chinese).
+     * 
+     * @return The display name string in Chinese.
      */
     public String getDisplayNameCN() {
         switch (this) {
@@ -80,10 +90,10 @@ public enum DamageType {
     }
 
     /**
-     * 从字符串解析伤害类型
+     * Parses DamageType from a string.
      * 
-     * @param str 字符串表示（如 "PHYSICAL", "magical", "MAGIC"）
-     * @return 对应的伤害类型，默认返回 PHYSICAL
+     * @param str The string representation (e.g., "PHYSICAL", "magical", "MAGIC").
+     * @return The corresponding DamageType, defaults to PHYSICAL.
      */
     public static DamageType fromString(String str) {
         if (str == null || str.isEmpty()) {
@@ -96,6 +106,6 @@ public enum DamageType {
         if (upper.equals("PHYSICAL")) {
             return PHYSICAL;
         }
-        return PHYSICAL; // 默认返回物理
+        return PHYSICAL; // Default to physical
     }
 }

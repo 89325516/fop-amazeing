@@ -31,16 +31,17 @@ import de.tum.cit.fop.maze.ui.widgets.WeaponSlotBarWidget;
 import java.util.List;
 
 /**
- * 无尽模式专用HUD (Endless Mode HUD)
- * 
- * 基于GameHUD设计，添加无尽模式专有元素：
- * - COMBO计数器和倍率显示
- * - RAGE仪表盘
- * - 生存时间计时器
- * - 击杀计数器
- * - 当前区域指示器
- * 
- * 不包含出口导航箭头（无尽模式无出口）
+ * Endless Mode HUD.
+ * <p>
+ * Based on GameHUD design but adds specific elements for Endless Mode:
+ * <ul>
+ * <li>COMBO counter and multiplier display</li>
+ * <li>RAGE meter</li>
+ * <li>Survival timer</li>
+ * <li>Kill counter</li>
+ * <li>Current zone indicator</li>
+ * </ul>
+ * Does not include exit navigation arrow (as there is no exit in endless mode).
  */
 public class EndlessHUD implements Disposable {
 
@@ -49,12 +50,12 @@ public class EndlessHUD implements Disposable {
     private final TextureManager textureManager;
     private final Skin skin;
 
-    // === 核心系统引用 ===
+    // === Core System References ===
     private ComboSystem comboSystem;
     private RageSystem rageSystem;
     private WaveSystem waveSystem;
 
-    // === 基础HUD元素（使用共享Widget） ===
+    // === Basic HUD Elements (Shared Widgets) ===
     private HealthBarWidget healthBarWidget;
     private WeaponSlotBarWidget weaponSlotBarWidget;
     private TextButton menuButton;
@@ -63,31 +64,40 @@ public class EndlessHUD implements Disposable {
     private Label armorLabel;
     private ProgressBar reloadBar;
 
-    // === 无尽模式专用元素 ===
-    private Label survivalTimeLabel; // 生存时间 MM:SS
-    private Label killCountLabel; // 击杀计数
-    private Label comboLabel; // COMBO显示
-    private Label comboMultiplierLabel; // COMBO倍率
-    private ProgressBar comboDecayBar; // COMBO衰减进度条
-    private Label rageLabel; // RAGE等级名称
-    private ProgressBar rageBar; // RAGE进度条 (0-100%)
-    private Label zoneLabel; // 当前区域
-    private Label scoreLabel; // 当前得分
-    private Label waveLabel; // 当前波次
+    // === Endless Mode Specific Elements ===
+    private Label survivalTimeLabel; // Survival Time MM:SS
+    private Label killCountLabel; // Kill Counter
+    private Label comboLabel; // COMBO Display
+    private Label comboMultiplierLabel; // COMBO Multiplier
+    private ProgressBar comboDecayBar; // COMBO Decay Bar
+    private Label rageLabel; // RAGE Level Name
+    private ProgressBar rageBar; // RAGE Progress Bar (0-100%)
+    private Label zoneLabel; // Current Zone
+    private Label scoreLabel; // Current Score
+    private Label waveLabel; // Current Wave
 
-    // === 缓存UI元素（已移至共享Widget） ===
+    // === Cached UI elements (Moved to shared widgets) ===
 
-    // === FPS计时器 ===
+    // === FPS Timer ===
     private float fpsUpdateTimer = 0f;
 
     // === Achievement Popup ===
     private AchievementPopup achievementPopup;
 
-    // === 游戏状态 ===
+    // === Game State ===
     private int totalKills = 0;
     private int currentScore = 0;
     private String currentZone = "Space";
 
+    /**
+     * Creates a new EndlessHUD.
+     *
+     * @param batch         The sprite batch for rendering.
+     * @param player        The player instance.
+     * @param skin          The skin for UI elements.
+     * @param tm            The texture manager.
+     * @param onMenuClicked Callback for menu button click.
+     */
     public EndlessHUD(SpriteBatch batch, Player player, Skin skin, TextureManager tm,
             Runnable onMenuClicked) {
         this.player = player;
@@ -104,7 +114,11 @@ public class EndlessHUD implements Disposable {
     }
 
     /**
-     * 设置核心系统引用
+     * Sets references to the core game systems.
+     *
+     * @param combo The combo system.
+     * @param rage  The rage system.
+     * @param wave  The wave system.
      */
     public void setSystems(ComboSystem combo, RageSystem rage, WaveSystem wave) {
         this.comboSystem = combo;
@@ -258,7 +272,9 @@ public class EndlessHUD implements Disposable {
     }
 
     /**
-     * 更新HUD
+     * Updates the HUD display.
+     *
+     * @param delta The time elapsed since the last frame.
      */
     public void update(float delta) {
         // FPS更新
@@ -268,25 +284,25 @@ public class EndlessHUD implements Disposable {
             fpsUpdateTimer = 0f;
         }
 
-        // === 生命条 (using shared widget) ===
+        // === Health Bar (using shared widget) ===
         healthBarWidget.update(delta);
 
-        // === 金币 ===
+        // === Coins ===
         coinLabel.setText("Coins: " + player.getCoins());
 
-        // === 分数 ===
+        // === Score ===
         scoreLabel.setText("Score: " + String.format("%,d", currentScore));
 
-        // === 生存时间 ===
+        // === Survival Time ===
         if (waveSystem != null) {
             survivalTimeLabel.setText(waveSystem.getFormattedTime());
             waveLabel.setText(waveSystem.getWaveName());
         }
 
-        // === 击杀数 ===
+        // === Kill Count ===
         killCountLabel.setText("Kills: " + totalKills);
 
-        // === COMBO显示 ===
+        // === COMBO Display ===
         if (comboSystem != null) {
             int combo = comboSystem.getCurrentCombo();
             comboLabel.setText("COMBO: " + combo);
@@ -294,7 +310,7 @@ public class EndlessHUD implements Disposable {
             float multiplier = comboSystem.getMultiplier();
             comboMultiplierLabel.setText("x" + String.format("%.1f", multiplier));
 
-            // 根据COMBO等级改变颜色
+            // Change color based on COMBO level
             if (combo >= 50) {
                 comboLabel.setColor(Color.MAGENTA);
             } else if (combo >= 20) {
@@ -307,23 +323,23 @@ public class EndlessHUD implements Disposable {
                 comboLabel.setColor(Color.WHITE);
             }
 
-            // COMBO衰减进度条
+            // COMBO Decay Bar
             comboDecayBar.setValue(comboSystem.getDecayProgress());
             comboDecayBar.setVisible(comboSystem.isActive());
 
-            // COMBO名称显示
+            // COMBO Name Display
             String comboName = comboSystem.getComboName();
             if (!comboName.isEmpty()) {
                 comboMultiplierLabel.setText(comboName + " x" + String.format("%.1f", multiplier));
             }
         }
 
-        // === RAGE显示 ===
+        // === RAGE Display ===
         if (rageSystem != null) {
             rageLabel.setText("RAGE: " + rageSystem.getRageLevelName());
             rageBar.setValue(rageSystem.getRagePercentage());
 
-            // 根据RAGE等级改变颜色
+            // Change color based on RAGE level
             int rageLevel = rageSystem.getRageLevelIndex();
             if (rageLevel >= 4) {
                 rageLabel.setColor(Color.MAGENTA);
@@ -338,10 +354,10 @@ public class EndlessHUD implements Disposable {
             }
         }
 
-        // === 区域指示器 ===
+        // === Zone Indicator ===
         zoneLabel.setText("Zone: " + currentZone);
 
-        // 根据区域设置颜色
+        // Set color based on zone
         switch (currentZone) {
             case "Grassland":
                 zoneLabel.setColor(Color.GREEN);
@@ -363,7 +379,7 @@ public class EndlessHUD implements Disposable {
                 break;
         }
 
-        // === 护甲状态 ===
+        // === Armor Status ===
         Armor armor = player.getEquippedArmor();
         if (armor != null && armor.hasShield()) {
             armorLabel.setText(armor.getName() + " [" + armor.getCurrentShield() + "/" + armor.getMaxShield() + "]");
@@ -376,10 +392,10 @@ public class EndlessHUD implements Disposable {
             armorLabel.setVisible(false);
         }
 
-        // === 武器栏 (using shared widget) ===
+        // === Weapon Slots (using shared widget) ===
         weaponSlotBarWidget.update();
 
-        // === 装弹进度条 ===
+        // === Reload Progress Bar ===
         Weapon currentWeapon = player.getCurrentWeapon();
         if (currentWeapon != null && currentWeapon.isRanged() && currentWeapon.isReloading()) {
             reloadBar.setVisible(true);
@@ -394,24 +410,47 @@ public class EndlessHUD implements Disposable {
 
     // Deprecated methods removed - now using shared widgets
 
-    // === 游戏状态更新方法 ===
+    // === Game State Update Methods ===
 
+    /**
+     * Sets the total kill count.
+     *
+     * @param kills Total kills.
+     */
     public void setTotalKills(int kills) {
         this.totalKills = kills;
     }
 
+    /**
+     * Sets the current score.
+     *
+     * @param score Current score.
+     */
     public void setCurrentScore(int score) {
         this.currentScore = score;
     }
 
+    /**
+     * Sets the current zone name.
+     *
+     * @param zone Current zone name.
+     */
     public void setCurrentZone(String zone) {
         this.currentZone = zone;
     }
 
+    /**
+     * Increments the kill count by 1.
+     */
     public void incrementKills() {
         this.totalKills++;
     }
 
+    /**
+     * Adds amount to current score.
+     *
+     * @param amount Score to add.
+     */
     public void addScore(int amount) {
         this.currentScore += amount;
     }
@@ -432,14 +471,28 @@ public class EndlessHUD implements Disposable {
 
     // === Standard Methods ===
 
+    /**
+     * Renders the HUD.
+     */
     public void render() {
         stage.draw();
     }
 
+    /**
+     * Gets the HUD stage.
+     *
+     * @return The stage.
+     */
     public Stage getStage() {
         return stage;
     }
 
+    /**
+     * Resizes the HUD viewport.
+     *
+     * @param width  New width.
+     * @param height New height.
+     */
     public void resize(int width, int height) {
         stage.getViewport().update(width, height, true);
     }

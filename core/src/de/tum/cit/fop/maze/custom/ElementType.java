@@ -2,23 +2,45 @@ package de.tum.cit.fop.maze.custom;
 
 /**
  * Enum defining custom element types with their required properties.
+ * Specifies valid actions and properties for each game element type.
  */
 public enum ElementType {
+
+    /**
+     * Player character.
+     * Supports movement and attack animations in 4 directions.
+     */
     PLAYER("Player", new String[] {},
             new String[] { "Idle", "IdleUp", "IdleDown", "Move", "MoveUp", "MoveDown", "Attack", "AttackUp",
                     "AttackDown", "Death" }),
 
+    /**
+     * Enemy character.
+     * Has health, damage, and movement speed properties.
+     */
     ENEMY("Enemy", new String[] { "health", "defense", "attackDamage", "moveSpeed" },
             new String[] { "Idle", "Move", "Death" }),
 
+    /**
+     * Weapon item.
+     * Can range, damage, and projectile properties.
+     */
     WEAPON("Weapon",
             new String[] { "damage", "cooldown", "range", "effect", "energyCost", "isRanged", "projectileSpeed",
                     "projectileSize" },
             new String[] { "Idle", "IdleUp", "IdleDown", "Attack", "Projectile" }),
 
+    /**
+     * Static obstacle.
+     * Can have collision damage and destructibility.
+     */
     OBSTACLE("Obstacle", new String[] { "collisionDamage", "isDestructible", "health" },
             new String[] { "Idle", "Destroyed" }),
 
+    /**
+     * Consumable item.
+     * Can heal or provide temporary effects.
+     */
     ITEM("Item", new String[] { "healAmount", "effectType", "effectDuration" },
             new String[] { "Idle", "Pickup" });
 
@@ -32,20 +54,38 @@ public enum ElementType {
         this.actions = actions;
     }
 
+    /**
+     * Gets the display name of the element type.
+     * 
+     * @return The display name.
+     */
     public String getDisplayName() {
         return displayName;
     }
 
+    /**
+     * Gets the list of required property keys for this type.
+     * 
+     * @return Array of property keys.
+     */
     public String[] getRequiredProperties() {
         return requiredProperties;
     }
 
+    /**
+     * Gets the list of supported actions (animations) for this type.
+     * 
+     * @return Array of action names.
+     */
     public String[] getActions() {
         return actions;
     }
 
     /**
-     * Get default value for a property
+     * Get default value for a specific property.
+     * 
+     * @param property The property key.
+     * @return The default value (int, float, boolean, or String).
      */
     public Object getDefaultValue(String property) {
         switch (property) {
@@ -91,7 +131,10 @@ public enum ElementType {
     }
 
     /**
-     * Get property display name
+     * Get property display name for UI.
+     * 
+     * @param property The property key.
+     * @return The user-friendly display name.
      */
     public String getPropertyDisplayName(String property) {
         switch (property) {

@@ -45,6 +45,11 @@ public class CustomElementManager {
         initializeDefaults();
     }
 
+    /**
+     * Gets the singleton instance of the CustomElementManager.
+     * 
+     * @return The singleton instance.
+     */
     public static CustomElementManager getInstance() {
         if (instance == null) {
             instance = new CustomElementManager();
@@ -53,11 +58,10 @@ public class CustomElementManager {
     }
 
     /**
-     * Add or update an element
-     */
-    /**
      * Add or update an element.
      * Copies sprites to local storage ("image" folder) if they are external.
+     * 
+     * @param element The custom element definition to save.
      */
     public void saveElement(CustomElementDefinition element) {
         if (Gdx.files == null) {
@@ -103,14 +107,19 @@ public class CustomElementManager {
     }
 
     /**
-     * Get all elements
+     * Get all custom elements.
+     * 
+     * @return A collection of all custom element definitions.
      */
     public java.util.Collection<CustomElementDefinition> getAllElements() {
         return elements.values();
     }
 
     /**
-     * Find an element definition by name (case-insensitive)
+     * Find an element definition by name (case-insensitive).
+     * 
+     * @param name The name to search for.
+     * @return The matching element definition, or null if not found.
      */
     public CustomElementDefinition getElementByName(String name) {
         for (CustomElementDefinition def : elements.values()) {
@@ -122,7 +131,10 @@ public class CustomElementManager {
     }
 
     /**
-     * Delete an element
+     * Delete an element by its ID.
+     * Also removes associated local image files.
+     * 
+     * @param id The ID of the element to delete.
      */
     public void deleteElement(String id) {
         CustomElementDefinition removed = elements.remove(id);
@@ -144,14 +156,20 @@ public class CustomElementManager {
     }
 
     /**
-     * Get element by ID
+     * Get an element definition by its ID.
+     * 
+     * @param id The element ID.
+     * @return The element definition, or null if not found.
      */
     public CustomElementDefinition getElement(String id) {
         return elements.get(id);
     }
 
     /**
-     * Get elements by type
+     * Get all elements of a specific type.
+     * 
+     * @param type The element type to filter by.
+     * @return A list of matching element definitions.
      */
     public List<CustomElementDefinition> getElementsByType(ElementType type) {
         List<CustomElementDefinition> result = new ArrayList<>();
@@ -164,7 +182,10 @@ public class CustomElementManager {
     }
 
     /**
-     * Get elements assigned to a specific level
+     * Get complete elements assigned to a specific level.
+     * 
+     * @param level The level number.
+     * @return A list of complete element definitions assigned to the level.
      */
     public List<CustomElementDefinition> getElementsForLevel(int level) {
         List<CustomElementDefinition> result = new ArrayList<>();
@@ -177,7 +198,11 @@ public class CustomElementManager {
     }
 
     /**
-     * Get elements by type for a specific level
+     * Get complete elements of a specific type assigned to a specific level.
+     * 
+     * @param level The level number.
+     * @param type  The element type.
+     * @return A list of matching complete element definitions.
      */
     public List<CustomElementDefinition> getElementsForLevel(int level, ElementType type) {
         List<CustomElementDefinition> result = new ArrayList<>();
@@ -190,17 +215,17 @@ public class CustomElementManager {
     }
 
     /**
-     * Load elements from disk
+     * Load elements from disk (JSON file).
      */
     @SuppressWarnings("unchecked")
     private void loadElements() {
         if (Gdx.files == null)
             return; // Skip loading in headless tests
         try {
-            // 优先尝试从 internal (assets目录) 加载
+            // Try loading from internal (assets directory) first
             FileHandle file = Gdx.files.internal(SAVE_DIR + ELEMENTS_FILE);
 
-            // 如果 internal 不存在，尝试 local
+            // If it doesn't exist in internal, try local storage
             if (!file.exists()) {
                 file = Gdx.files.local(SAVE_DIR + ELEMENTS_FILE);
             }
@@ -221,7 +246,7 @@ public class CustomElementManager {
     }
 
     /**
-     * Save all elements to disk
+     * Save all elements to disk (JSON file).
      */
     private void persistToFile() {
         if (Gdx.files == null)
@@ -243,14 +268,23 @@ public class CustomElementManager {
     }
 
     /**
-     * Get the sprite storage directory for an element
+     * Get the sprite storage directory for an element.
+     * 
+     * @param elementId The element ID.
+     * @return The FileHandle for the sprite directory.
      */
     public FileHandle getSpriteDir(String elementId) {
         return Gdx.files.local(SAVE_DIR + "sprites/" + elementId + "/");
     }
 
     /**
-     * Copy a sprite file to the element's sprite directory
+     * Copy a sprite file to the element's sprite directory.
+     * 
+     * @param elementId  The element ID.
+     * @param action     The action name.
+     * @param frameIndex The frame index.
+     * @param sourceFile The source file to copy.
+     * @return The path to the copied file, or null if failed.
      */
     public String copySprite(String elementId, String action, int frameIndex, FileHandle sourceFile) {
         try {
@@ -271,7 +305,9 @@ public class CustomElementManager {
     }
 
     /**
-     * Get the number of custom elements
+     * Get the number of custom elements managed.
+     * 
+     * @return The count of elements.
      */
     public int getElementCount() {
         return elements.size();
@@ -281,6 +317,9 @@ public class CustomElementManager {
      * Creates a TextureRegion that pads non-square textures to square with
      * transparency.
      * Preserves all original content without cropping.
+     * 
+     * @param tex The source texture.
+     * @return The padded square TextureRegion.
      */
     private TextureRegion createCroppedRegion(Texture tex) {
         int w = tex.getWidth();
@@ -325,6 +364,10 @@ public class CustomElementManager {
     /**
      * Get animation for a custom element action.
      * Loads textures on demand and caches them.
+     * 
+     * @param elementId The element ID.
+     * @param action    The action name.
+     * @return The animation, or null if loading failed.
      */
     public Animation<TextureRegion> getAnimation(String elementId, String action) {
         String key = elementId + ":" + action;
@@ -381,7 +424,7 @@ public class CustomElementManager {
                 }
 
                 if (file.exists()) {
-                    // 使用纹理缓存避免重复加载和 Auto-padding
+                    // Use texture cache to avoid duplicate loading and Auto-padding
                     TextureRegion region = textureCache.get(path);
                     if (region == null) {
                         Texture tex = new Texture(file);
@@ -410,9 +453,9 @@ public class CustomElementManager {
     }
 
     /**
-     * 获取预加载任务列表
+     * Gets list of preloading tasks.
      * 
-     * @return 需要预加载的 (elementId, action) 对列表
+     * @return List of (elementId, action) pairs that need preloading.
      */
     public List<String[]> getPreloadTasks() {
         List<String[]> tasks = new ArrayList<>();
@@ -421,7 +464,7 @@ public class CustomElementManager {
             Map<String, String[]> spritePaths = def.getSpritePaths();
             for (String action : spritePaths.keySet()) {
                 String[] paths = spritePaths.get(action);
-                // 只添加有效的动画任务
+                // Only add valid animation tasks
                 if (paths != null && paths.length > 0 && paths[0] != null && !paths[0].startsWith("internal:")) {
                     tasks.add(new String[] { elementId, action });
                 }
@@ -431,11 +474,11 @@ public class CustomElementManager {
     }
 
     /**
-     * 预加载单个动画（调用 getAnimation 触发缓存）
+     * Preloads a single animation (triggers caching via getAnimation).
      * 
-     * @param elementId 元素ID
-     * @param action    动作名称
-     * @return 是否加载成功
+     * @param elementId The element ID.
+     * @param action    The action name.
+     * @return True if loaded successfully, false otherwise.
      */
     public boolean preloadAnimation(String elementId, String action) {
         Animation<TextureRegion> anim = getAnimation(elementId, action);
@@ -443,7 +486,9 @@ public class CustomElementManager {
     }
 
     /**
-     * 检查动画缓存是否已完成预加载
+     * Checks if all animation tasks are preloaded in cache.
+     * 
+     * @return True if all tasks are cached.
      */
     public boolean isPreloaded() {
         List<String[]> tasks = getPreloadTasks();
@@ -456,12 +501,18 @@ public class CustomElementManager {
         return true;
     }
 
+    /**
+     * Clears all elements, caches, and persists the empty state.
+     */
     public void clearAll() {
         elements.clear();
         animationCache.clear();
         persistToFile();
     }
 
+    /**
+     * Initializes default custom elements if they don't exist.
+     */
     private void initializeDefaults() {
         // Standard Slime (Level 1)
         if (!elements.containsKey("default_slime")) {

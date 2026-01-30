@@ -7,6 +7,12 @@ import de.tum.cit.fop.maze.model.DamageType;
  */
 public class Bow extends Weapon {
 
+    /**
+     * Creates an Ice Bow.
+     * 
+     * @param x X coordinate.
+     * @param y Y coordinate.
+     */
     public Bow(float x, float y) {
         // Lower damage, longer range, freeze effect
         // Fully initialized as Ranged: isRanged=true, projectiles speed 15

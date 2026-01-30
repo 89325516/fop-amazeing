@@ -252,6 +252,11 @@ public class AchievementManager {
                 AchievementRarity.EPIC, AchievementCategory.CHALLENGE));
     }
 
+    /**
+     * Registers a new achievement in the system.
+     *
+     * @param achievement The achievement to register.
+     */
     private static void registerAchievement(Achievement achievement) {
         allAchievements.put(achievement.getId(), achievement);
     }
@@ -402,6 +407,8 @@ public class AchievementManager {
 
     /**
      * Check if player first kills an enemy.
+     * 
+     * @return List of newly unlocked achievements
      */
     public static List<String> checkFirstKill() {
         List<String> newUnlocks = new ArrayList<>();
@@ -584,6 +591,12 @@ public class AchievementManager {
         return newUnlocks;
     }
 
+    /**
+     * Checks if all levels in a specific theme (range) are completed.
+     *
+     * @param completedLevels String containing all completed level keys.
+     * @return List of newly unlocked achievements.
+     */
     private static List<String> checkThemeCompletion(String completedLevels) {
         List<String> newUnlocks = new ArrayList<>();
 
@@ -615,6 +628,14 @@ public class AchievementManager {
         return newUnlocks;
     }
 
+    /**
+     * Helper to check if a range of levels is present in the completion string.
+     *
+     * @param completed The string of completed levels.
+     * @param start     The start level number.
+     * @param end       The end level number.
+     * @return true if all levels in range are completed.
+     */
     private static boolean hasLevels(String completed, int start, int end) {
         for (int i = start; i <= end; i++) {
             if (!completed.contains("level_" + i + ";")) {
@@ -687,6 +708,12 @@ public class AchievementManager {
 
     // === Helper Methods ===
 
+    /**
+     * Normalizes a weapon name to a standard key for storage.
+     *
+     * @param weaponName The raw weapon name.
+     * @return The normalized key (e.g., "sword", "bow").
+     */
     private static String normalizeWeaponKey(String weaponName) {
         if (weaponName == null)
             return "unknown";
@@ -704,6 +731,12 @@ public class AchievementManager {
         return lower.replace(" ", "_");
     }
 
+    /**
+     * Extracts the level number from a level file path.
+     *
+     * @param levelPath The file path of the level.
+     * @return The level number, or 0 if extraction fails.
+     */
     private static int extractLevelNumber(String levelPath) {
         if (levelPath == null)
             return 0;
@@ -719,7 +752,9 @@ public class AchievementManager {
     }
 
     /**
-     * Check if player has all weapon achievements.
+     * Checks if player has all weapon collection achievements.
+     *
+     * @return true if all weapon achievements are unlocked.
      */
     private static boolean hasAllWeaponAchievements() {
         List<String> unlocked = getUnlockedCards();
@@ -731,7 +766,9 @@ public class AchievementManager {
     }
 
     /**
-     * Check if player has all weapon mastery achievements.
+     * Checks if player has all weapon mastery achievements.
+     *
+     * @return true if all mastery achievements are unlocked.
      */
     private static boolean hasAllWeaponMasteryAchievements() {
         List<String> unlocked = getUnlockedCards();
@@ -762,6 +799,11 @@ public class AchievementManager {
         return true;
     }
 
+    /**
+     * Retrieves a list of all unlocked achievement names.
+     *
+     * @return List of strings representing unlocked achievement IDs.
+     */
     public static List<String> getUnlockedCards() {
         Preferences prefs = Gdx.app.getPreferences(PREFS_NAME);
         String current = prefs.getString(UNLOCKED_CARDS_KEY, "");

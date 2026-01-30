@@ -8,30 +8,35 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * 空间哈希网格 (Spatial Hash Grid)
+ * Spatial Hash Grid.
+ * <p>
+ * Used to optimize proximity queries for massive entities, reducing O(N) linear
+ * scans to O(1) amortized queries.
+ * <p>
+ * Principle: Divides 2D space into fixed-size cells. Each entity is stored in
+ * the corresponding cell based on its position.
+ * When querying for nearby entities, only relevant cells need to be checked,
+ * avoiding traversal of all entities.
  * 
- * 用于优化大规模实体的邻近查询，将 O(N) 线性扫描降至 O(1) 摊销查询。
- * 
- * 原理：将2D空间划分为固定大小的单元格，每个实体根据位置存入对应单元格。
- * 查询邻近实体时只需检查相关单元格，无需遍历全部实体。
- * 
- * @param <T> 实体类型（必须实现 Positioned 接口或提供坐标访问方式）
+ * @param <T> Entity type (must implement PositionProvider or provide coordinate
+ *            access).
  */
 public class SpatialHashGrid<T> {
 
-    /** 单元格大小（世界单位） */
+    /** Cell size (in world units). */
     private final float cellSize;
 
-    /** 哈希表：cellKey -> 该单元格内的实体集合 */
+    /** Hash table: cellKey -> Set of entities in that cell. */
     private final Map<Long, Set<T>> grid;
 
-    /** 反向索引：实体 -> 当前所在单元格Key */
+    /** Reverse index: Entity -> Current cell Key. */
     private final Map<T, Long> entityCells;
 
     /**
-     * 构造函数
+     * Constructor.
      * 
-     * @param cellSize 单元格大小（建议与渲染半径匹配，如16或32）
+     * @param cellSize Cell size (recommended to match render radius, e.g., 16 or
+     *                 32).
      */
     public SpatialHashGrid(float cellSize) {
         this.cellSize = cellSize;
@@ -40,21 +45,25 @@ public class SpatialHashGrid<T> {
     }
 
     /**
-     * 计算单元格Key
+     * Calculates the cell Key.
+     *
+     * @param x X coordinate.
+     * @param y Y coordinate.
+     * @return The cell key.
      */
     private long getCellKey(float x, float y) {
         int cellX = (int) Math.floor(x / cellSize);
         int cellY = (int) Math.floor(y / cellSize);
-        // 使用长整型组合两个int，避免碰撞
+        // Use long to combine two ints to avoid collisions
         return ((long) cellX << 32) | (cellY & 0xFFFFFFFFL);
     }
 
     /**
-     * 插入实体
+     * Inserts an entity.
      * 
-     * @param entity 实体对象
-     * @param x      当前X坐标
-     * @param y      当前Y坐标
+     * @param entity The entity object.
+     * @param x      Current X coordinate.
+     * @param y      Current Y coordinate.
      */
     public void insert(T entity, float x, float y) {
         long key = getCellKey(x, y);
@@ -63,9 +72,9 @@ public class SpatialHashGrid<T> {
     }
 
     /**
-     * 移除实体
+     * Removes an entity.
      * 
-     * @param entity 实体对象
+     * @param entity The entity object.
      */
     public void remove(T entity) {
         Long key = entityCells.remove(entity);
@@ -81,22 +90,22 @@ public class SpatialHashGrid<T> {
     }
 
     /**
-     * 更新实体位置
+     * Updates an entity's position.
      * 
-     * @param entity 实体对象
-     * @param newX   新X坐标
-     * @param newY   新Y坐标
+     * @param entity The entity object.
+     * @param newX   New X coordinate.
+     * @param newY   New Y coordinate.
      */
     public void update(T entity, float newX, float newY) {
         long newKey = getCellKey(newX, newY);
         Long oldKey = entityCells.get(entity);
 
-        // 如果还在同一个单元格，无需更新
+        // If still in the same cell, no update needed
         if (oldKey != null && oldKey == newKey) {
             return;
         }
 
-        // 从旧单元格移除
+        // Remove from old cell
         if (oldKey != null) {
             Set<T> oldCell = grid.get(oldKey);
             if (oldCell != null) {
@@ -107,31 +116,31 @@ public class SpatialHashGrid<T> {
             }
         }
 
-        // 插入新单元格
+        // Insert into new cell
         grid.computeIfAbsent(newKey, k -> new HashSet<>()).add(entity);
         entityCells.put(entity, newKey);
     }
 
     /**
-     * 获取指定位置周围的实体
+     * Gets entities around a specified position.
      * 
-     * @param centerX 中心X坐标
-     * @param centerY 中心Y坐标
-     * @param radius  查询半径
-     * @return 半径内的实体列表
+     * @param centerX Center X coordinate.
+     * @param centerY Center Y coordinate.
+     * @param radius  Query radius.
+     * @return List of entities within the radius.
      */
     public List<T> getNearby(float centerX, float centerY, float radius) {
         List<T> result = new ArrayList<>();
 
-        // 确定需要检查的单元格范围
+        // Determine range of cells to check
         int minCellX = (int) Math.floor((centerX - radius) / cellSize);
         int maxCellX = (int) Math.floor((centerX + radius) / cellSize);
         int minCellY = (int) Math.floor((centerY - radius) / cellSize);
         int maxCellY = (int) Math.floor((centerY + radius) / cellSize);
 
-        float radiusSq = radius * radius;
+        // float radiusSq = radius * radius; // Unused for coarse query
 
-        // 遍历相关单元格
+        // Iterate through relevant cells
         for (int cx = minCellX; cx <= maxCellX; cx++) {
             for (int cy = minCellY; cy <= maxCellY; cy++) {
                 long key = ((long) cx << 32) | (cy & 0xFFFFFFFFL);
@@ -146,15 +155,15 @@ public class SpatialHashGrid<T> {
     }
 
     /**
-     * 获取指定位置周围的实体（带精确距离过滤）
+     * Gets entities around a specified position (with exact distance filtering).
      * 
-     * 此方法需要实体提供坐标，使用 PositionProvider 接口
+     * This method requires the entity to provide coordinates via PositionProvider.
      * 
-     * @param centerX          中心X坐标
-     * @param centerY          中心Y坐标
-     * @param radius           查询半径
-     * @param positionProvider 坐标提供器
-     * @return 精确距离内的实体列表
+     * @param centerX          Center X coordinate.
+     * @param centerY          Center Y coordinate.
+     * @param radius           Query radius.
+     * @param positionProvider Position provider.
+     * @return List of entities within exact distance.
      */
     public List<T> getNearbyExact(float centerX, float centerY, float radius, PositionProvider<T> positionProvider) {
         List<T> candidates = getNearby(centerX, centerY, radius);
@@ -175,7 +184,7 @@ public class SpatialHashGrid<T> {
     }
 
     /**
-     * 清空所有实体
+     * Clears all entities.
      */
     public void clear() {
         grid.clear();
@@ -183,26 +192,28 @@ public class SpatialHashGrid<T> {
     }
 
     /**
-     * 获取当前实体总数
+     * Gets the current total number of entities.
+     *
+     * @return The size.
      */
     public int size() {
         return entityCells.size();
     }
 
     /**
-     * 坐标提供器接口
+     * Position Provider Interface.
      */
     @FunctionalInterface
     public interface PositionProvider<T> {
         float getX(T entity);
 
         default float getY(T entity) {
-            return 0; // 将由调用者实现完整版本
+            return 0; // To be implemented by caller
         }
     }
 
     /**
-     * 完整的坐标提供器接口
+     * Full Position Provider Interface.
      */
     public interface FullPositionProvider<T> {
         float getX(T entity);
@@ -211,7 +222,14 @@ public class SpatialHashGrid<T> {
     }
 
     /**
-     * 获取指定位置周围的实体（带精确距离过滤，使用完整坐标提供器）
+     * Gets entities around a specified position (with exact distance filtering,
+     * using FullPositionProvider).
+     *
+     * @param centerX          Center X.
+     * @param centerY          Center Y.
+     * @param radius           Query radius.
+     * @param positionProvider Full position provider.
+     * @return List of entities.
      */
     public List<T> getNearbyExact(float centerX, float centerY, float radius,
             FullPositionProvider<T> positionProvider) {

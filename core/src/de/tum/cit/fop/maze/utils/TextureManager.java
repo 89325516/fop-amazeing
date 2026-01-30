@@ -34,10 +34,10 @@ public class TextureManager implements Disposable {
         public TextureRegion wallRegion2x1, wallRegion3x1, wallRegion2x2, wallRegion3x3;
 
         public TextureRegion floorRegion; // Default
-        // 可行走地砖 (Walkable Floor) - 玩家可以走动的区域
+        // Walkable Floor - Areas where the player can walk
         public TextureRegion floorDungeon, floorDesert, floorGrassland, floorJungle, floorIce, floorLava, floorRain,
                         floorSpace;
-        // 墙体底砖 (Wall Base Floor) - 墙体所在方格下面的地砖
+        // Wall Base Floor - The floor tile under a wall
         public TextureRegion floorWallBaseDungeon, floorWallBaseDesert, floorWallBaseGrassland;
         public TextureRegion floorWallBaseJungle, floorWallBaseIce, floorWallBaseSpace;
         public TextureRegion entryRegion;
@@ -67,7 +67,7 @@ public class TextureManager implements Disposable {
         public Animation<TextureRegion> mobileTrapJungle;
         public Animation<TextureRegion> mobileTrapSpace;
 
-        // Dropped Item Textures (金币和爱心掉落物)
+        // Dropped Item Textures (Coin and Heart drops)
         public TextureRegion coinRegion;
         public TextureRegion heartDropRegion;
 
@@ -274,7 +274,7 @@ public class TextureManager implements Disposable {
                         loadAttackAnimations();
                 }
 
-                // 5. Load Optimized Floor Textures (Walkable Floor - 可行走地砖)
+                // 5. Load Optimized Floor Textures (Walkable Floor)
                 floorDungeon = loadTextureSafe("images/floors/tile_dungeon_stone.png");
                 floorDesert = loadTextureSafe("images/floors/tile_desert_sand.png");
                 floorGrassland = loadTextureSafe("images/floors/tile_grassland_grass.png");
@@ -284,8 +284,9 @@ public class TextureManager implements Disposable {
                 floorSpace = loadTextureSafe("images/floors/tile_space_metal.png");
                 floorJungle = loadTextureSafe("images/floors/tile_jungle_floor.png");
 
-                // 5.5 Load Wall Base Floor Textures (墙体底砖)
-                // 尝试加载专用墙体底砖，若不存在则回退到对应的可行走地砖
+                // 5.5 Load Wall Base Floor Textures
+                // Try to load dedicated wall base floor, if not exists, fallback to
+                // corresponding walkable floor
                 floorWallBaseDungeon = loadWallBaseFloorSafe("images/floors/tile_dungeon_wallbase.png", floorDungeon);
                 floorWallBaseDesert = loadWallBaseFloorSafe("images/floors/tile_desert_wallbase.png", floorDesert);
                 floorWallBaseGrassland = loadWallBaseFloorSafe("images/floors/tile_grassland_wallbase.png",
@@ -330,7 +331,7 @@ public class TextureManager implements Disposable {
                 // 9. Load Treasure Chest Textures
                 loadChestAssets();
 
-                // 10. Load Dropped Item Textures (金币和爱心)
+                // 10. Load Dropped Item Textures (Coin and Heart)
                 coinRegion = loadTextureSafe("images/items/item_coin.png");
                 heartDropRegion = loadTextureSafe("images/items/item_heart_drop.png");
 
@@ -571,6 +572,13 @@ public class TextureManager implements Disposable {
         /**
          * Returns a wall texture region for the given theme, size, and position.
          * Position is used to deterministically select a variant.
+         *
+         * @param theme  The wall theme.
+         * @param width  The wall width.
+         * @param height The wall height.
+         * @param x      The x position.
+         * @param y      The y position.
+         * @return The texture region for the wall.
          */
         public TextureRegion getWallRegion(String theme, int width, int height, int x, int y) {
                 String usedTheme = (theme == null) ? "dungeon" : theme.toLowerCase();
@@ -602,6 +610,9 @@ public class TextureManager implements Disposable {
         /**
          * Returns a trap texture region for the given theme.
          * Falls back to default trapRegion if themed texture is not available.
+         *
+         * @param theme The theme name.
+         * @return The trap texture region.
          */
         public TextureRegion getTrapRegion(String theme) {
                 if (theme == null)
@@ -625,6 +636,9 @@ public class TextureManager implements Disposable {
         /**
          * Returns the trap animation for the given theme.
          * Returns null if no animation exists for that theme.
+         *
+         * @param theme The theme name.
+         * @return The trap animation or null.
          */
         public Animation<TextureRegion> getTrapAnimation(String theme) {
                 if (theme == null)
@@ -647,6 +661,9 @@ public class TextureManager implements Disposable {
 
         /**
          * Returns the mobile trap animation for the given theme.
+         *
+         * @param theme The theme description.
+         * @return The animation for the mobile trap.
          */
         public Animation<TextureRegion> getMobileTrapAnimation(String theme) {
                 if (theme == null)
@@ -670,6 +687,9 @@ public class TextureManager implements Disposable {
         /**
          * Returns the exit texture region for the given theme.
          * Falls back to default exitRegion if themed texture is not available.
+         *
+         * @param theme The theme name.
+         * @return The exit texture region.
          */
         public TextureRegion getExitRegion(String theme) {
                 if (theme == null)
@@ -814,28 +834,31 @@ public class TextureManager implements Disposable {
         }
 
         /**
-         * 获取宝箱纹理的渲染高度（用于底部对齐）
+         * Gets the render height of the chest for bottom alignment.
          * 
-         * 宝箱纹理尺寸：closed (30x31), half (30x34), open (30x51)
-         * 需要根据状态返回正确的高度以实现底部对齐。
+         * Chest dimensions: closed (30x31), half (30x34), open (30x51).
+         * Needs to return correct height in grid units for bottom alignment.
          * 
-         * @param state    宝箱状态
-         * @param tileSize 格子大小（像素）
-         * @return 渲染高度（格子单位）
+         * @param state    Chest state.
+         * @param tileSize Tile size in pixels.
+         * @return Render height in grid units.
          */
         public float getChestRenderHeight(de.tum.cit.fop.maze.model.TreasureChest.ChestState state, float tileSize) {
                 TextureRegion region = getChestFrame(state);
                 if (region == null) {
                         return 1f;
                 }
-                // 基准高度：closed 的高度（31px）对应 1 格
+                // Base height: closed (31px) corresponds to 1 grid unit
                 float baseHeight = 31f;
                 float actualHeight = region.getRegionHeight();
                 return actualHeight / baseHeight;
         }
 
         /**
-         * 获取宝箱纹理的宽高比
+         * Gets the aspect ratio of the chest image.
+         * 
+         * @param state The chest state.
+         * @return The aspect ratio (width / height).
          */
         public float getChestAspectRatio(de.tum.cit.fop.maze.model.TreasureChest.ChestState state) {
                 TextureRegion region = getChestFrame(state);
@@ -863,6 +886,9 @@ public class TextureManager implements Disposable {
         /**
          * Get texture for a specific potion type.
          * Loads from assets/images/items/potion_{type}.png
+         * 
+         * @param potionKey The potion type key.
+         * @return The potion texture region.
          */
         public TextureRegion getPotionTexture(String potionKey) {
                 if (potionCache.containsKey(potionKey)) {
@@ -887,11 +913,11 @@ public class TextureManager implements Disposable {
         }
 
         /**
-         * 加载墙体底砖纹理，若不存在则回退到指定的默认纹理
+         * Loads a wall base floor texture safely, returning fallback if failed.
          * 
-         * @param path     墙体底砖纹理路径
-         * @param fallback 回退纹理（通常是对应主题的可行走地砖）
-         * @return 加载的纹理或回退纹理
+         * @param path     Path to the wall base texture.
+         * @param fallback The fallback texture region (usually the walkable floor).
+         * @return The loaded or fallback texture region.
          */
         private TextureRegion loadWallBaseFloorSafe(String path, TextureRegion fallback) {
                 try {
@@ -903,15 +929,16 @@ public class TextureManager implements Disposable {
                 } catch (Exception e) {
                         // Silently fall back
                 }
-                // 回退到可行走地砖（保持视觉一致性直到素材准备好）
+                // Fallback to walkable floor (maintain visual consistency until assets are
+                // ready)
                 return fallback != null ? fallback : fallbackRegion;
         }
 
         /**
-         * 获取指定主题的可行走地砖纹理
+         * Gets the walkable floor texture for a specific theme.
          * 
-         * @param theme 主题名称（Grassland, Desert, Ice, Jungle, Space, Dungeon）
-         * @return 对应主题的可行走地砖纹理
+         * @param theme Theme name (Grassland, Desert, Ice, Jungle, Space, Dungeon).
+         * @return The corresponding walkable floor texture.
          */
         public TextureRegion getWalkableFloor(String theme) {
                 if (theme == null)
@@ -935,10 +962,11 @@ public class TextureManager implements Disposable {
         }
 
         /**
-         * 获取指定主题的墙体底砖纹理
+         * Gets the wall base floor texture for a specific theme.
          * 
-         * @param theme 主题名称（Grassland, Desert, Ice, Jungle, Space, Dungeon）
-         * @return 对应主题的墙体底砖纹理（若未加载则回退到可行走地砖）
+         * @param theme Theme name (Grassland, Desert, Ice, Jungle, Space, Dungeon).
+         * @return The corresponding wall base floor texture (or fallback to walkable
+         *         floor).
          */
         public TextureRegion getWallBaseFloor(String theme) {
                 if (theme == null)

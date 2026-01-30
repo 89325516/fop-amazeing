@@ -806,7 +806,7 @@ public class ElementCreatorScreen implements Screen {
                 defaultVal = currentElement.getType().getDefaultValue(prop);
             }
             if (defaultVal instanceof Boolean) {
-                // 使用 TextButton 替代 CheckBox（因为皮肤中没有 CheckBox 样式）
+                // Use TextButton instead of CheckBox (since CheckBox style is missing in skin)
                 final boolean[] checked = { (Boolean) defaultVal };
                 final TextButton toggleBtn = new TextButton(checked[0] ? "ON" : "OFF", skin);
                 toggleBtn.setColor(checked[0] ? Color.GREEN : Color.GRAY);
@@ -1071,7 +1071,7 @@ public class ElementCreatorScreen implements Screen {
     @Override
     public void show() {
         Gdx.input.setInputProcessor(stage);
-        // 🔊 全局按钮音效
+        // 🔊 Global button sound
         de.tum.cit.fop.maze.utils.UIUtils.enableMenuButtonSound(stage);
     }
 
