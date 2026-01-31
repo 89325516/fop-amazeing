@@ -676,19 +676,25 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         }
 
         // 2.6 Render Dropped Items (Coins, Weapons, Armor, etc.)
-        float dropScale = 0.6f; // Dropped item size scaled to 60%
-        float dropSize = UNIT_SCALE * dropScale;
-        float dropOffset = (UNIT_SCALE - dropSize) / 2; // Center offset
+        // Use different scales for different item types
+        float defaultDropScale = 0.6f; // Default scale for small items
+        float weaponDropScale = 1.2f; // Larger scale for weapons (easier to spot)
+        float coinDropScale = 0.7f; // Coins slightly smaller
+
         for (de.tum.cit.fop.maze.model.items.DroppedItem item : gameWorld.getDroppedItems()) {
             if (item.isPickedUp())
                 continue;
 
             TextureRegion itemTex = null;
+            float currentScale = defaultDropScale; // Default scale
+
             switch (item.getType()) {
                 case COIN:
                     itemTex = textureManager.coinRegion;
+                    currentScale = coinDropScale;
                     break;
                 case WEAPON:
+                    currentScale = weaponDropScale; // Use larger scale for weapons
                     // Use Idle animation for weapon drops
                     de.tum.cit.fop.maze.model.weapons.Weapon weapon = (de.tum.cit.fop.maze.model.weapons.Weapon) item
                             .getPayload();
@@ -710,6 +716,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
                         itemTex = textureManager.coinRegion; // Final fallback
                     break;
                 case ARMOR:
+                    currentScale = weaponDropScale; // Armor also uses larger scale
                     de.tum.cit.fop.maze.model.items.Armor armor = (de.tum.cit.fop.maze.model.items.Armor) item
                             .getPayload();
                     itemTex = getArmorTexture(armor.getName());
@@ -718,10 +725,13 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
                     break;
                 case POTION:
                     itemTex = textureManager.getPotionTexture(item.getTextureKey());
+                    currentScale = defaultDropScale; // Potions keep smaller scale
                     break;
             }
 
             if (itemTex != null) {
+                float dropSize = UNIT_SCALE * currentScale;
+                float dropOffset = (UNIT_SCALE - dropSize) / 2; // Center offset
                 float bobY = item.getBobOffset() * UNIT_SCALE; // Floating animation
                 game.getSpriteBatch().draw(itemTex,
                         item.getX() * UNIT_SCALE + dropOffset,
