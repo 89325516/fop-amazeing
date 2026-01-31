@@ -299,17 +299,21 @@ public class LevelSelectScreen implements Screen {
     private void showUnlockDialog(int level) {
         Dialog dialog = new Dialog("LOCKED ACCESS", game.getSkin());
 
-        // Add padding to the content table to prevent title overlap
-        dialog.getContentTable().padTop(60).padLeft(40).padRight(40).padBottom(20);
+        // Set minimum width for the dialog to prevent content overlap
+        dialog.setWidth(450);
 
-        // Manually add label and textfield to control alignment
+        // Add padding to the content table to prevent title overlap
+        dialog.getContentTable().padTop(60).padLeft(40).padRight(40).padBottom(30);
+
+        // Manually add label and textfield to control alignment - use row() for
+        // vertical layout
         Label promptLabel = new Label("Enter Override Code (Dev):", game.getSkin());
-        dialog.getContentTable().add(promptLabel).padRight(15);
+        dialog.getContentTable().add(promptLabel).colspan(2).padBottom(15).row();
 
         final TextField passwordField = new TextField("", game.getSkin());
         passwordField.setPasswordMode(true);
         passwordField.setPasswordCharacter('*');
-        dialog.getContentTable().add(passwordField).width(200);
+        dialog.getContentTable().add(passwordField).width(250).colspan(2).padBottom(20).row();
 
         TextButton unlockBtn = new TextButton("AUTHORIZE", game.getSkin());
         unlockBtn.addListener(new ChangeListener() {
@@ -335,11 +339,14 @@ public class LevelSelectScreen implements Screen {
             }
         });
 
-        // Adjust button layouts
-        dialog.getButtonTable().padBottom(30);
-        dialog.getButtonTable().add(unlockBtn).width(130).padRight(20);
-        dialog.getButtonTable().add(cancelBtn).width(130);
+        // Use a horizontal button row with proper spacing
+        dialog.getButtonTable().defaults().pad(10).minWidth(120).height(45);
+        dialog.getButtonTable().padTop(10).padBottom(30);
+        dialog.getButtonTable().add(unlockBtn).padRight(30);
+        dialog.getButtonTable().add(cancelBtn);
 
+        // Pack and center the dialog
+        dialog.pack();
         dialog.show(stage);
     }
 
