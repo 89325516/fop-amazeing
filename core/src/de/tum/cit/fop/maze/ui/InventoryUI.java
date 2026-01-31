@@ -11,6 +11,7 @@ import com.badlogic.gdx.utils.Align;
 import de.tum.cit.fop.maze.model.InventorySystem;
 import de.tum.cit.fop.maze.model.items.Potion;
 import de.tum.cit.fop.maze.model.weapons.Weapon;
+import com.badlogic.gdx.graphics.Texture;
 import de.tum.cit.fop.maze.utils.TextureManager;
 
 import java.util.List;
@@ -217,11 +218,46 @@ public class InventoryUI {
                 boolean isEquipped = i == currentWeaponIdx;
                 slot.setBackground(isSelected ? selectedSlotBg : normalSlotBg);
 
-                // Weapon icon placeholder (use first letter as fallback)
-                Label iconLabel = new Label(weapon.getName().substring(0, 1).toUpperCase(), skin);
-                iconLabel.setFontScale(1.5f);
-                iconLabel.setColor(isEquipped ? Color.GOLD : Color.WHITE);
-                slot.add(iconLabel).center();
+                // === Load weapon icon image (matching shop icons) ===
+                String textureKey = null;
+
+                // Try to find matching ShopItem by weapon name for consistent icons
+                for (de.tum.cit.fop.maze.shop.ShopItem shopItem : de.tum.cit.fop.maze.shop.ShopManager
+                        .getItemsByCategory(
+                                de.tum.cit.fop.maze.shop.ShopItem.ItemCategory.WEAPON)) {
+                    if (shopItem.getName().equals(weapon.getName())) {
+                        textureKey = shopItem.getTextureKey();
+                        break;
+                    }
+                }
+
+                // Fallback to weapon's own textureKey if not found in shop
+                if (textureKey == null) {
+                    textureKey = weapon.getTextureKey();
+                }
+
+                String iconPath;
+                if (textureKey.startsWith("custom_images") || textureKey.contains("/")) {
+                    iconPath = textureKey + ".png";
+                } else {
+                    iconPath = "images/items/shop/" + textureKey + ".png";
+                }
+
+                try {
+                    Texture iconTexture = new Texture(Gdx.files.internal(iconPath));
+                    iconTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+                    Image weaponIcon = new Image(iconTexture);
+                    // Fill the slot more completely for consistent appearance
+                    float iconSize = SLOT_SIZE - 8;
+                    weaponIcon.setSize(iconSize, iconSize);
+                    slot.add(weaponIcon).size(iconSize, iconSize).center();
+                } catch (Exception e) {
+                    // Fallback to text if image not found
+                    Label iconLabel = new Label(weapon.getName().substring(0, 1).toUpperCase(), skin);
+                    iconLabel.setFontScale(1.5f);
+                    iconLabel.setColor(isEquipped ? Color.GOLD : Color.WHITE);
+                    slot.add(iconLabel).center();
+                }
 
                 // Click listener
                 slot.addListener(new ClickListener() {
@@ -270,15 +306,29 @@ public class InventoryUI {
                 boolean isSelected = !isWeaponSelected && selectedItemIndex == i;
                 slot.setBackground(isSelected ? selectedSlotBg : normalSlotBg);
 
-                // Potion icon (use colored circle as fallback)
-                Label iconLabel = new Label("●", skin);
-                iconLabel.setFontScale(2f);
-                iconLabel.setColor(new Color(
-                        ((potion.getColor() >> 16) & 0xFF) / 255f,
-                        ((potion.getColor() >> 8) & 0xFF) / 255f,
-                        (potion.getColor() & 0xFF) / 255f,
-                        1f));
-                slot.add(iconLabel).center();
+                // === Load potion icon image ===
+                String textureKey = potion.getTextureKey();
+                String iconPath = "images/items/" + textureKey + ".png";
+
+                try {
+                    Texture iconTexture = new Texture(Gdx.files.internal(iconPath));
+                    iconTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+                    Image potionIcon = new Image(iconTexture);
+                    // Fill the slot more completely for consistent appearance
+                    float iconSize = SLOT_SIZE - 8;
+                    potionIcon.setSize(iconSize, iconSize);
+                    slot.add(potionIcon).size(iconSize, iconSize).center();
+                } catch (Exception e) {
+                    // Fallback to colored circle if image not found
+                    Label iconLabel = new Label("●", skin);
+                    iconLabel.setFontScale(2f);
+                    iconLabel.setColor(new Color(
+                            ((potion.getColor() >> 16) & 0xFF) / 255f,
+                            ((potion.getColor() >> 8) & 0xFF) / 255f,
+                            (potion.getColor() & 0xFF) / 255f,
+                            1f));
+                    slot.add(iconLabel).center();
+                }
 
                 // Stack count
                 if (potion.getStackCount() > 1) {

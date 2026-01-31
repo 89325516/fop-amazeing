@@ -11,6 +11,7 @@ public class MagicStaff extends Weapon {
         // High damage, medium range, fast cooldown for rapid fire, Burn effect
         // Fully initialized as Ranged: isRanged=true, speed 12
         super(x, y, "Machine Gun", 2, 6.0f, 0.25f, WeaponEffect.BURN, DamageType.MAGICAL, true, 1.2f, 12f);
+        this.textureKey = "fire_staff";
 
         // Override with custom values if available
         de.tum.cit.fop.maze.custom.CustomElementManager manager = de.tum.cit.fop.maze.custom.CustomElementManager

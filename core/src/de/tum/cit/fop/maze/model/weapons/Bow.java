@@ -11,6 +11,7 @@ public class Bow extends Weapon {
         // Lower damage, longer range, freeze effect
         // Fully initialized as Ranged: isRanged=true, projectiles speed 15
         super(x, y, "Ice Bow", 1, 5.0f, 0.8f, WeaponEffect.FREEZE, DamageType.PHYSICAL, true, 0.8f, 15f);
+        this.textureKey = "ice_bow";
 
         // Override with custom values if available
         de.tum.cit.fop.maze.custom.CustomElementManager manager = de.tum.cit.fop.maze.custom.CustomElementManager

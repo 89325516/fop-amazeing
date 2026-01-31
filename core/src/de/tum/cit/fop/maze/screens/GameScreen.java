@@ -680,6 +680,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
         // Use different scales for different item types
         float defaultDropScale = 0.6f; // Default scale for small items
         float weaponDropScale = 1.2f; // Larger scale for weapons (easier to spot)
+        float armorDropScale = 0.8f; // Medium scale for armor (slightly bigger than coins)
         float coinDropScale = 0.7f; // Coins slightly smaller
 
         for (de.tum.cit.fop.maze.model.items.DroppedItem item : gameWorld.getDroppedItems()) {
@@ -717,7 +718,7 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
                         itemTex = textureManager.coinRegion; // Final fallback
                     break;
                 case ARMOR:
-                    currentScale = weaponDropScale; // Armor also uses larger scale
+                    currentScale = armorDropScale; // Armor uses medium scale
                     de.tum.cit.fop.maze.model.items.Armor armor = (de.tum.cit.fop.maze.model.items.Armor) item
                             .getPayload();
                     itemTex = getArmorTexture(armor.getName());
