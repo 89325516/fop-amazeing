@@ -100,9 +100,9 @@ public class LoadoutScreen implements Screen {
 
         ScrollPane availableScroll = new ScrollPane(createAvailableWeaponsTable(), skin);
         availableScroll.setFadeScrollBars(false);
-        leftPanel.add(availableScroll).width(350).height(400);
+        leftPanel.add(availableScroll).width(280).height(320);
 
-        root.add(leftPanel).pad(20).top();
+        root.add(leftPanel).pad(15).top();
 
         // Right side: Current loadout
         Table rightPanel = new Table();
@@ -117,9 +117,9 @@ public class LoadoutScreen implements Screen {
 
         loadoutSlotsTable = new Table();
         updateLoadoutSlots();
-        rightPanel.add(loadoutSlotsTable).width(350).height(400);
+        rightPanel.add(loadoutSlotsTable).width(280).height(320);
 
-        root.add(rightPanel).pad(20).top();
+        root.add(rightPanel).pad(15).top();
         root.row();
 
         // Footer buttons
@@ -173,7 +173,7 @@ public class LoadoutScreen implements Screen {
             emptyLabel.setColor(Color.GRAY);
             emptyLabel.setWrap(true); // 啟用文字換行
             emptyLabel.setAlignment(com.badlogic.gdx.utils.Align.center); // 文字置中
-            availableWeaponsTable.add(emptyLabel).width(300).pad(20); // 設置寬度避免截斷
+            availableWeaponsTable.add(emptyLabel).width(240).pad(15); // 設置寬度避免截斷
             return;
         }
 
@@ -196,16 +196,16 @@ public class LoadoutScreen implements Screen {
         swordRow.pad(10);
 
         Label swordIcon = new Label("⚔", skin);
-        swordRow.add(swordIcon).width(50).padRight(10);
+        swordRow.add(swordIcon).width(40).padRight(8);
 
         Label swordName = new Label("Iron Sword\n(Default)", skin);
         swordName.setColor(Color.LIGHT_GRAY);
         swordName.setWrap(true);
-        swordRow.add(swordName).width(180).left().padRight(10);
+        swordRow.add(swordName).width(140).left().padRight(8);
 
         Label lockedLabel = new Label("🔒", skin);
         lockedLabel.setColor(Color.GRAY);
-        swordRow.add(lockedLabel).width(40);
+        swordRow.add(lockedLabel).width(35);
 
         loadoutSlotsTable.add(swordRow).fillX().expandX().padBottom(8);
         loadoutSlotsTable.row();
@@ -265,20 +265,20 @@ public class LoadoutScreen implements Screen {
             Label iconLabel = new Label("⚔", skin);
             iconCell.add(iconLabel);
         }
-        row.add(iconCell).width(50).padRight(10);
+        row.add(iconCell).width(40).padRight(8);
 
         // Weapon name - with wrap enabled and max width
         Label nameLabel = new Label(weapon.getName(), skin);
         nameLabel.setColor(isSelected ? Color.YELLOW : Color.WHITE);
         nameLabel.setWrap(true);
-        row.add(nameLabel).width(180).left().padRight(10);
+        row.add(nameLabel).width(140).left().padRight(8);
 
         // Action buttons
         if (isAvailable) {
             if (isSelected) {
                 Label selectedLabel = new Label("✓", skin);
                 selectedLabel.setColor(Color.GREEN);
-                row.add(selectedLabel).width(40);
+                row.add(selectedLabel).width(35);
             } else {
                 TextButton addBtn = new TextButton("+", skin);
                 addBtn.addListener(new ClickListener() {
@@ -289,7 +289,7 @@ public class LoadoutScreen implements Screen {
                         }
                     }
                 });
-                row.add(addBtn).width(40).height(40);
+                row.add(addBtn).width(35).height(35);
             }
         } else {
             // In loadout bar - show remove button
@@ -302,7 +302,7 @@ public class LoadoutScreen implements Screen {
                     refreshUI();
                 }
             });
-            row.add(removeBtn).width(40).height(40);
+            row.add(removeBtn).width(35).height(35);
         }
 
         return row;

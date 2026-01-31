@@ -149,7 +149,7 @@ public class LevelSummaryScreen implements Screen {
         // Increase padding to prevent text from overflowing the border
         // Add extra top padding to move PERFORMANCE down
         card.pad(60, 70, 50, 70);
-        card.padTop(80);
+        card.padTop(100);
 
         // Split Layout: Stats (Left) | Rank/Summary (Right)
         if (data.isVictory()) {

@@ -98,7 +98,7 @@ public class GameHUD implements Disposable {
 
         // --- Top Bar ---
         Table topTable = new Table();
-        rootTable.add(topTable).growX().top().pad(15); // Adjusted padding to 15 (aligned with EndlessHUD)
+        rootTable.add(topTable).growX().top().pad(15).padRight(60);
 
         // Left Container (Lives + Compass)
         Table topLeftGroup = new Table();
@@ -136,7 +136,7 @@ public class GameHUD implements Disposable {
                     onInventoryClicked.run();
             }
         });
-        buttonTable.add(inventoryButton).width(80).height(50).padRight(10);
+        buttonTable.add(inventoryButton).width(110).height(50).padRight(10);
 
         // Menu Button
         settingsButton = new TextButton("Menu", skin);
@@ -147,7 +147,7 @@ public class GameHUD implements Disposable {
                     onSettingsClicked.run();
             }
         });
-        buttonTable.add(settingsButton).width(80).height(50);
+        buttonTable.add(settingsButton).width(110).height(50);
 
         // === Row 2: SP ===
         Label.LabelStyle spStyle = new Label.LabelStyle(skin.getFont("font"), Color.GOLD);
