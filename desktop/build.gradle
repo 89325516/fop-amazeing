@@ -1,7 +1,6 @@
 sourceCompatibility = 17
 sourceSets.main.java.srcDirs = [ "src/" ]
-sourceSets.main.resources.srcDirs = ["../assets"]
-
+//sourceSets.main.resources.srcDirs = ["../assets"]
 project.ext.mainClassName = "de.tum.cit.fop.maze.DesktopLauncher"
 project.ext.assetsDir = new File("../assets")
 

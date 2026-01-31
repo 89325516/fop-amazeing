@@ -14,7 +14,7 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import de.tum.cit.fop.maze.MazeRunnerGame;
 import de.tum.cit.fop.maze.custom.CustomElementManager;
 import de.tum.cit.fop.maze.shop.LoadoutManager;
@@ -48,7 +48,7 @@ public class LoadoutScreen implements Screen {
 
     @Override
     public void show() {
-        stage = new Stage(new ScreenViewport());
+        stage = new Stage(new ExtendViewport(1280, 720));
         Gdx.input.setInputProcessor(stage);
         skin = game.getSkin();
 
@@ -171,7 +171,9 @@ public class LoadoutScreen implements Screen {
         if (purchasedWeapons.isEmpty()) {
             Label emptyLabel = new Label("No weapons purchased!\nVisit the shop first.", skin);
             emptyLabel.setColor(Color.GRAY);
-            availableWeaponsTable.add(emptyLabel).pad(20);
+            emptyLabel.setWrap(true); // 啟用文字換行
+            emptyLabel.setAlignment(com.badlogic.gdx.utils.Align.center); // 文字置中
+            availableWeaponsTable.add(emptyLabel).width(300).pad(20); // 設置寬度避免截斷
             return;
         }
 
