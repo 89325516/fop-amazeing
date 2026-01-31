@@ -184,7 +184,16 @@ public class GameScreen implements Screen, GameWorld.WorldListener {
 
             if (state != null) {
                 Player p = gameWorld.getPlayer();
-                p.setLives(state.getLives());
+                // FIX: Only apply lives from save if it's a valid positive value.
+                // If lives is 0 or negative (e.g., from an empty/corrupted save),
+                // keep the player's default max health instead of setting to 0 (which causes
+                // instant death).
+                int savedLives = state.getLives();
+                if (savedLives > 0) {
+                    p.setLives(savedLives);
+                }
+                // If savedLives <= 0, player keeps their initial max health (already set in
+                // Player constructor)
                 p.setHasKey(false); // Key resets between levels
                 p.setSkillStats(state.getSkillPoints(),
                         state.getMaxHealthBonus(),
